@@ -1,0 +1,11 @@
+# PlatformIO
+src/esp32/.pio/
+src/esp32/.vscode/
+src/esp32/.clang_complete
+src/esp32/.gcc-flags.json
+
+# OS
+.DS_Store
+
+# Editors
+*.swp
