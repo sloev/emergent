@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.1.0** (in progress)
+**Current release: v0.1.0** (complete — next up: v0.2.0)
 
 ---
 
@@ -19,8 +19,8 @@ current one is closed out, unless explicitly reprioritized.
 - [x] GitHub Actions workflow to rebuild `synth-behavior.pdf` from the markdown source
 - [x] ESP32 PlatformIO project skeleton (`src/esp32`)
 - [x] Board configuration abstraction (per-board pin/IO profiles)
-- [ ] Push to GitHub, enable Pages (serve from `docs/` on `main`)
-- [ ] CI: PlatformIO build check for at least one board target
+- [x] Push to GitHub, enable Pages (serve from `docs/` on `main`)
+- [x] CI: PlatformIO build check for at least one board target
 
 ## v0.2.0 — Body layer: sensors & actuators
 
