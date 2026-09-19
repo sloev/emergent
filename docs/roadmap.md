@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.2.0** (in progress)
+**Current release: v0.3.0** (in progress)
 
 ---
 
@@ -38,11 +38,16 @@ starting point, expect to override them per physical chassis.
 
 ## v0.3.0 — WiFi hotspot & dashboard
 
-- [ ] SoftAP mode, SSID/password configurable per board profile
-- [ ] Async web server serving the dashboard UI
-- [ ] Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs
-- [ ] Minimal dashboard front-end served from firmware (LittleFS)
-- [ ] Config page: adjust IO mapping / drive targets without reflashing
+- [x] SoftAP mode, SSID/password configurable per board profile
+- [x] Async web server serving the dashboard UI
+- [x] Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs
+- [x] Minimal dashboard front-end served from firmware (LittleFS)
+- [x] Config page: change WiFi credentials without reflashing (persisted to NVS)
+
+Verified: both board targets build the firmware and the LittleFS image clean
+with PlatformIO. Not yet run on real hardware. "Drive targets" config is
+deferred to v0.4.0, once drives exist to configure — for now the dashboard's
+manual actuator sliders stand in for direct output control.
 
 ## v0.4.0 — Physiology & drives
 

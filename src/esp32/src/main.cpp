@@ -1,15 +1,17 @@
-// Emergent firmware — v0.2.0: body layer.
+// Emergent firmware — v0.3.0: WiFi hotspot & dashboard.
 //
-// The generic Sensor/Actuator interfaces and the per-board IO profile now
-// exist (see include/body/ and include/boards/). This entry point wires them
-// up and runs a serial self-test plus a heartbeat driven through the body
-// layer instead of a raw pin. The behavior engine (physiology, drives,
-// memory) is not here yet — see docs/roadmap.md.
+// The board now brings up its own AP and serves a live dashboard (LittleFS
+// front-end, JSON + WebSocket telemetry, manual actuator control, and a
+// config page to change the AP's WiFi credentials without reflashing). The
+// behavior engine (physiology, drives, memory) is not here yet — see
+// docs/roadmap.md.
 
 #include <Arduino.h>
 
 #include "body/body.h"
 #include "board_config.h"
+#include "net/dashboard_server.h"
+#include "net/wifi_ap.h"
 
 static Body body(active_board());
 
@@ -52,11 +54,13 @@ void setup() {
 
     body.begin();
     self_test();
+
+    wifi_ap::begin(active_board());
+    dashboard::begin(body);
 }
 
 void loop() {
     static uint32_t last_toggle_ms = 0;
-    static uint32_t last_report_ms = 0;
     static bool led_on = false;
 
     Actuator* led = body.actuator("led_status");
@@ -69,17 +73,5 @@ void loop() {
         last_toggle_ms = now;
     }
 
-    // Periodic sensor report over serial, standing in for the dashboard
-    // telemetry that lands in v0.3.0.
-    if (now - last_report_ms >= 2000) {
-        for (size_t i = 0; i < body.sensor_count(); i++) {
-            Sensor& s = body.sensor_at(i);
-            Serial.print(s.name());
-            Serial.print("=");
-            Serial.print(s.read());
-            Serial.print("  ");
-        }
-        Serial.println();
-        last_report_ms = now;
-    }
+    dashboard::loop_tick(body);
 }

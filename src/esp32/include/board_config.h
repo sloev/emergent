@@ -17,6 +17,11 @@
 struct BoardConfig {
     const char* name;
 
+    // Defaults for the onboard WiFi hotspot. Overridable at runtime from the
+    // dashboard's config page (persisted to NVS) without reflashing.
+    const char* ap_ssid;
+    const char* ap_password;  // "" for an open network; WPA2 needs >= 8 chars
+
     const ActuatorSpec* actuators;
     size_t actuator_count;
 

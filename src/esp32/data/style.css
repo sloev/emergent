@@ -1,0 +1,104 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #fafaf8;
+  --fg: #111111;
+  --fg-muted: #5a5a5a;
+  --line: #111111;
+  --accent: #c23a1f;
+}
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  margin: 0 auto;
+  max-width: 480px;
+  padding: 1.5rem;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--line);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+h1 {
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+nav button {
+  background: none;
+  border: 2px solid var(--line);
+  color: var(--fg);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  margin-left: 0.4rem;
+}
+nav button.active { background: var(--line); color: #fff; }
+
+.tab { display: none; }
+.tab.active { display: block; }
+
+h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid #ddd9d0;
+  padding-bottom: 0.35rem;
+  margin-top: 2rem;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #ddd9d0;
+  font-size: 0.9rem;
+}
+.channel .name { font-weight: 600; flex: none; min-width: 6.5rem; }
+.channel .value {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  min-width: 3.5rem;
+  text-align: right;
+}
+.channel input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+form label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+form input {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+form button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+#wifi-status {
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+}

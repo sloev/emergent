@@ -30,6 +30,10 @@ jobs:
       - name: Install PlatformIO
         run: pip install --upgrade platformio
 
-      - name: Build (${{ matrix.env }})
+      - name: Build firmware (${{ matrix.env }})
         working-directory: src/esp32
         run: pio run -e ${{ matrix.env }}
+
+      - name: Build filesystem image (${{ matrix.env }})
+        working-directory: src/esp32
+        run: pio run -e ${{ matrix.env }} -t buildfs

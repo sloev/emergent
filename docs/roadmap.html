@@ -216,7 +216,7 @@ code.hljs {
 .hljs-tag {
   /* purposely ignored */
   
-}/*# sourceURL=/home/runner/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+}/*# sourceURL=/home/nihil/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
 	<body class="">
 		<h1 id="roadmap">Roadmap</h1>
 <p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
@@ -224,7 +224,7 @@ code.hljs {
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.2.0</strong> (in progress)</p>
+<p><strong>Current release: v0.3.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -251,12 +251,16 @@ PlatformIO. Not yet verified against real hardware — pin choices per board are
 starting point, expect to override them per physical chassis.</p>
 <h2 id="v030--wifi-hotspot--dashboard">v0.3.0 — WiFi hotspot &amp; dashboard</h2>
 <ul>
-<li><input disabled="" type="checkbox"> SoftAP mode, SSID/password configurable per board profile</li>
-<li><input disabled="" type="checkbox"> Async web server serving the dashboard UI</li>
-<li><input disabled="" type="checkbox"> Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs</li>
-<li><input disabled="" type="checkbox"> Minimal dashboard front-end served from firmware (LittleFS)</li>
-<li><input disabled="" type="checkbox"> Config page: adjust IO mapping / drive targets without reflashing</li>
+<li><input checked="" disabled="" type="checkbox"> SoftAP mode, SSID/password configurable per board profile</li>
+<li><input checked="" disabled="" type="checkbox"> Async web server serving the dashboard UI</li>
+<li><input checked="" disabled="" type="checkbox"> Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs</li>
+<li><input checked="" disabled="" type="checkbox"> Minimal dashboard front-end served from firmware (LittleFS)</li>
+<li><input checked="" disabled="" type="checkbox"> Config page: change WiFi credentials without reflashing (persisted to NVS)</li>
 </ul>
+<p>Verified: both board targets build the firmware and the LittleFS image clean
+with PlatformIO. Not yet run on real hardware. "Drive targets" config is
+deferred to v0.4.0, once drives exist to configure — for now the dashboard's
+manual actuator sliders stand in for direct output control.</p>
 <h2 id="v040--physiology--drives">v0.4.0 — Physiology &amp; drives</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Internal variable vector (<code>h_energy</code>, <code>h_fatigue</code>, <code>h_safety</code>, <code>h_arousal</code>,

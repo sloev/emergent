@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergent</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Emergent</h1>
+    <nav>
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="config">Config</button>
+    </nav>
+  </header>
+
+  <section id="tab-dashboard" class="tab active">
+    <h2>Sensors</h2>
+    <div id="sensors" class="channels"></div>
+
+    <h2>Actuators</h2>
+    <div id="actuators" class="channels"></div>
+  </section>
+
+  <section id="tab-config" class="tab">
+    <h2>WiFi</h2>
+    <form id="wifi-form">
+      <label>SSID<input name="ssid" required></label>
+      <label>Password<input name="password" type="password" placeholder="leave blank for open network"></label>
+      <button type="submit">Save &amp; restart</button>
+    </form>
+    <p id="wifi-status"></p>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

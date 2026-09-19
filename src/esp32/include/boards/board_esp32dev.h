@@ -23,6 +23,8 @@ static const SensorSpec kSensorsEsp32Dev[] = {
 
 static const BoardConfig kBoardEsp32Dev = {
     .name = "esp32dev",
+    .ap_ssid = "emergent-esp32dev",
+    .ap_password = "emergent1",
     .actuators = kActuatorsEsp32Dev,
     .actuator_count = sizeof(kActuatorsEsp32Dev) / sizeof(kActuatorsEsp32Dev[0]),
     .sensors = kSensorsEsp32Dev,
