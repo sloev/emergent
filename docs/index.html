@@ -31,10 +31,18 @@
 
   header {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 1.5rem;
     border-bottom: 3px solid var(--line);
     padding-bottom: 1.25rem;
+  }
+  .title-block {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 0.7rem;
+    row-gap: 0.15rem;
   }
   header h1 {
     font-size: 1.75rem;
@@ -42,10 +50,42 @@
     margin: 0;
     text-transform: uppercase;
   }
-  header .mark {
-    width: 14px;
-    height: 14px;
+  .dict-entry {
+    color: var(--fg-muted);
+    font-size: 0.85rem;
+  }
+  .dict-entry .phon {
+    font-style: italic;
+  }
+  .dict-entry .pos {
+    font-style: italic;
+  }
+  .glossary-link {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    color: var(--fg);
+    border: 2px solid var(--line);
+    padding: 0.3rem 0.6rem;
+    white-space: nowrap;
+  }
+  .glossary-link:hover {
+    color: #fff;
     background: var(--accent);
+    border-color: var(--accent);
+  }
+  .glossary-link .mark {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+  }
+  .glossary-link:hover .mark {
+    background: #fff;
   }
 
   p.tagline {
@@ -181,6 +221,30 @@
   }
   .links .arrow { color: var(--accent); margin-right: 0.4rem; }
 
+  .glossary {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+  .glossary .term {
+    margin: 0;
+  }
+  .glossary .term strong {
+    text-transform: lowercase;
+  }
+  .glossary .phon,
+  .glossary .pos {
+    font-style: italic;
+    color: var(--fg-muted);
+    font-size: 0.9em;
+  }
+  .glossary .def {
+    margin: 0.15rem 0 0;
+    color: var(--fg-muted);
+  }
+
   code {
     background: #f1f0ec;
     padding: 0.1rem 0.35rem;
@@ -193,8 +257,11 @@
 <div class="wrap">
 
   <header>
-    <h1>Emergent</h1>
-    <div class="mark" aria-hidden="true"></div>
+    <div class="title-block">
+      <h1>Emergent</h1>
+      <p class="dict-entry"><span class="phon">/ɪˈmɜːdʒ(ə)nt/</span> — <span class="pos">adj.</span> arising from a system's interactions, not present in any of its parts alone</p>
+    </div>
+    <a class="glossary-link" href="#glossary"><span class="mark" aria-hidden="true"></span>Glossary</a>
   </header>
   <p class="tagline">A synthetic ethology platform for ESP32-class hardware.</p>
 
@@ -274,6 +341,44 @@
       <li>
         <a href="roadmap.md"><span class="arrow">→</span>Roadmap</a>
         <span class="desc">releases &amp; tasks</span>
+      </li>
+    </ul>
+  </section>
+
+  <section id="glossary">
+    <div class="section-label"><span class="num">04</span><h2>Glossary</h2></div>
+    <ul class="glossary">
+      <li>
+        <p class="term"><strong>emergent</strong> <span class="phon">/ɪˈmɜːdʒ(ə)nt/</span> <span class="pos">adj.</span></p>
+        <p class="def">arising from a system's interactions, not present in any of its parts alone.</p>
+      </li>
+      <li>
+        <p class="term"><strong>ethology</strong> <span class="phon">/ɪˈθɒlədʒi/</span> <span class="pos">n.</span></p>
+        <p class="def">the study of animal behavior under natural, or naturalistic, conditions.</p>
+      </li>
+      <li>
+        <p class="term"><strong>homeostasis</strong> <span class="phon">/ˌhəʊmɪəʊˈsteɪsɪs/</span> <span class="pos">n.</span></p>
+        <p class="def">the regulation of internal variables to keep them within a viable range.</p>
+      </li>
+      <li>
+        <p class="term"><strong>drive</strong> <span class="phon">/draɪv/</span> <span class="pos">n.</span></p>
+        <p class="def">a pressure toward action, produced by an internal variable deviating from its target.</p>
+      </li>
+      <li>
+        <p class="term"><strong>contingency</strong> <span class="phon">/kənˈtɪndʒənsi/</span> <span class="pos">n.</span></p>
+        <p class="def">a reliable relation between an action and what tends to follow it.</p>
+      </li>
+      <li>
+        <p class="term"><strong>stigmergy</strong> <span class="phon">/ˈstɪɡmɜːdʒi/</span> <span class="pos">n.</span></p>
+        <p class="def">coordination through traces left in a shared environment, rather than direct signaling.</p>
+      </li>
+      <li>
+        <p class="term"><strong>subsumption</strong> <span class="phon">/səbˈsʌmpʃ(ə)n/</span> <span class="pos">n.</span></p>
+        <p class="def">a control scheme in which layered behaviors can override one another with no central planner.</p>
+      </li>
+      <li>
+        <p class="term"><strong>synthetic psychology</strong> <span class="pos">n. phr.</span></p>
+        <p class="def">building simple mechanisms and observing which psychological terms people apply to them.</p>
       </li>
     </ul>
   </section>
