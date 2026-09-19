@@ -1,5 +1,8 @@
 # Emergent
 
+> **Disclaimer:** this project is built with the help of several different AI systems —
+> code, docs, and design included.
+
 A synthetic ethology platform for ESP32-class hardware: creature-like behavior from
 homeostatic drives, a decaying contingency memory, and a coarse spatial map — no cloud
 inference, no hand-authored behavior tree, no large neural network.

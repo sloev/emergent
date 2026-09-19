@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.1.0** (complete — next up: v0.2.0)
+**Current release: v0.2.0** (in progress)
 
 ---
 
@@ -24,13 +24,17 @@ current one is closed out, unless explicitly reprioritized.
 
 ## v0.2.0 — Body layer: sensors & actuators
 
-- [ ] Generic `Actuator` interface (range, rate limit, cost estimate, safety envelope)
-- [ ] Generic `Sensor` interface (normalized numeric channel, update rate)
-- [ ] IO profile format mapping named channels to physical pins/drivers
-- [ ] Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
+- [x] Generic `Actuator` interface (range, rate limit, cost estimate, safety envelope)
+- [x] Generic `Sensor` interface (normalized numeric channel, update rate)
+- [x] IO profile format mapping named channels to physical pins/drivers
+- [x] Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
       ADC-based sensors (battery voltage/current), digital touch/bump
-- [ ] Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)
-- [ ] Sensor/actuator self-test routine over serial
+- [x] Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)
+- [x] Sensor/actuator self-test routine over serial
+
+Verified: both board targets (`esp32dev`, `esp32-s3-devkitc-1`) build clean with
+PlatformIO. Not yet verified against real hardware — pin choices per board are a
+starting point, expect to override them per physical chassis.
 
 ## v0.3.0 — WiFi hotspot & dashboard
 

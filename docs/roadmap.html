@@ -216,7 +216,7 @@ code.hljs {
 .hljs-tag {
   /* purposely ignored */
   
-}/*# sourceURL=/home/runner/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+}/*# sourceURL=/home/nihil/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
 	<body class="">
 		<h1 id="roadmap">Roadmap</h1>
 <p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
@@ -224,7 +224,7 @@ code.hljs {
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.1.0</strong> (complete — next up: v0.2.0)</p>
+<p><strong>Current release: v0.2.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -238,14 +238,17 @@ current one is closed out, unless explicitly reprioritized.</p>
 </ul>
 <h2 id="v020--body-layer-sensors--actuators">v0.2.0 — Body layer: sensors &amp; actuators</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Generic <code>Actuator</code> interface (range, rate limit, cost estimate, safety envelope)</li>
-<li><input disabled="" type="checkbox"> Generic <code>Sensor</code> interface (normalized numeric channel, update rate)</li>
-<li><input disabled="" type="checkbox"> IO profile format mapping named channels to physical pins/drivers</li>
-<li><input disabled="" type="checkbox"> Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
+<li><input checked="" disabled="" type="checkbox"> Generic <code>Actuator</code> interface (range, rate limit, cost estimate, safety envelope)</li>
+<li><input checked="" disabled="" type="checkbox"> Generic <code>Sensor</code> interface (normalized numeric channel, update rate)</li>
+<li><input checked="" disabled="" type="checkbox"> IO profile format mapping named channels to physical pins/drivers</li>
+<li><input checked="" disabled="" type="checkbox"> Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
 ADC-based sensors (battery voltage/current), digital touch/bump</li>
-<li><input disabled="" type="checkbox"> Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)</li>
-<li><input disabled="" type="checkbox"> Sensor/actuator self-test routine over serial</li>
+<li><input checked="" disabled="" type="checkbox"> Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)</li>
+<li><input checked="" disabled="" type="checkbox"> Sensor/actuator self-test routine over serial</li>
 </ul>
+<p>Verified: both board targets (<code>esp32dev</code>, <code>esp32-s3-devkitc-1</code>) build clean with
+PlatformIO. Not yet verified against real hardware — pin choices per board are a
+starting point, expect to override them per physical chassis.</p>
 <h2 id="v030--wifi-hotspot--dashboard">v0.3.0 — WiFi hotspot &amp; dashboard</h2>
 <ul>
 <li><input disabled="" type="checkbox"> SoftAP mode, SSID/password configurable per board profile</li>
