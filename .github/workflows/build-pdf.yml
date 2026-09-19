@@ -23,7 +23,7 @@ jobs:
           node-version: "20"
 
       - name: Render PDF from markdown
-        run: npx --yes md-to-pdf docs/synth-behavior.md --dest-dir docs
+        run: npx --yes md-to-pdf docs/synth-behavior.md
 
       - name: Commit updated PDF
         run: |
