@@ -6,164 +6,291 @@
 <title>Emergent — Synthetic Ethology on ESP32</title>
 <style>
   :root {
-    --bg: #0b0d10;
-    --bg-panel: #14171c;
-    --fg: #e6e8eb;
-    --fg-muted: #9aa3ad;
-    --accent: #7ee787;
-    --accent-2: #58a6ff;
-    --border: #262b33;
+    --bg: #fafaf8;
+    --fg: #111111;
+    --fg-muted: #5a5a5a;
+    --line: #111111;
+    --accent: #c23a1f;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  html, body {
     background: var(--bg);
     color: var(--fg);
-    line-height: 1.6;
+  }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
   .wrap {
-    max-width: 820px;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 3rem 1.5rem 5rem;
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--line);
+    padding-bottom: 1.25rem;
   }
   header h1 {
-    font-size: 2.2rem;
-    margin-bottom: 0.25rem;
-  }
-  header p.tagline {
-    color: var(--fg-muted);
-    font-size: 1.1rem;
-    margin-top: 0;
-  }
-  .badges {
-    margin: 1rem 0 2rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  .badge {
-    display: inline-block;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    border: 1px solid var(--border);
-    color: var(--fg-muted);
-  }
-  section {
-    margin-top: 2.5rem;
-  }
-  h2 {
-    font-size: 1.3rem;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0.4rem;
-  }
-  .cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  @media (max-width: 600px) {
-    .cards { grid-template-columns: 1fr; }
-  }
-  .card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.1rem 1.2rem;
-    text-decoration: none;
-    color: var(--fg);
-    transition: border-color 0.15s ease;
-  }
-  .card:hover { border-color: var(--accent-2); }
-  .card h3 {
-    margin: 0 0 0.35rem;
-    font-size: 1.05rem;
-    color: var(--accent-2);
-  }
-  .card p {
+    font-size: 1.75rem;
+    letter-spacing: 0.02em;
     margin: 0;
-    color: var(--fg-muted);
-    font-size: 0.92rem;
+    text-transform: uppercase;
   }
-  .download {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding: 0.6rem 1rem;
+  header .mark {
+    width: 14px;
+    height: 14px;
     background: var(--accent);
-    color: #05230d;
-    font-weight: 600;
-    border-radius: 8px;
-    text-decoration: none;
   }
-  .download:hover { filter: brightness(1.08); }
+
+  p.tagline {
+    color: var(--fg-muted);
+    font-size: 1.05rem;
+    margin: 1.25rem 0 0;
+    max-width: 46ch;
+  }
+
+  section { margin-top: 3.5rem; }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .section-label .num {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+  .section-label h2 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+    font-weight: 700;
+  }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .intro p { margin: 0 0 1.1rem; }
+  .intro ul {
+    margin: 0 0 1.1rem;
+    padding-left: 1.2rem;
+  }
+  .intro li { margin: 0.2rem 0; }
+  blockquote {
+    margin: 1.5rem 0;
+    padding: 0.9rem 1.1rem;
+    border-left: 3px solid var(--accent);
+    background: #f1f0ec;
+    font-style: italic;
+  }
+  blockquote p { margin: 0; }
+
+  .constraints {
+    list-style: none;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .constraints li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+  .constraints li::before {
+    content: "—";
+    color: var(--accent);
+    font-weight: bold;
+  }
+
+  .goals {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .goals li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #ddd9d0;
+  }
+  .goals li:last-child { border-bottom: none; }
+  .box {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--line);
+    margin-top: 0.2rem;
+  }
+  .box.done {
+    background: var(--line);
+  }
+  .goals .ver {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    min-width: 3ch;
+  }
+  .goals .label { color: var(--fg); }
+  .goals li.done .label { color: var(--fg-muted); text-decoration: line-through; }
+
+  .goals-foot {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  .goals-foot a { color: var(--accent); }
+
+  .links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .links li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid #ddd9d0;
+    padding-bottom: 0.9rem;
+  }
+  .links a {
+    color: var(--fg);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .links a:hover { color: var(--accent); }
+  .links .desc {
+    color: var(--fg-muted);
+    font-size: 0.88rem;
+    text-align: right;
+  }
+  .links .arrow { color: var(--accent); margin-right: 0.4rem; }
+
   footer {
-    margin-top: 4rem;
+    margin-top: 4.5rem;
+    padding-top: 1.25rem;
+    border-top: 3px solid var(--line);
     color: var(--fg-muted);
     font-size: 0.85rem;
-    border-top: 1px solid var(--border);
-    padding-top: 1.5rem;
   }
+
   code {
-    background: var(--bg-panel);
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
+    background: #f1f0ec;
+    padding: 0.1rem 0.35rem;
     font-size: 0.9em;
   }
-  a { color: var(--accent-2); }
+  a { color: inherit; }
 </style>
 </head>
 <body>
 <div class="wrap">
+
   <header>
     <h1>Emergent</h1>
-    <p class="tagline">A synthetic ethology platform for ESP32-class hardware — behavior from homeostasis, memory, and embodiment, not scripts or big models.</p>
-    <div class="badges">
-      <span class="badge">no cloud inference</span>
-      <span class="badge">no behavior tree</span>
-      <span class="badge">runs on-device</span>
-    </div>
+    <div class="mark" aria-hidden="true"></div>
   </header>
+  <p class="tagline">A synthetic ethology platform for ESP32-class hardware.</p>
 
-  <section>
-    <p>
-      This project builds small, battery-powered machines whose behavior emerges from
-      a body model, drifting internal drives, a decaying contingency memory, and a coarse
-      spatial map — all running directly on an ESP32. The full design rationale, historical
-      background, and algorithms are written up in the synthetic behavior paper below.
-    </p>
-    <a class="download" href="synth-behavior.pdf" download>&#8681; Download the paper (PDF)</a>
+  <section class="intro">
+    <div class="section-label"><span class="num">01</span><h2>Introduction</h2></div>
+
+    <p>The problem is simple to state and hard to do well: make a small, cheap,
+    battery-powered machine look alive.</p>
+
+    <p>Not intelligent in the large-model sense, not conversational, and not
+    necessarily useful for a fixed task. Instead, we want a machine that appears
+    to have:</p>
+
+    <ul>
+      <li>internal variables that drift over time,</li>
+      <li>competing needs and priorities,</li>
+      <li>a body that constrains what it can do,</li>
+      <li>an environment that pushes back,</li>
+      <li>a history and imperfect memory,</li>
+      <li>consequences that follow from its actions,</li>
+      <li>changing preferences and habits,</li>
+      <li>periods of activity and rest,</li>
+      <li>enough stochasticity that its future is not trivially predictable.</li>
+    </ul>
+
+    <p>Humans are extremely sensitive to motion, timing, and contingency — a
+    few sensors, motors, delays, and feedback loops are enough for us to
+    describe behavior using words like <em>curious</em>, <em>cautious</em>,
+    <em>bored</em>, or <em>interested</em>. In this project, such words are
+    observer-level summaries of dynamics, not claims about subjective
+    experience. The concrete engineering goal is:</p>
+
+    <blockquote><p>Construct a machine whose behavior is best understood in
+    terms of internal regulation, learning, and interaction with its
+    environment, rather than in terms of fixed scripts.</p></blockquote>
+
+    <p>The central constraints are deliberate:</p>
+    <ul class="constraints">
+      <li>No large neural network.</li>
+      <li>No cloud inference.</li>
+      <li>No hand-authored behavior tree.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>Explore</h2>
-    <div class="cards">
-      <a class="card" href="synth-behavior.md">
-        <h3>Synthetic Behavior Paper</h3>
-        <p>Full write-up: architecture, physiology &amp; drives, contingency memory, spatial memory, charging station design.</p>
-      </a>
-      <a class="card" href="roadmap.md">
-        <h3>Roadmap</h3>
-        <p>Release plan and task tracking, one release worked at a time, rolling versioning.</p>
-      </a>
-      <a class="card" href="https://github.com/sloev/emergent/tree/main/src/esp32">
-        <h3>Source (ESP32 firmware)</h3>
-        <p>Configurable PlatformIO firmware under <code>src/esp32</code> — boards, IO profiles, WiFi dashboard.</p>
-      </a>
-      <a class="card" href="synth-behavior.pdf" download>
-        <h3>Download PDF</h3>
-        <p>Auto-generated on every update to the paper via GitHub Actions.</p>
-      </a>
-    </div>
+    <div class="section-label"><span class="num">02</span><h2>Goals</h2></div>
+    <ul class="goals">
+      <li class="done"><span class="box done"></span><span class="ver">0.1</span><span class="label">Project scaffolding &amp; CI</span></li>
+      <li><span class="box"></span><span class="ver">0.2</span><span class="label">Configurable body: sensors &amp; actuators</span></li>
+      <li><span class="box"></span><span class="ver">0.3</span><span class="label">WiFi hotspot &amp; live dashboard</span></li>
+      <li><span class="box"></span><span class="ver">0.4</span><span class="label">Homeostatic drives</span></li>
+      <li><span class="box"></span><span class="ver">0.5</span><span class="label">Contingency memory</span></li>
+      <li><span class="box"></span><span class="ver">0.6</span><span class="label">Spatial memory &amp; navigation</span></li>
+      <li><span class="box"></span><span class="ver">0.7</span><span class="label">Full core loop on hardware</span></li>
+      <li><span class="box"></span><span class="ver">0.8</span><span class="label">Life-state persistence</span></li>
+      <li><span class="box"></span><span class="ver">0.9</span><span class="label">Emergent charging station</span></li>
+      <li><span class="box"></span><span class="ver">1.0</span><span class="label">First stable release <em>(human-gated)</em></span></li>
+    </ul>
+    <p class="goals-foot"><a href="roadmap.md">→ full roadmap, with tasks per release</a></p>
+  </section>
+
+  <section>
+    <div class="section-label"><span class="num">03</span><h2>Links</h2></div>
+    <ul class="links">
+      <li>
+        <a href="https://github.com/sloev/emergent/tree/main/src/esp32"><span class="arrow">→</span>Firmware</a>
+        <span class="desc">ESP32 source, main branch</span>
+      </li>
+      <li>
+        <a href="synth-behavior.pdf" download><span class="arrow">→</span>Article — PDF</a>
+        <span class="desc">rebuilt on every change</span>
+      </li>
+      <li>
+        <a href="synth-behavior.md"><span class="arrow">→</span>Article — Markdown</a>
+        <span class="desc">source of record</span>
+      </li>
+      <li>
+        <a href="roadmap.md"><span class="arrow">→</span>Roadmap</a>
+        <span class="desc">releases &amp; tasks</span>
+      </li>
+    </ul>
   </section>
 
   <footer>
-    Generated docs live in <code>/docs</code>. The PDF is rebuilt automatically by CI whenever
-    <code>synth-behavior.md</code> changes — it always reflects the latest text.
+    docs/ is published via GitHub Pages. The PDF is rebuilt automatically by CI
+    whenever <code>synth-behavior.md</code> changes.
   </footer>
+
 </div>
 </body>
 </html>
