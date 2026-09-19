@@ -1,0 +1,1444 @@
+<!DOCTYPE html><html><head><title></title><meta charset="utf-8"><style>/* Shared stylesheet for rendered markdown pages (article, roadmap). */
+
+* { box-sizing: border-box; }
+html, body {
+  background: #fafaf8;
+  color: #111111;
+}
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap, body > * {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+body {
+  padding: 3rem 0 5rem;
+}
+
+a { color: #c23a1f; }
+a:hover { color: #8f2a15; }
+
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: 1.9rem;
+  text-transform: uppercase;
+  border-bottom: 3px solid #111111;
+  padding-bottom: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+h2 {
+  font-size: 1.25rem;
+  border-bottom: 1px solid #ddd9d0;
+  padding-bottom: 0.4rem;
+  margin-top: 2.5rem;
+}
+h3 {
+  font-size: 1.05rem;
+  margin-top: 2rem;
+}
+h4 {
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+}
+
+p, ul, ol { margin: 0 0 1.1rem; }
+li { margin: 0.2rem 0; }
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.9rem 1.1rem;
+  border-left: 3px solid #c23a1f;
+  background: #f1f0ec;
+  font-style: italic;
+}
+blockquote p { margin: 0; }
+
+code {
+  background: #f1f0ec;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.9em;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+}
+pre {
+  background: #f1f0ec;
+  padding: 1rem;
+  overflow-x: auto;
+}
+pre code {
+  background: none;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 1.5rem;
+  font-size: 0.92rem;
+}
+th, td {
+  border: 1px solid #ddd9d0;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: #f1f0ec;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ddd9d0;
+  margin: 2.5rem 0;
+}
+
+img { max-width: 100%; }
+/*# sourceURL=docs/assets/article.css*/</style><style>pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em
+}
+code.hljs {
+  padding: 3px 5px
+}
+/*!
+  Theme: GitHub
+  Description: Light theme as seen on github.com
+  Author: github.com
+  Maintainer: @Hirse
+  Updated: 2021-05-15
+
+  Outdated base version: https://github.com/primer/github-syntax-light
+  Current colors taken from GitHub's CSS
+*/
+.hljs {
+  color: #24292e;
+  background: #ffffff
+}
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  /* prettylights-syntax-keyword */
+  color: #d73a49
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  /* prettylights-syntax-entity */
+  color: #6f42c1
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  /* prettylights-syntax-constant */
+  color: #005cc5
+}
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  /* prettylights-syntax-string */
+  color: #032f62
+}
+.hljs-built_in,
+.hljs-symbol {
+  /* prettylights-syntax-variable */
+  color: #e36209
+}
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  /* prettylights-syntax-comment */
+  color: #6a737d
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  /* prettylights-syntax-entity-tag */
+  color: #22863a
+}
+.hljs-subst {
+  /* prettylights-syntax-storage-modifier-import */
+  color: #24292e
+}
+.hljs-section {
+  /* prettylights-syntax-markup-heading */
+  color: #005cc5;
+  font-weight: bold
+}
+.hljs-bullet {
+  /* prettylights-syntax-markup-list */
+  color: #735c0f
+}
+.hljs-emphasis {
+  /* prettylights-syntax-markup-italic */
+  color: #24292e;
+  font-style: italic
+}
+.hljs-strong {
+  /* prettylights-syntax-markup-bold */
+  color: #24292e;
+  font-weight: bold
+}
+.hljs-addition {
+  /* prettylights-syntax-markup-inserted */
+  color: #22863a;
+  background-color: #f0fff4
+}
+.hljs-deletion {
+  /* prettylights-syntax-markup-deleted */
+  color: #b31d28;
+  background-color: #ffeef0
+}
+.hljs-char.escape_,
+.hljs-link,
+.hljs-params,
+.hljs-property,
+.hljs-punctuation,
+.hljs-tag {
+  /* purposely ignored */
+  
+}/*# sourceURL=/home/nihil/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+	<body class="">
+		<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-introduction">Introduction</a>  </li>
+<li><a href="#2-historical-and-conceptual-background">Historical and Conceptual Background</a>  <ol>
+<li><a href="#21-cybernetics-and-regulation">Cybernetics and Regulation</a>  </li>
+<li><a href="#22-grey-walters-tortoises">Grey Walter’s Tortoises</a>  </li>
+<li><a href="#23-braitenberg-vehicles-and-synthetic-psychology">Braitenberg Vehicles and Synthetic Psychology</a>  </li>
+<li><a href="#24-behavior-based-robotics-and-subsumption">Behavior-Based Robotics and Subsumption</a>  </li>
+<li><a href="#25-intrinsic-motivation-and-homeostatic-reinforcement-learning">Intrinsic Motivation and Homeostatic Reinforcement Learning</a>  </li>
+<li><a href="#26-embodied-cognition-ethology-and-stigmergy">Embodied Cognition, Ethology, and Stigmergy</a>  </li>
+<li><a href="#27-game-theory-economics-and-foraging">Game Theory, Economics, and Foraging</a>  </li>
+<li><a href="#28-emergent-behavior-in-animal-inspired-robotics">Emergent Behavior in Animal-Inspired Robotics</a></li>
+</ol>
+</li>
+<li><a href="#3-project-overview-and-design-goals">Project Overview and Design Goals</a>  </li>
+<li><a href="#4-system-architecture">System Architecture</a>  <ol>
+<li><a href="#41-system-overview-diagram">System Overview Diagram</a>  </li>
+<li><a href="#42-layers-and-responsibilities">Layers and Responsibilities</a></li>
+</ol>
+</li>
+<li><a href="#5-the-body-sensors-and-actuators">The Body: Sensors and Actuators</a>  <ol>
+<li><a href="#51-actuators">Actuators</a>  </li>
+<li><a href="#52-sensors">Sensors</a>  </li>
+<li><a href="#53-body-schema-as-an-emergent-construct">Body Schema as an Emergent Construct</a></li>
+</ol>
+</li>
+<li><a href="#6-internal-physiology-and-drives">Internal Physiology and Drives</a>  <ol>
+<li><a href="#61-variables-and-dynamics">Variables and Dynamics</a>  </li>
+<li><a href="#62-drive-modulation-algorithm">Drive Modulation Algorithm</a></li>
+</ol>
+</li>
+<li><a href="#7-contingency-memory">Contingency Memory</a>  <ol>
+<li><a href="#71-data-structure">Data Structure</a>  </li>
+<li><a href="#72-update-algorithm">Update Algorithm</a>  </li>
+<li><a href="#73-no-privileged-semantics">No Privileged Semantics</a></li>
+</ol>
+</li>
+<li><a href="#8-spatial-memory-and-navigation">Spatial Memory and Navigation</a>  <ol>
+<li><a href="#81-spatial-representation">Spatial Representation</a>  </li>
+<li><a href="#82-action-biasing-from-space">Action Biasing from Space</a></li>
+</ol>
+</li>
+<li><a href="#9-core-loop">Core Loop</a>  <ol>
+<li><a href="#91-behavior-flow-diagram">Behavior Flow Diagram</a>  </li>
+<li><a href="#92-core-loop-pseudocode">Core Loop Pseudocode</a></li>
+</ol>
+</li>
+<li><a href="#10-inputoutput-modalities-and-emergent-uses">Input/Output Modalities and Emergent Uses</a>  <ol>
+<li><a href="#101-light-and-phototaxis-like-behavior">Light and Phototaxis-Like Behavior</a>  </li>
+<li><a href="#102-rf-fields-as-digital-gradients">RF Fields as Digital Gradients</a>  </li>
+<li><a href="#103-chemosensation-and-scent-trails">Chemosensation and Scent Trails</a>  </li>
+<li><a href="#104-touch-and-collision">Touch and Collision</a>  </li>
+<li><a href="#105-acoustic-and-vibrational-coupling">Acoustic and Vibrational Coupling</a>  </li>
+<li><a href="#106-battery-as-just-another-input-coupled-to-energy">Battery as “Just Another Input”, Coupled to Energy</a></li>
+</ol>
+</li>
+<li><a href="#11-charging-station-as-an-emergent-attractor">Charging Station as an Emergent Attractor</a>  </li>
+<li><a href="#12-emergent-phenomena-and-cross-disciplinary-links">Emergent Phenomena and Cross-Disciplinary Links</a>  <ol>
+<li><a href="#121-mechanical-voice-and-prosody">Mechanical Voice and Prosody</a>  </li>
+<li><a href="#122-individual-differences-and-personality">Individual Differences and “Personality”</a>  </li>
+<li><a href="#123-social-and-crowd-level-effects">Social and Crowd-Level Effects</a>  </li>
+<li><a href="#124-game-design-art-and-education">Game Design, Art, and Education</a></li>
+</ol>
+</li>
+<li><a href="#13-life-state-persistence-and-body-transfer">Life-State Persistence and Body Transfer</a>  </li>
+<li><a href="#14-implementation-on-esp32-class-hardware">Implementation on ESP32-Class Hardware</a>  <ol>
+<li><a href="#141-software-structure">Software Structure</a>  </li>
+<li><a href="#142-memory-and-timing-constraints">Memory and Timing Constraints</a></li>
+</ol>
+</li>
+<li><a href="#15-experimental-program-and-ablations">Experimental Program and Ablations</a>  </li>
+<li><a href="#16-what-this-project-illustrates-and-future-directions">What This Project Illustrates and Future Directions</a>  </li>
+<li><a href="#17-related-projects-and-prior-art-in-practice">Related Projects and Prior Art in Practice</a>  </li>
+<li><a href="#18-philosophical-boundaries">Philosophical Boundaries</a>  </li>
+<li><a href="#19-references">References</a></li>
+</ol>
+<hr>
+<h2 id="1-introduction">1. Introduction</h2>
+<p>The problem is simple to state and hard to do well: <strong>make a small, cheap, battery-powered machine look alive</strong>.</p>
+<p>Not intelligent in the large-model sense, not conversational, and not necessarily useful for a fixed task. Instead, we want a machine that appears to have:</p>
+<ul>
+<li>internal variables that drift over time,  </li>
+<li>competing needs and priorities,  </li>
+<li>a body that constrains what it can do,  </li>
+<li>an environment that pushes back,  </li>
+<li>a history and imperfect memory,  </li>
+<li>consequences that follow from its actions,  </li>
+<li>changing preferences and habits,  </li>
+<li>periods of activity and rest,  </li>
+<li>enough stochasticity that its future is not trivially predictable.</li>
+</ul>
+<p>Humans are extremely sensitive to motion, timing, and contingency. A few sensors, motors, delays, and feedback loops are enough for us to describe behavior using words like <em>curious</em>, <em>cautious</em>, <em>bored</em>, or <em>interested</em>. Heider and Simmel’s classic experiment showed that people attribute agency and intent even to moving geometric shapes.</p>
+<p>In this project, such words are <strong>observer-level summaries</strong> of dynamics, not claims about subjective experience. The concrete engineering goal is:</p>
+<blockquote>
+<p>Construct a machine whose behavior is best understood in terms of internal regulation, learning, and interaction with its environment, rather than in terms of fixed scripts.</p>
+</blockquote>
+<p>The central constraints are deliberate:</p>
+<ul>
+<li><strong>No large neural network.</strong>  </li>
+<li><strong>No cloud inference.</strong>  </li>
+<li><strong>No hand-authored behavior tree.</strong></li>
+</ul>
+<p>Instead, we rely on:</p>
+<ul>
+<li>a structured description of the <strong>body</strong> (sensors and actuators),  </li>
+<li>a small vector of <strong>physiological variables and drives</strong>,  </li>
+<li>a compact, decaying <strong>contingency memory</strong> of action→sensation relationships,  </li>
+<li>a stochastic <strong>action generator</strong> modulated by drives and history,  </li>
+<li>a coarse <strong>spatial memory</strong>,  </li>
+<li>an optional <strong>metabolic subsystem</strong> that ties behavior to energy.</li>
+</ul>
+<p>The remainder of the article presents the historical background, theoretical framework, system architecture, algorithms, similarities to existing work, and experimental considerations for this synthetic ethology platform.</p>
+<hr>
+<h2 id="2-historical-and-conceptual-background">2. Historical and Conceptual Background</h2>
+<h3 id="21-cybernetics-and-regulation">2.1 Cybernetics and Regulation</h3>
+<p>Norbert Wiener’s <em><a href="https://en.wikipedia.org/wiki/Cybernetics">Cybernetics: Or Control and Communication in the Animal and the Machine</a></em> framed intelligent behavior as <strong>regulation through feedback</strong> rather than symbolic inference. A thermostat does not “understand” weather; it maintains temperature by sensing deviations and acting to reduce them.</p>
+<p>Key ideas we adopt:</p>
+<ul>
+<li><strong>Homeostasis.</strong> Maintain internal variables within viable bands.  </li>
+<li><strong>Allostasis.</strong> Change parameters in anticipation of future demands, not just reactions to deviations.</li>
+</ul>
+<p>Biology offers countless examples: temperature regulation, blood glucose control, osmotic balance. Homeostatic variables drift; organisms act to restore them. Here, drives emerge from <strong>deviations</strong> of internal variables from preferred ranges and bias actions that historically reduce those deviations.</p>
+<h3 id="22-grey-walters-tortoises">2.2 Grey Walter’s Tortoises</h3>
+<p>In the late 1940s, W. Grey Walter built electro-mechanical “tortoises” (Elmer and Elsie) coupling photocells and touch sensors directly to motors. Without digital computation, they appeared to explore, avoid obstacles, and return to a hutch to “feed” on light and recharge. These robots remain canonical examples that simple analog control loops can yield rich behavior.</p>
+<p>Our architecture inherits Walter’s emphasis on <strong>tight sensorimotor coupling</strong> but extends it with explicit internal physiology, memory, and a programmable microcontroller substrate.</p>
+<h3 id="23-braitenberg-vehicles-and-synthetic-psychology">2.3 Braitenberg Vehicles and Synthetic Psychology</h3>
+<p>Valentino Braitenberg’s <em><a href="https://mitpress.mit.edu/9780262521123/vehicles/">Vehicles: Experiments in Synthetic Psychology</a></em> showed how minimal wiring patterns from sensors to motors produce strikingly interpretable behaviors: approach, avoidance, “aggression”, “fear”, “curiosity”.</p>
+<p>The key methodological lesson is <strong>synthetic psychology</strong>:<br>build simple systems bottom-up and ask which psychological descriptions humans spontaneously apply. Our code never uses notions like “goal” or “emotion”; those remain observer vocabulary.</p>
+<h3 id="24-behavior-based-robotics-and-subsumption">2.4 Behavior-Based Robotics and Subsumption</h3>
+<p>Rodney Brooks’ <a href="https://people.csail.mit.edu/brooks/papers/robust-layers.pdf">subsumption architecture</a> used layers of simple behaviors, where higher layers suppressed lower-level outputs. There was no central world model; behavior emerged from layer interactions and the environment.</p>
+<p>We retain:</p>
+<ul>
+<li>locality and concurrency,  </li>
+<li>incremental layering on real hardware,</li>
+</ul>
+<p>but avoid explicit “behavior modules” (<em>wander</em>, <em>avoid</em>, <em>dock</em>). Instead we keep:</p>
+<ul>
+<li>sensor streams,  </li>
+<li>actuator channels,  </li>
+<li>statistics of their correlations, in context.</li>
+</ul>
+<h3 id="25-intrinsic-motivation-and-homeostatic-reinforcement-learning">2.5 Intrinsic Motivation and Homeostatic Reinforcement Learning</h3>
+<p>In computational neuroscience and RL, <strong>homeostatic reinforcement learning</strong> (HRL) treats the maintenance of internal variables as the underlying objective of behavior. Keramati and Gutkin’s work formalizes how classical RL can be grounded in physiological drives, explaining risk aversion, satiation, and other behavioral regularities.(Keramati &amp; Gutkin, 2014)</p>
+<p>Recent work such as Yoshida &amp; Kuniyoshi’s “Embodied Neural Homeostat” demonstrates that homeostasis-driven RL can yield <strong>integrated behaviors</strong> like walking, foraging, and temperature control in real robots, using internal energy and temperature dynamics as primary signals.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024) </p>
+<p>Our platform is intentionally lighter: we do not run a full value-function-based HRL pipeline. Instead, we:</p>
+<ul>
+<li>maintain a small set of <strong>drives</strong> over internal variables,  </li>
+<li>use <strong>contingency memory</strong> to bias action sampling based on past outcomes,  </li>
+<li>rely on stochastic policy sampling rather than gradient-based RL.</li>
+</ul>
+<p>Conceptually, we sit between hand-crafted behavior trees and fully learned policies.</p>
+<h3 id="26-embodied-cognition-ethology-and-stigmergy">2.6 Embodied Cognition, Ethology, and Stigmergy</h3>
+<p>Embodied cognition argues that cognition is not only “in the brain” but distributed across <strong>body and environment</strong>. Ethology emphasizes that behavior must be understood in the ecological niche. Concepts like <strong>stigmergy</strong> show how indirect traces (pheromone trails, footprints) mediate social coordination.</p>
+<p>Our robots:</p>
+<ul>
+<li>live in physical rooms with light, RF fields, obstacles, and humans,  </li>
+<li>may emit chemical, acoustic, and visual traces,  </li>
+<li>respond to these traces later as if they “meant” something.</li>
+</ul>
+<p>All semantics are imposed post-hoc by observers; the firmware only ever sees correlations and contingencies.</p>
+<h3 id="27-game-theory-economics-and-foraging">2.7 Game Theory, Economics, and Foraging</h3>
+<p>Several concepts from economics and game theory parallel this design:</p>
+<ul>
+<li><strong>Optimal foraging theory</strong> treats animal foraging as a utility-maximization problem under uncertainty and depletion; modern RL work reproduces patch-selection behavior with deep agents in continuous environments.(Yoshida et al., 2024)  </li>
+<li><strong>Utility concavity</strong> and <strong>risk aversion</strong> in economic theory mirror homeostatic drive concavity: as an internal variable approaches its comfortable range, the marginal value of further gains diminishes, encouraging risk-averse choices.(Keramati &amp; Gutkin, 2014)  </li>
+<li><strong>Mixed strategies</strong> in evolutionary game theory correspond to <strong>stochastic policies</strong> in RL and to our use of controlled randomness: never fully deterministic, always exploring.</li>
+</ul>
+<p>Our architecture adopts these indirectly:</p>
+<ul>
+<li>drives are concave around target ranges,  </li>
+<li>stochastic action generation acts like a mixed strategy over embodied moves,  </li>
+<li>spatial and contingency memories coarsely approximate value estimates without ever computing them as such.</li>
+</ul>
+<h3 id="28-emergent-behavior-in-animal-inspired-robotics">2.8 Emergent Behavior in Animal-Inspired Robotics</h3>
+<p>A growing literature puts animal-inspired robots into real environments, using them as <strong>physical models</strong> of behavior. An overview by Gómez-Marín and colleagues summarizes work on social interaction, vocal production, and goal-directed reaching in neurorobotics, arguing that robots and animals share “skin in the game”: friction, noise, wear, and embodiment.(Gomez-Marin &amp; Zhang, 2022)</p>
+<p>Closer to this project, recent systems like the Embodied Neural Homeostat (ENH) show emergence of integrated behavior (locomotion, foraging, thermal regulation) from homeostatic drives in physical robots.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </p>
+<p>Swarm-level studies use evolutionary algorithms (e.g., NEAT) to evolve local controllers in simulation that yield group patterns such as flocking, collective transport, or coordinated patrolling.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  </p>
+<p>Compared with these, the present project:</p>
+<ul>
+<li>emphasizes <strong>resource-constrained microcontrollers</strong>,  </li>
+<li>avoids large neural networks and external training,  </li>
+<li>treats <strong>every signal, including battery</strong>, as uninterpreted at the sensor level,  </li>
+<li>focuses on <strong>single-agent but socially and ecologically situated</strong> behavior, with optional extensions to groups.</li>
+</ul>
+<hr>
+<h2 id="3-project-overview-and-design-goals">3. Project Overview and Design Goals</h2>
+<p>We aim for an architecture that:</p>
+<ol>
+<li><p><strong>Runs on an ESP32-class microcontroller.</strong>  </p>
+<ul>
+<li>No external GPU or host PC.  </li>
+<li>All learning and control are on-device.</li>
+</ul>
+</li>
+<li><p><strong>Treats signals symmetrically.</strong>  </p>
+<ul>
+<li>No hard-coded semantics for collision, battery, light, sound, RF, etc.  </li>
+<li>Raw sensor channels are numbers; meaning is emergent.</li>
+</ul>
+</li>
+<li><p><strong>Implements a minimal “organism” architecture.</strong>  </p>
+<ul>
+<li>A small set of internal variables (“physiology”).  </li>
+<li>Drives derived from deviations from target bands.  </li>
+<li>A lossy, decaying contingency memory relating recent actions to subsequent sensory changes.  </li>
+<li>A coarse spatial memory.  </li>
+<li>A stochastic action generator modulated by drives and memories.</li>
+</ul>
+</li>
+<li><p><strong>Connects behavior to energy without scripting it.</strong>  </p>
+<ul>
+<li>Battery is just another input, albeit coupled numerically into <code>h_energy</code>.  </li>
+<li>A charging station is a physical object with particular sensory profiles and power dynamics, not a symbolic goal.</li>
+</ul>
+</li>
+<li><p><strong>Supports serializable “life states”.</strong>  </p>
+<ul>
+<li>The organism can be paused, serialized, and restored into a different body.</li>
+</ul>
+</li>
+<li><p><strong>Is suitable as a research/education platform.</strong>  </p>
+<ul>
+<li>Easy to instrument and log.  </li>
+<li>Easy to ablate components for experiments.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="4-system-architecture">4. System Architecture</h2>
+<h3 id="41-system-overview-diagram">4.1 System Overview Diagram</h3>
+<pre><code class="hljs mermaid">graph TD
+    env_world["Environment&lt;br/&gt;(physical &amp; social)"]
+
+    body_sensors["Sensors"]
+    body_smux["Sensor Mux&lt;br/&gt;&amp; Normalization"]
+    body_actgate["Actuator&lt;br/&gt;Gateway"]
+
+    core_phys["Physiology&lt;br/&gt;(internal vars)"]
+    core_drives["Drives"]
+    core_cont["Contingency&lt;br/&gt;Memory"]
+    core_space["Spatial&lt;br/&gt;Memory"]
+    core_gen["Action&lt;br/&gt;Generator"]
+
+    obs_ui["Telemetry /&lt;br/&gt;Web UI"]
+
+    env_world --&gt; body_sensors
+    body_sensors --&gt; body_smux
+
+    body_actgate --&gt; env_world
+
+    body_smux --&gt; core_phys
+    body_smux --&gt; core_cont
+    body_smux --&gt; core_space
+
+    core_phys --&gt; core_drives
+
+    core_drives --&gt; core_gen
+    core_cont  --&gt; core_gen
+    core_space --&gt; core_gen
+
+    core_gen --&gt; body_actgate
+    core_gen --&gt; core_cont
+    core_gen --&gt; core_space
+
+    core_phys -.-&gt; obs_ui
+    core_cont -.-&gt; obs_ui
+    core_space -.-&gt; obs_ui
+</code></pre>
+<p>This diagram uses simple node IDs, HTML <code>&lt;br/&gt;</code> for multi-line labels, and only ASCII characters to avoid Mermaid parsing issues.</p>
+<h3 id="42-layers-and-responsibilities">4.2 Layers and Responsibilities</h3>
+<ul>
+<li><p><strong>Body layer</strong>  </p>
+<ul>
+<li>Abstracts hardware into typed input/output channels.  </li>
+<li>Encodes only physical constraints: ranges, update rates, safety limits.</li>
+</ul>
+</li>
+<li><p><strong>Core loop</strong>  </p>
+<ul>
+<li>Maintains physiology and drives.  </li>
+<li>Tracks contingencies between action deltas and sensor deltas.  </li>
+<li>Maintains a coarse spatial map.  </li>
+<li>Generates new actions from baseline + noise + memory-derived bias.</li>
+</ul>
+</li>
+<li><p><strong>Observation layer</strong>  </p>
+<ul>
+<li>Streams internals for analysis and visualization.  </li>
+<li>Allows downloading/restoring organism state.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="5-the-body-sensors-and-actuators">5. The Body: Sensors and Actuators</h2>
+<h3 id="51-actuators">5.1 Actuators</h3>
+<p>Actuators are generic effectors. The system does not know what they “mean”.</p>
+<p>Example actuator set:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Range</th>
+<th>Physical Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>motor_left/right</code></td>
+<td>continuous</td>
+<td>-1 … +1</td>
+<td>Differential drive motors</td>
+</tr>
+<tr>
+<td><code>servo_pan/tilt</code></td>
+<td>continuous</td>
+<td>-1 … +1</td>
+<td>Head or sensor orientation</td>
+</tr>
+<tr>
+<td><code>vibe_motor</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Vibration motor</td>
+</tr>
+<tr>
+<td><code>grind_motor</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Noisy mechanical actuator (“voice”)</td>
+</tr>
+<tr>
+<td><code>led_r/g/b</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>RGB lighting / signaling</td>
+</tr>
+<tr>
+<td><code>fan</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Airflow actuator</td>
+</tr>
+<tr>
+<td><code>pump/atomizer</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Fluid or scent emission</td>
+</tr>
+<tr>
+<td><code>heater</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Local thermal field</td>
+</tr>
+<tr>
+<td><code>electromagnet</code></td>
+<td>continuous</td>
+<td>0 … 1</td>
+<td>Gripping, field perturbation</td>
+</tr>
+</tbody></table>
+<p>Each actuator has:</p>
+<ul>
+<li>range and rate limits,  </li>
+<li>a cost estimate (used in physiology updates),  </li>
+<li>safety envelopes (e.g., thermal limits).</li>
+</ul>
+<h3 id="52-sensors">5.2 Sensors</h3>
+<p>Sensors provide normalized numeric streams. No label is privileged.</p>
+<p>Example sensors:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Example Hardware</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mic_energy</code>, bands, peaks</td>
+<td>continuous</td>
+<td>MEMS microphone</td>
+</tr>
+<tr>
+<td><code>distance_*</code></td>
+<td>continuous</td>
+<td>ToF, ultrasonic, IR</td>
+</tr>
+<tr>
+<td><code>touch_*</code></td>
+<td>cont/binary</td>
+<td>Bump switches, capacitive strips</td>
+</tr>
+<tr>
+<td><code>light_*</code>, <code>uv</code></td>
+<td>continuous</td>
+<td>Photodiodes, light sensors</td>
+</tr>
+<tr>
+<td><code>imu_accel/gyro/mag</code></td>
+<td>continuous</td>
+<td>6-axis or 9-axis IMU</td>
+</tr>
+<tr>
+<td><code>temperature</code>, <code>humidity</code></td>
+<td>continuous</td>
+<td>Environmental sensors</td>
+</tr>
+<tr>
+<td><code>gas</code>, <code>air_quality</code></td>
+<td>continuous</td>
+<td>Metal-oxide gas sensor</td>
+</tr>
+<tr>
+<td><code>rf_rssi_*</code></td>
+<td>continuous</td>
+<td>Wi-Fi/BLE RSSI or beacons</td>
+</tr>
+<tr>
+<td><code>battery_voltage</code>, <code>current</code></td>
+<td>continuous</td>
+<td>ADC monitoring of power rails</td>
+</tr>
+<tr>
+<td><code>internal_temp</code></td>
+<td>continuous</td>
+<td>MCU or board temperature</td>
+</tr>
+</tbody></table>
+<p>Battery signals enter at this layer as raw numbers, like any other sensor.</p>
+<h3 id="53-body-schema-as-an-emergent-construct">5.3 Body Schema as an Emergent Construct</h3>
+<p>We do <strong>not</strong> predefine kinematics or a body model. Instead, the system gradually learns regularities such as:</p>
+<ul>
+<li>“When <code>motor_left</code> and <code>motor_right</code> change like this, IMU and <code>distance_front</code> change like that.”  </li>
+<li>“When <code>servo_pan</code> increases, a particular light sensor often saturates.”</li>
+</ul>
+<p>This echoes how infants learn their own bodies through co-occurrence of actuation, proprioception, and exteroception.</p>
+<hr>
+<h2 id="6-internal-physiology-and-drives">6. Internal Physiology and Drives</h2>
+<h3 id="61-variables-and-dynamics">6.1 Variables and Dynamics</h3>
+<p>The internal state contains a small vector of slow variables, for example:</p>
+<ul>
+<li><code>h_energy</code> — abstract “resource” level. It is <strong>numerically coupled</strong> to battery readings and actuator costs, but never treated as “battery percentage” symbolically.  </li>
+<li><code>h_fatigue</code> — accumulated exertion.  </li>
+<li><code>h_safety</code> — recent history of collisions, extreme temperatures, etc.  </li>
+<li><code>h_arousal</code> — global activity or responsiveness.  </li>
+<li><code>h_curiosity</code> — based on novelty or prediction error.  </li>
+<li><code>h_boredom</code> — time spent in low-change regimes.  </li>
+<li><code>h_social</code> — history of correlated signals from other robots / humans.</li>
+</ul>
+<p>Each variable:</p>
+<ul>
+<li>integrates selected sensor channels,  </li>
+<li>decays or recovers over time,  </li>
+<li>may be coupled (e.g., high exertion drains <code>h_energy</code> and raises <code>h_fatigue</code>).</li>
+</ul>
+<p>Drives are scalar pressures derived from deviations from preferred bands:</p>
+<pre><code class="hljs text">drive[name] = deviation(h_name, target_range[name])
+</code></pre>
+<h3 id="62-drive-modulation-algorithm">6.2 Drive Modulation Algorithm</h3>
+<p>Drives shape the scale and direction of stochastic exploration.</p>
+<pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">compute_drives</span>(<span class="hljs-params">phys, targets</span>):
+    drives = {}
+    <span class="hljs-keyword">for</span> name, value <span class="hljs-keyword">in</span> phys.items():
+        lo, hi = targets[name]
+        <span class="hljs-keyword">if</span> value &lt; lo:
+            drives[name] = (lo - value) / (hi - lo + <span class="hljs-number">1e-6</span>)
+        <span class="hljs-keyword">elif</span> value &gt; hi:
+            drives[name] = (value - hi) / (hi - lo + <span class="hljs-number">1e-6</span>)
+        <span class="hljs-keyword">else</span>:
+            drives[name] = <span class="hljs-number">0.0</span>
+    <span class="hljs-keyword">return</span> drives
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_fuzz_scale</span>(<span class="hljs-params">drives</span>):
+    curiosity = drives.get(<span class="hljs-string">"h_curiosity"</span>, <span class="hljs-number">0.0</span>)
+    boredom   = drives.get(<span class="hljs-string">"h_boredom"</span>, <span class="hljs-number">0.0</span>)
+    energy    = drives.get(<span class="hljs-string">"h_energy"</span>, <span class="hljs-number">0.0</span>)   <span class="hljs-comment"># high = low resource</span>
+    safety    = drives.get(<span class="hljs-string">"h_safety"</span>, <span class="hljs-number">0.0</span>)   <span class="hljs-comment"># high = unsafe</span>
+
+    fuzz = (
+        <span class="hljs-number">0.6</span> * curiosity +
+        <span class="hljs-number">0.4</span> * boredom   -
+        <span class="hljs-number">0.4</span> * energy    -
+        <span class="hljs-number">0.3</span> * safety
+    )
+    <span class="hljs-keyword">return</span> clamp(fuzz, <span class="hljs-number">0.03</span>, <span class="hljs-number">0.8</span>)
+</code></pre>
+<p>Intuitively:</p>
+<ul>
+<li>high curiosity and boredom → more exploration;  </li>
+<li>high energy and safety pressures → less exploration, more exploitation.</li>
+</ul>
+<hr>
+<h2 id="7-contingency-memory">7. Contingency Memory</h2>
+<h3 id="71-data-structure">7.1 Data Structure</h3>
+<p>Contingency memory holds many small records of “when I did X, Y tended to follow”:</p>
+<pre><code class="hljs text">Entry:
+    action_delta_code    # compressed Δaction at t-1
+    sensor_delta_code    # compressed Δsensor at t
+    strength             # reliability / confidence
+    age                  # ticks since last reinforcement
+    ctx_hash (optional)  # coarse context (space, physiology bins)
+</code></pre>
+<p>Quantization and hashing compress high-dimensional deltas into small codes so memory remains bounded.</p>
+<h3 id="72-update-algorithm">7.2 Update Algorithm</h3>
+<pre><code class="hljs python">LEARN = <span class="hljs-number">0.1</span>
+DECAY = <span class="hljs-number">0.005</span>
+MAX_ENTRIES = <span class="hljs-number">1024</span>
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">update_contingency</span>(<span class="hljs-params">mem, d_action, d_sensor, ctx_hash=<span class="hljs-literal">None</span></span>):
+    <span class="hljs-comment"># decay existing entries</span>
+    <span class="hljs-keyword">for</span> e <span class="hljs-keyword">in</span> mem.values():
+        e.strength *= (<span class="hljs-number">1.0</span> - DECAY)
+        e.age += <span class="hljs-number">1</span>
+
+    key = hash_quantized(d_action, d_sensor, ctx_hash)
+
+    <span class="hljs-keyword">if</span> key <span class="hljs-keyword">in</span> mem:
+        e = mem[key]
+        e.strength += LEARN * (<span class="hljs-number">1.0</span> - e.strength)
+        e.age = <span class="hljs-number">0</span>
+    <span class="hljs-keyword">else</span>:
+        mem[key] = Entry(
+            action_delta_code = compress(d_action),
+            sensor_delta_code = compress(d_sensor),
+            strength          = LEARN,
+            age               = <span class="hljs-number">0</span>,
+            ctx_hash          = ctx_hash,
+        )
+
+    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(mem) &gt; MAX_ENTRIES:
+        prune(mem)  <span class="hljs-comment"># drop weakest / oldest</span>
+</code></pre>
+<p>When generating new actions, the system can query for entries whose <code>sensor_delta_code</code> historically led to improvements in drives and bias toward their <code>action_delta_code</code>.</p>
+<h3 id="73-no-privileged-semantics">7.3 No Privileged Semantics</h3>
+<p>The firmware never encodes:</p>
+<ul>
+<li>“sensor X corresponds to collision”,  </li>
+<li>“sensor Y corresponds to low battery”,  </li>
+<li>“action Z is ‘move forward’.”</li>
+</ul>
+<p>Those are interpretations we may assign later. For the agent, there are only:</p>
+<ul>
+<li>evolving statistics over deltas,  </li>
+<li>and reuse of patterns that historically improved internal variables.</li>
+</ul>
+<hr>
+<h2 id="8-spatial-memory-and-navigation">8. Spatial Memory and Navigation</h2>
+<h3 id="81-spatial-representation">8.1 Spatial Representation</h3>
+<p>We use a light-weight spatial representation, for example a coarse 2-D grid or a set of “place cells”.</p>
+<p>Each cell stores:</p>
+<ul>
+<li>visitation count and recency,  </li>
+<li>average changes in key drives when entering, staying, or leaving,  </li>
+<li>simple summaries of observed contingencies there.</li>
+</ul>
+<pre><code class="hljs mermaid">graph LR
+    cell["Spatial Cell"]
+    vstat["Visit Stats"]
+    dprof["Drive Profiles"]
+    csum["Local Contingency&lt;br/&gt;Summaries"]
+
+    cell --&gt; vstat
+    cell --&gt; dprof
+    cell --&gt; csum
+</code></pre>
+<h3 id="82-action-biasing-from-space">8.2 Action Biasing from Space</h3>
+<p>When drives are high, spatial memory suggests promising directions.</p>
+<pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">best_cell_for</span>(<span class="hljs-params">drives, spatial_map</span>):
+    best_score, best_cell = -<span class="hljs-number">1e9</span>, <span class="hljs-literal">None</span>
+    <span class="hljs-keyword">for</span> cell <span class="hljs-keyword">in</span> spatial_map.cells:
+        score = <span class="hljs-number">0.0</span>
+        <span class="hljs-keyword">for</span> name, d <span class="hljs-keyword">in</span> drives.items():
+            w = DRIVE_WEIGHTS.get(name, <span class="hljs-number">1.0</span>)
+            score += w * cell.expected_improvement[name]
+        <span class="hljs-keyword">if</span> score &gt; best_score:
+            best_score, best_cell = score, cell
+    <span class="hljs-keyword">return</span> best_cell
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">spatial_bias</span>(<span class="hljs-params">position, drives, spatial_map</span>):
+    cell = best_cell_for(drives, spatial_map)
+    <span class="hljs-keyword">if</span> cell <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:
+        <span class="hljs-keyword">return</span> zero_action_bias()
+    direction = cell.center - position
+    motor_bias = direction_to_motor(direction)
+    urgency = <span class="hljs-built_in">max</span>(drives.values())
+    <span class="hljs-keyword">return</span> motor_bias * urgency
+</code></pre>
+<p>A “charging corner” is simply a region where internal energy tends to improve.</p>
+<hr>
+<h2 id="9-core-loop">9. Core Loop</h2>
+<h3 id="91-behavior-flow-diagram">9.1 Behavior Flow Diagram</h3>
+<pre><code class="hljs mermaid">stateDiagram-v2
+    [*] --&gt; Sense
+
+    Sense --&gt; UpdatePhys
+    UpdatePhys --&gt; ComputeDrives
+    ComputeDrives --&gt; QueryMemory
+    QueryMemory --&gt; GenerateAction
+    GenerateAction --&gt; Actuate
+    Actuate --&gt; WaitPropagation
+    WaitPropagation --&gt; SenseOutcome
+    SenseOutcome --&gt; UpdateContingency
+    UpdateContingency --&gt; UpdateSpace
+    UpdateSpace --&gt; Sense
+</code></pre>
+<p>This uses standard <code>stateDiagram-v2</code> syntax and simple state names.</p>
+<h3 id="92-core-loop-pseudocode">9.2 Core Loop Pseudocode</h3>
+<pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">tick</span><span class="hljs-params">()</span> {
+    <span class="hljs-comment">// 1. Sense</span>
+    SensorReadings <span class="hljs-type">s_t</span> = read_sensors();
+
+    <span class="hljs-comment">// 2. Internal updates</span>
+    update_physiology(&amp;phys, <span class="hljs-type">s_t</span>);             <span class="hljs-comment">// includes battery -&gt; h_energy mapping</span>
+    DriveVector drives = compute_drives(phys, drive_targets);
+
+    <span class="hljs-comment">// 3. Candidate actions</span>
+    ActionVector a_base  = generate_baseline_action();
+    <span class="hljs-type">float</span>        fuzz    = calculate_fuzz_scale(drives);
+    ActionVector a_noise = sample_noise_vector() * fuzz;
+
+    BiasVector b_cont  = contingency_bias(memory, phys, <span class="hljs-type">s_t</span>);
+    BiasVector b_space = spatial_bias(position, drives, spatial_map);
+
+    ActionVector <span class="hljs-type">a_t</span> = clamp_action(a_base + a_noise + b_cont + b_space);
+
+    <span class="hljs-comment">// 4. Act</span>
+    apply_actions(<span class="hljs-type">a_t</span>);
+
+    <span class="hljs-comment">// 5. Wait for physical propagation</span>
+    delay_ms(PROPAGATION_DELAY);
+
+    <span class="hljs-comment">// 6. Observe consequences</span>
+    SensorReadings s_tp1 = read_sensors();
+
+    DeltaAction d_a = diff_actions(prev_action, <span class="hljs-type">a_t</span>);
+    DeltaSensor d_s = diff_sensors(<span class="hljs-type">s_t</span>, s_tp1);
+
+    <span class="hljs-comment">// 7. Learn</span>
+    <span class="hljs-type">uint32_t</span> ctx = context_hash(position, phys);
+    update_contingency(&amp;memory, d_a, d_s, ctx);
+    update_spatial(&amp;spatial_map, position, drives, d_s);
+
+    prev_action = <span class="hljs-type">a_t</span>;
+}
+</code></pre>
+<hr>
+<h2 id="10-inputoutput-modalities-and-emergent-uses">10. Input/Output Modalities and Emergent Uses</h2>
+<h3 id="101-light-and-phototaxis-like-behavior">10.1 Light and Phototaxis-Like Behavior</h3>
+<p><strong>Inputs:</strong> <code>light_*</code>, <code>temperature</code>.<br><strong>Outputs:</strong> motors, servos, LEDs, heater.</p>
+<p>Emergent possibilities:</p>
+<ul>
+<li>drift toward brightness (windows, lamps) when curiosity-like drives dominate,  </li>
+<li>retreat from heat when safety worsens with rising temperature,  </li>
+<li>internal variables entrained to day/night cycles, yielding activity rhythms.</li>
+</ul>
+<p>Self-emitted LEDs can support <strong>self-inspection</strong> and <strong>inter-robot signaling</strong> when robots see each other’s flashes.</p>
+<h3 id="102-rf-fields-as-digital-gradients">10.2 RF Fields as Digital Gradients</h3>
+<p><strong>Inputs:</strong> <code>rf_rssi_*</code>.<br><strong>Outputs:</strong> locomotion, RF beacons.</p>
+<p>RF strength often correlates with human presence, power availability, or network access. The system may discover that:</p>
+<ul>
+<li>some locations yield higher <code>rf_rssi</code> and later improvements to “social” or energy-related variables,  </li>
+<li>beacons define <strong>digital territories</strong>.</li>
+</ul>
+<p>From a sociology and urban-studies perspective, these are analogues of public squares, Wi-Fi hotspots, and infrastructure hubs.</p>
+<h3 id="103-chemosensation-and-scent-trails">10.3 Chemosensation and Scent Trails</h3>
+<p><strong>Inputs:</strong> <code>gas</code>, <code>humidity</code>, etc.<br><strong>Outputs:</strong> <code>pump</code>, <code>atomizer</code>, brush or fan.</p>
+<p>Robots can:</p>
+<ul>
+<li>lay down “chemical signatures” where certain drives improved,  </li>
+<li>later follow or avoid regions with those signatures,  </li>
+<li>converge on trail networks analogous to ant foraging paths, shaped by evaporation and deposition.</li>
+</ul>
+<p>This is direct hardware for stigmergy experiments.</p>
+<h3 id="104-touch-and-collision">10.4 Touch and Collision</h3>
+<p><strong>Inputs:</strong> <code>touch_*</code>, sudden IMU changes.<br><strong>Outputs:</strong> motors, vibration, LEDs, sound.</p>
+<p>Collisions are never special-cased. They are just patterns where:</p>
+<ul>
+<li>certain touch or IMU channels spike when certain actions are taken,  </li>
+<li>those spikes correlate with later changes in <code>h_safety</code>, <code>h_energy</code>, etc.</li>
+</ul>
+<p>From repeated exposure, the system can:</p>
+<ul>
+<li>favor motion patterns that reduce the chance of these patterns,  </li>
+<li>or, under some experimental manipulations, seek them.</li>
+</ul>
+<p>This aligns with classical conditioning and simple risk-avoidance or risk-seeking learning.</p>
+<h3 id="105-acoustic-and-vibrational-coupling">10.5 Acoustic and Vibrational Coupling</h3>
+<p><strong>Inputs:</strong> microphone bands, peak frequency.<br><strong>Outputs:</strong> <code>grind_motor</code>, <code>vibe_motor</code>, general motion.</p>
+<p>Uses:</p>
+<ul>
+<li>self-monitoring of actuator health (motor sound spectra),  </li>
+<li>emergent “mechanical voice” where actuation patterns become expressive,  </li>
+<li>inter-robot signaling through coded bursts of vibration or tone sequences.</li>
+</ul>
+<p>This connects to bioacoustics and human–robot interaction via tapping, clapping, or speech-like patterns.</p>
+<h3 id="106-battery-as-just-another-input-coupled-to-energy">10.6 Battery as “Just Another Input”, Coupled to Energy</h3>
+<p><strong>Inputs:</strong> <code>battery_voltage</code>, <code>current</code>.<br><strong>No explicit “charge” routine.</strong></p>
+<p>Battery signals enter as normal sensor channels. The only “privilege” they have is in the physiology update:</p>
+<ul>
+<li><code>h_energy</code> is updated partly from battery readings and partly from behavior-dependent load estimates,  </li>
+<li><code>h_energy</code> is then treated like any other internal variable; drives are deviations from a comfortable band,  </li>
+<li>if certain spatial regions or action patterns systematically raise <code>battery_voltage</code>, those patterns become associated with improvements in <code>h_energy</code>,  </li>
+<li>drives then bias future exploration toward them.</li>
+</ul>
+<p>Externally, this looks like self-charging behavior. Internally, it is homeostatic regulation driven by sensor streams and contingencies.</p>
+<hr>
+<h2 id="11-charging-station-as-an-emergent-attractor">11. Charging Station as an Emergent Attractor</h2>
+<p>The charging station is part of the <strong>ecology</strong>, not a coded “home base”. It should:</p>
+<ul>
+<li>broadcast rich <strong>sensory gradients</strong> (RF, light, sound, scent, temperature),  </li>
+<li>deliver <strong>power</strong> only when the body is correctly positioned,  </li>
+<li>provide <strong>sensorically obvious feedback</strong> when charging is active or complete,  </li>
+<li>never communicate “I am a charger” at the protocol level.</li>
+</ul>
+<p>From the robot’s perspective, the station is just a <strong>cluster of regularities</strong>:</p>
+<ul>
+<li>being near this object correlates with rising <code>battery_voltage</code>,  </li>
+<li>and with consistent patterns on other sensors (light, sound, RF, etc.).</li>
+</ul>
+<p>Over time, those regularities make station-seeking behavior emergent.</p>
+<h3 id="111-station-architecture-overview">11.1 Station Architecture Overview</h3>
+<p>The station is:</p>
+<ul>
+<li>a physical <strong>dock</strong> that constrains pose enough to align contacts or inductive coils,  </li>
+<li>a bundle of <strong>stimulus emitters</strong> (RF beacon, LED pattern, optional sound/scent/heat),  </li>
+<li>a <strong>power electronics module</strong> that supplies current safely,  </li>
+<li>a set of <strong>completion cues</strong> that change when charging stops.</li>
+</ul>
+<pre><code class="hljs mermaid">graph TD
+    env["Room / Environment"]
+
+    subgraph Station
+        frame["Mechanical Frame&lt;br/&gt;&amp; Guides"]
+        contacts["Power Interface&lt;br/&gt;(contacts or inductive)"]
+        beacon["RF Beacon&lt;br/&gt;(Wi-Fi/BLE/etc.)"]
+        leds["LED Cluster&lt;br/&gt;(distinct pattern)"]
+        audio["Optional Audio&lt;br/&gt;(clicks/tones)"]
+        scent["Optional Scent /&lt;br/&gt;Airflow"]
+        thermo["Optional Heater&lt;br/&gt;(mild warmth)"]
+        psu["Power Module&lt;br/&gt;(CC/CV, safety)"]
+        sense["Station Sensors&lt;br/&gt;(V,I,temp,presence)"]
+        ctrl["Station Controller"]
+    end
+
+    env --&gt; frame
+    env --&gt; leds
+    env --&gt; audio
+    env --&gt; scent
+    env --&gt; thermo
+    env --&gt; beacon
+
+    psu --&gt; contacts
+    sense --&gt; ctrl
+    ctrl --&gt; leds
+    ctrl --&gt; audio
+    ctrl --&gt; beacon
+    ctrl --&gt; psu
+</code></pre>
+<p>For the robot, this appears as:</p>
+<ul>
+<li>strong local RF signature,  </li>
+<li>characteristic LED spectrum and flicker,  </li>
+<li>distinctive acoustic and/or airflow pattern,  </li>
+<li>localized warmth,  </li>
+<li>sudden, sustained rise in <code>battery_voltage</code> once contact is made.</li>
+</ul>
+<h3 id="112-mechanical-design-and-contact-geometry">11.2 Mechanical Design and Contact Geometry</h3>
+<p>Goals:</p>
+<ul>
+<li><strong>Self-alignment</strong>: make it easy to “fall into” a valid charging pose via bumping and pushing.  </li>
+<li><strong>Robust contacts</strong>: tolerate misalignment, dirt, wear.  </li>
+<li><strong>No exact pose requirement in code</strong>: alignment handled by mechanics.</li>
+</ul>
+<p>Suggested features:</p>
+<ul>
+<li><p><strong>Funnel entrance</strong>:  </p>
+<ul>
+<li>two sloped side walls guiding the chassis toward a central pocket,  </li>
+<li>a shallow ramp with a soft stop so low-speed collisions bring the robot in.</li>
+</ul>
+</li>
+<li><p><strong>Contact design</strong>:  </p>
+<ul>
+<li>spring-loaded pogo pins on the station, large pads on the robot, or  </li>
+<li>inductive coils (Qi-like) with a generous coupling margin,  </li>
+<li>a mechanical “nose” or bumper that helps the robot “nose in” until contacts compress.</li>
+</ul>
+</li>
+<li><p><strong>Anti-snag geometry</strong>:  </p>
+<ul>
+<li>chamfered edges, no sharp lips,  </li>
+<li>enough clearance for escape maneuvers if the robot backs out.</li>
+</ul>
+</li>
+</ul>
+<p>Thus, random or slightly biased approaches often result in a valid power connection. Once connected, geometry tends to stabilize pose and reduce unwanted motion.</p>
+<h3 id="113-sensory-lures-making-the-station-salient">11.3 Sensory Lures: Making the Station Salient</h3>
+<p>The station should emit <strong>multi-modal gradients</strong> that:</p>
+<ul>
+<li>can be sensed from <strong>far away</strong> (RF, light, low-frequency sound),  </li>
+<li>become more intense or structured when <strong>closer or correctly aligned</strong>,  </li>
+<li>are statistically associated with <strong>rising internal energy</strong> once charging starts.</li>
+</ul>
+<h4 id="rf-lure">RF Lure</h4>
+<ul>
+<li>Dedicated Wi-Fi/BLE SSID or beacon with high power and a distinctive RSSI profile.  </li>
+<li>Optionally <strong>pulsed</strong>, giving a recognizable temporal pattern near the dock.</li>
+</ul>
+<p>Robot side: RF is just <code>rf_rssi_*</code>. If “being near high RSSI with that pattern” tends to precede <code>h_energy</code> improvement, contingencies will favor moving into RF peaks.</p>
+<h4 id="optical-lure">Optical Lure</h4>
+<ul>
+<li>High-contrast <strong>LED pattern</strong> with:  <ul>
+<li>distinctive color mix,  </li>
+<li>simple temporal code (slow pulse, repeating motif),  </li>
+<li>visibility over distance and angle.</li>
+</ul>
+</li>
+</ul>
+<p>Robot side: appears in <code>light_*</code> sensors; spatial memory may encode “cells with this light distribution tend to be good for energy”.</p>
+<h4 id="acoustic--vibration-lure">Acoustic / Vibration Lure</h4>
+<ul>
+<li>Small speaker emitting low-duty cycle clicks or tones at a distinctive frequency.  </li>
+<li>Optional low-frequency vibration transmitted through a ramp or floor panel.</li>
+</ul>
+<p>Robot side: shows up as specific spectral signatures in microphone and/or IMU.</p>
+<h4 id="scent--airflow--temperature-lure">Scent / Airflow / Temperature Lure</h4>
+<ul>
+<li>Gentle airflow or warmth near the dock.  </li>
+<li>Mild scent via an atomizer or solid fragrance.</li>
+</ul>
+<p>Robot side: changes in <code>gas</code>, <code>humidity</code>, <code>temperature</code> co-vary with other station cues.</p>
+<h3 id="114-power-delivery-and-safety">11.4 Power Delivery and Safety</h3>
+<p>Station-side power module:</p>
+<ul>
+<li>CC/CV regulation sized for the robot’s battery chemistry,  </li>
+<li>over-current, over-temperature, and reverse-polarity protection,  </li>
+<li>current and voltage sensing for station-internal state (“charging”, “full”).</li>
+</ul>
+<p>Robot-side:</p>
+<ul>
+<li>only sees analog outcomes:  <ul>
+<li><code>battery_voltage</code> and possibly <code>current</code> rising,  </li>
+<li>internal thermistors warming slightly if charging generates heat,  </li>
+<li>these map into <code>h_energy</code> and <code>h_safety</code> updates.</li>
+</ul>
+</li>
+</ul>
+<p>There is <strong>no explicit “start charging” RPC</strong>. Interaction is purely physical and sensory.</p>
+<h3 id="115-signaling-charging-vs-done-without-semantics">11.5 Signaling “Charging” vs “Done” Without Semantics</h3>
+<p>The station should change its <strong>sensory profile</strong> when:</p>
+<ol>
+<li>Charging is <strong>active</strong>,  </li>
+<li>Charging is <strong>complete</strong> (or paused).</li>
+</ol>
+<p>These differences must be clear in sensor space but not labeled in code.</p>
+<p>Examples:</p>
+<ul>
+<li><p><strong>Active charging</strong>:  </p>
+<ul>
+<li>LEDs: slow pulsing wave,  </li>
+<li>sound: occasional faint click or hum,  </li>
+<li>RF beacon: regular 1 Hz bursts.</li>
+</ul>
+</li>
+<li><p><strong>Charging complete</strong>:  </p>
+<ul>
+<li>LEDs: steady glow or different color mix,  </li>
+<li>sound: silence or rare “heartbeat” tick,  </li>
+<li>RF beacon: reduced duty cycle or different pulse spacing.</li>
+</ul>
+</li>
+</ul>
+<p>From the robot’s perspective:</p>
+<ul>
+<li>certain combinations of station cues + rising <code>battery_voltage</code> correlate with improved <code>h_energy</code>,  </li>
+<li>later, when <code>battery_voltage</code> plateaus and <code>h_energy</code> is near target, cues stabilize into the “full” profile.</li>
+</ul>
+<p>Over many episodes, contingency and spatial memory can learn that:</p>
+<ul>
+<li><strong>approaching</strong> the “charging profile” tends to precede <code>h_energy</code> improvement,  </li>
+<li><strong>remaining</strong> in the “full profile” yields little further gain.</li>
+</ul>
+<p>Behavior then tends toward:</p>
+<ul>
+<li>entering and staying at the station while “charging profile” persists,  </li>
+<li>leaving more readily when the “full” profile dominates and <code>h_energy</code> drive is low.</li>
+</ul>
+<p>No code ever says <code>if low_battery then go_to_station()</code>.</p>
+<h3 id="116-example-station-logic">11.6 Example Station Logic</h3>
+<pre><code class="hljs python"><span class="hljs-comment"># Pseudocode for station microcontroller</span>
+<span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+    v = measure_robot_voltage()   <span class="hljs-comment"># or station contact voltage</span>
+    i = measure_current()
+    t = measure_temp()
+
+    charging_active = (i &gt; I_MIN_ACTIVE) <span class="hljs-keyword">and</span> (t &lt; T_MAX)
+
+    <span class="hljs-keyword">if</span> charging_active:
+        <span class="hljs-keyword">if</span> v &gt; V_FULL_THRESHOLD <span class="hljs-keyword">and</span> i &lt; I_TAPER_THRESHOLD:
+            state = <span class="hljs-string">"FULL"</span>
+        <span class="hljs-keyword">else</span>:
+            state = <span class="hljs-string">"CHARGING"</span>
+    <span class="hljs-keyword">else</span>:
+        state = <span class="hljs-string">"IDLE"</span>
+
+    <span class="hljs-keyword">if</span> state == <span class="hljs-string">"IDLE"</span>:
+        set_led_mode(<span class="hljs-string">"attractor_idle"</span>)
+        set_rf_pattern(<span class="hljs-string">"beacon_idle"</span>)
+        set_audio_mode(<span class="hljs-string">"quiet"</span>)
+    <span class="hljs-keyword">elif</span> state == <span class="hljs-string">"CHARGING"</span>:
+        set_led_mode(<span class="hljs-string">"charging_pulse"</span>)
+        set_rf_pattern(<span class="hljs-string">"beacon_active"</span>)
+        set_audio_mode(<span class="hljs-string">"slow_click"</span>)
+    <span class="hljs-keyword">elif</span> state == <span class="hljs-string">"FULL"</span>:
+        set_led_mode(<span class="hljs-string">"full_solid"</span>)
+        set_rf_pattern(<span class="hljs-string">"beacon_full"</span>)
+        set_audio_mode(<span class="hljs-string">"rare_tick"</span>)
+
+    sleep_ms(<span class="hljs-number">100</span>)
+</code></pre>
+<p>The robot never sees <code>"CHARGING"</code> or <code>"FULL"</code> as symbols; it only experiences the sensory shifts.</p>
+<h3 id="117-emergent-charging-storyline">11.7 Emergent Charging Storyline</h3>
+<p>A typical emergent narrative:</p>
+<ol>
+<li><p><strong>Early life</strong>  </p>
+<ul>
+<li>Robot wanders randomly.  </li>
+<li>Occasionally collides with ramp, is funneled in, accidentally making contact.  </li>
+<li><code>battery_voltage</code> rises; <code>h_energy</code> improves.</li>
+</ul>
+</li>
+<li><p><strong>Memory formation</strong>  </p>
+<ul>
+<li>Contingency memory stores associations between approach actions, station cues, and subsequent <code>h_energy</code> improvements.  </li>
+<li>Spatial memory notes that certain locations precede such episodes.</li>
+</ul>
+</li>
+<li><p><strong>Behavior shaping</strong>  </p>
+<ul>
+<li>When <code>h_energy</code> deviates strongly (simulated “hunger”), drives bias exploration.  </li>
+<li>Patterns that historically improved <code>h_energy</code> (movements toward station cues) become more probable.</li>
+</ul>
+</li>
+<li><p><strong>Charging completion and departure</strong>  </p>
+<ul>
+<li>Once <code>battery_voltage</code> stabilizes and <code>h_energy</code> is high,  </li>
+<li>station cues shift to the “full” profile,  </li>
+<li><code>h_energy</code> drive relaxes,  </li>
+<li>stochastic exploration reasserts itself; gentle biases toward remaining weaken and the robot drifts out.</li>
+</ul>
+</li>
+</ol>
+<p>To an observer, the robot “seeks the charging station when low on energy and leaves when full”. In code, it never <strong>knows</strong> what a charging station is.</p>
+<hr>
+<h2 id="12-emergent-phenomena-and-cross-disciplinary-links">12. Emergent Phenomena and Cross-Disciplinary Links</h2>
+<h3 id="121-mechanical-voice-and-prosody">12.1 Mechanical Voice and Prosody</h3>
+<p>Repeated action sequences that improve “social” or curiosity-related drives can produce distinct acoustic signatures:</p>
+<ul>
+<li>rising/falling motor tones,  </li>
+<li>rhythmic tapping,  </li>
+<li>broadband “grind” pulses.</li>
+</ul>
+<p>From linguistics and music theory we can borrow:</p>
+<ul>
+<li>prosodic contours (rise–fall, emphasis),  </li>
+<li>rhythmic motifs,  </li>
+<li>call-and-response structures.</li>
+</ul>
+<p>Experiments: expose robots to human rhythmic patterns (clapping, tapping) and observe whether particular action-and-sound sequences become more likely after “successful” interactions.</p>
+<h3 id="122-individual-differences-and-personality">12.2 Individual Differences and “Personality”</h3>
+<p>Because:</p>
+<ul>
+<li>exploration is stochastic,  </li>
+<li>memory is lossy,  </li>
+<li>spatial histories differ,</li>
+</ul>
+<p>nominally identical robots develop distinct <strong>behavioral profiles</strong>. Behavioral ecology calls such persistent individual differences “behavioral syndromes”.</p>
+<p>We can measure:</p>
+<ul>
+<li>risk tolerance (distance to obstacles, collision rate),  </li>
+<li>exploration rate (spatial coverage),  </li>
+<li>sociality (time near conspecifics or humans),  </li>
+<li>persistence (how long patterns are repeated).</li>
+</ul>
+<p>Psychology and psychiatry provide a rich vocabulary to interpret perturbations: altering decay rates or drive gains can yield lethargic, manic, compulsive, or avoidant “personalities”.</p>
+<h3 id="123-social-and-crowd-level-effects">12.3 Social and Crowd-Level Effects</h3>
+<p>With many robots in a shared environment:</p>
+<ul>
+<li>stigmergic cues (scent, RF, light patterns) become shared media,  </li>
+<li>simple local rules yield clustering, segregation, or flocking-like motion,  </li>
+<li>human movement influences robot distributions and vice versa.</li>
+</ul>
+<p>This connects to:</p>
+<ul>
+<li><strong>sociology</strong> (norm formation, crowd dynamics),  </li>
+<li><strong>collective behavior</strong> in animals,  </li>
+<li><strong>economics</strong> of congestion and resource competition.</li>
+</ul>
+<p>Swarm-robotics work using evolutionary methods and NEAT to generate emergent group behavior offers a useful comparison: our system does not optimize a group objective, but similar group-level phenomena may appear as robots individually chase local drive improvements.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)</p>
+<h3 id="124-game-design-art-and-education">12.4 Game Design, Art, and Education</h3>
+<p>From game design:</p>
+<ul>
+<li>crafting legible behavior signatures humans can read and respond to,  </li>
+<li>tuning “reward” landscapes (via environment design) to elicit interesting emergent strategies.</li>
+</ul>
+<p>From art:</p>
+<ul>
+<li>robots as kinetic sculptures,  </li>
+<li>emergent narratives formed by their trajectories and interactions,  </li>
+<li>audio-visual aesthetics using mechanically produced sound and light.</li>
+</ul>
+<p>From education:</p>
+<ul>
+<li>concrete demonstrations of homeostasis, adaptation, dynamical systems, emergence,  </li>
+<li>visualization tools mapping internal variables to colors, shapes, or sounds.</li>
+</ul>
+<hr>
+<h2 id="13-life-state-persistence-and-body-transfer">13. Life-State Persistence and Body Transfer</h2>
+<p>The <em>organism</em> is defined as a serializable state blob:</p>
+<pre><code class="hljs json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"version"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"age_s"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">172800</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"physiology"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_energy"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.73</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"h_safety"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.91</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"drives"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_curiosity"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.82</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"h_boredom"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.12</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"contingencies"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span> <span class="hljs-comment">/* compressed entries */</span> <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"spatial_memory"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span> <span class="hljs-comment">/* grid or place-cell summaries */</span> <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"stats"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"risk_tolerance"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.34</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"mean_speed"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.18</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"channel_fingerprint"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"a1b2c3d4"</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p>Mechanism:</p>
+<ul>
+<li>state can be downloaded from one chassis and uploaded into another,  </li>
+<li>a mapping layer remaps channels where possible and gradually forgets mismatched contingencies,  </li>
+<li>observers experience continuity of “character” even as body and environment change.</li>
+</ul>
+<p>This gives an experimental handle on <strong>embodied identity</strong>: what, if anything, remains the same when you change the body but preserve part of the internal history?</p>
+<hr>
+<h2 id="14-implementation-on-esp32-class-hardware">14. Implementation on ESP32-Class Hardware</h2>
+<h3 id="141-software-structure">14.1 Software Structure</h3>
+<pre><code class="hljs mermaid">graph TD
+    hf["High-Frequency Tasks&lt;br/&gt;(PWM, ADC, audio)"]
+    beh["Behavior Task&lt;br/&gt;(15–30 Hz)"]
+    slow["Slow Tasks&lt;br/&gt;(~1 Hz: logging,&lt;br/&gt;checkpoints)"]
+
+    hf --&gt; beh
+    beh --&gt; slow
+    slow --&gt; beh
+</code></pre>
+<ul>
+<li><p><strong>High-frequency tasks</strong>  </p>
+<ul>
+<li>Motor PWM, audio sampling, quick safety checks.  </li>
+<li>Interrupt-driven where needed.</li>
+</ul>
+</li>
+<li><p><strong>Behavior task</strong>  </p>
+<ul>
+<li>Implements the core loop.  </li>
+<li>Runs at 15–30 Hz.</li>
+</ul>
+</li>
+<li><p><strong>Slow tasks</strong>  </p>
+<ul>
+<li>State snapshots to flash or external storage.  </li>
+<li>Telemetry via HTTP/WebSocket.  </li>
+<li>Occasional parameter adaptation.</li>
+</ul>
+</li>
+</ul>
+<h3 id="142-memory-and-timing-constraints">14.2 Memory and Timing Constraints</h3>
+<p>To stay microcontroller-friendly:</p>
+<ul>
+<li>use fixed-size arrays for contingency and spatial memory,  </li>
+<li>aggressively quantize and hash to keep entries small,  </li>
+<li>prefer integer or fixed-point arithmetic inside the loop,  </li>
+<li>avoid dynamic allocation,  </li>
+<li>bound per-tick work (e.g., scan only subsets of memory each step).</li>
+</ul>
+<hr>
+<h2 id="15-experimental-program-and-ablations">15. Experimental Program and Ablations</h2>
+<p>To treat this as a <em>scientific</em> platform:</p>
+<h3 id="151-metrics">15.1 Metrics</h3>
+<ul>
+<li><strong>Homeostasis quality</strong>: variance of internal variables under perturbations.  </li>
+<li><strong>Exploration structure</strong>: spatial coverage, visitation entropy.  </li>
+<li><strong>History dependence</strong>: divergence between individuals with different pasts under matched environments.  </li>
+<li><strong>Perceived aliveness</strong>: blinded human ratings from short video clips (as used in work on believable agents and animal-inspired robotics).(Gomez-Marin &amp; Zhang, 2022)</li>
+</ul>
+<h3 id="152-ablations">15.2 Ablations</h3>
+<ul>
+<li>remove stochastic exploration (deterministic policy),  </li>
+<li>freeze contingency memory,  </li>
+<li>clear spatial memory,  </li>
+<li>flatten drives (no homeostatic pressure),  </li>
+<li>hide or randomize certain sensors (including battery),  </li>
+<li>decouple battery from <code>h_energy</code> to see how much charging behavior is lost.</li>
+</ul>
+<p>Comparing ablated and full agents isolates which mechanisms contribute most to diverse, legible behavior.</p>
+<hr>
+<h2 id="16-what-this-project-illustrates-and-future-directions">16. What This Project Illustrates and Future Directions</h2>
+<h3 id="161-what-the-project-illustrates">16.1 What the Project Illustrates</h3>
+<p>This architecture demonstrates that:</p>
+<ol>
+<li><p><strong>Believable creature-like behavior does not require big models.</strong><br>Carefully structured local feedback, homeostatic drives, and bounded memory can produce behavior that observers interpret using rich psychological language.</p>
+</li>
+<li><p><strong>Semantics can emerge from statistics.</strong><br>Battery, collision, and RF signals start as untyped numbers. Yet, because they systematically affect internal variables, the system comes to behave <em>as if</em> it understood “danger”, “safety”, or “charging”, without symbolic representation.</p>
+</li>
+<li><p><strong>Energy and ecology can be coupled without scripting goals.</strong><br>The charging station is designed as an attractor in sensor and energy space; “seeking the charger” is an emergent pattern, not a coded routine.</p>
+</li>
+<li><p><strong>Microcontrollers are sufficient for serious synthetic ethology.</strong><br>By trading off explicit value functions and large networks for simpler homeostatic and statistical machinery, we can run interesting experiments entirely on-device.</p>
+</li>
+<li><p><strong>Robots can be used as physical thought experiments about behavior.</strong><br>Like earlier work on animal-inspired robots and homeostatic RL, the platform blurs lines between robotics, neuroscience, and ethology.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)(Gomez-Marin &amp; Zhang, 2022)</p>
+</li>
+</ol>
+<h3 id="162-possible-further-steps">16.2 Possible Further Steps</h3>
+<p>Some natural extensions:</p>
+<ul>
+<li><p><strong>Richer physiology.</strong><br>Add more internal variables (e.g., “temperature comfort”, “social saturation”) and study interactions.</p>
+</li>
+<li><p><strong>Minimal learning rules</strong> closer to biological plasticity.<br>Replace the abstract contingency memory with variants of Hebbian learning or predictive coding.</p>
+</li>
+<li><p><strong>Multi-agent experiments.</strong><br>Introduce several robots with shared or conflicting drives, and simple stigmergic channels (scent, light, RF tags). Explore collective phenomena and analogues of market-like resource allocation.</p>
+</li>
+<li><p><strong>Task-free vs task-biased regimes.</strong><br>Keep architecture unchanged but change environment statistics (e.g., how often particular stimuli correlate with drive improvements). Compare to explicit task-focused RL agents in the same morphology.</p>
+</li>
+<li><p><strong>Bridges to formal RL.</strong><br>Treat the contingency + spatial memories as approximate value structures and compare behavior against HRL models in similar setups.(Keramati &amp; Gutkin, 2014)</p>
+</li>
+<li><p><strong>Open-world benchmarks.</strong><br>Define shared environments, metrics, and logging formats so others can run comparable experiments on their own microcontroller platforms.</p>
+</li>
+</ul>
+<hr>
+<h2 id="17-related-projects-and-prior-art-in-practice">17. Related Projects and Prior Art in Practice</h2>
+<p>While this project stresses <strong>extreme on-device simplicity</strong>, it sits in a broader ecosystem of work on emergent behavior and embodied agents:</p>
+<ul>
+<li><p><strong>Homeostatic RL in robots.</strong>  </p>
+<ul>
+<li>Yoshida &amp; Kuniyoshi’s “Embodied Neural Homeostat” implements deep HRL on a physical quadruped, achieving emergent walking, foraging, and temperature regulation under homeostatic objectives.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </li>
+<li>Several studies model animal-like long-term nutritional behavior using homeostatic RL in simulated agents.(Yoshida et al., 2024)</li>
+</ul>
+</li>
+<li><p><strong>Embodied co-design surveys.</strong>  </p>
+<ul>
+<li>The <em>Embodied Co-Design for Rapidly Evolving Agents</em> survey compiles work on jointly optimizing morphology and control, often with deep RL and evolution, and links to multiple open-source implementations (e.g., DERL, emergent hand morphology).(Wang, 2024/2026)<br>These tend to operate in simulation with heavy compute, but share the emphasis on body-environment loops.</li>
+</ul>
+</li>
+<li><p><strong>Swarm emergent behavior with NEAT.</strong>  </p>
+<ul>
+<li>Work on <em>Learning Emergent Behavior in Robot Swarms with NEAT</em> evolves controllers for agents whose local rules yield collective patterns.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)<br>Many of these controllers are available in public GitHub repositories (e.g., swarm benchmarks in CoppeliaSim), though typically targeting desktops or simulators.</li>
+</ul>
+</li>
+<li><p><strong>Animal-inspired neurorobotics.</strong>  </p>
+<ul>
+<li>A collection of neurorobotics papers shows robots as models for social interaction, vocalization, and goal-directed reaching, with code often accompanying publications via lab GitHub accounts.(Gomez-Marin &amp; Zhang, 2022)</li>
+</ul>
+</li>
+</ul>
+<p>Compared with these, the present project contributes:</p>
+<ul>
+<li>an <strong>explicit, end-to-end specification</strong> of a pure-emergence architecture tuned for ESP32-class boards,  </li>
+<li>an emphasis on <strong>semantic symmetry</strong> of all sensory channels (even battery),  </li>
+<li>a concrete, low-profile <strong>charging station design</strong> that supports emergent self-charging,  </li>
+<li>a blueprint for <strong>life-state transfer</strong> and systematic ablation experiments.</li>
+</ul>
+<hr>
+<h2 id="18-philosophical-boundaries">18. Philosophical Boundaries</h2>
+<p>This project stays at the levels of:</p>
+<ul>
+<li><strong>behavior:</strong> patterns of motion and interaction,  </li>
+<li><strong>organismic organization:</strong> regulation, memory, embodiment.</li>
+</ul>
+<p>It does <em>not</em> claim:</p>
+<ul>
+<li>subjective experience,  </li>
+<li>moral status,  </li>
+<li>or a solution to consciousness.</li>
+</ul>
+<p>It offers a <strong>concrete, tunable dynamical system</strong> where:</p>
+<ul>
+<li>things like “caring” about battery or avoiding collisions arise from low-level statistical structure and feedback,  </li>
+<li>observers can apply concepts from biology, psychology, economics, and sociology without those concepts being present in code.</li>
+</ul>
+<hr>
+<h2 id="19-references">19. References</h2>
+<p>Classics and conceptual background:</p>
+<ul>
+<li>Norbert Wiener, <em>Cybernetics: Or Control and Communication in the Animal and the Machine</em>, 1948.  </li>
+<li>W. Grey Walter, <em>The Living Brain</em>, 1953.  </li>
+<li>Valentino Braitenberg, <em>Vehicles: Experiments in Synthetic Psychology</em>, <a href="https://mitpress.mit.edu/9780262521123/vehicles/">MIT Press</a>, 1984.  </li>
+<li>Rodney A. Brooks, “A robust layered control system for a mobile robot,” <em>IEEE Journal of Robotics and Automation</em>, 1986.  </li>
+<li>Warren S. McCulloch, W. Ross Ashby, and others on early homeostatic machine designs.  </li>
+<li>J. J. Gibson, <em>The Ecological Approach to Visual Perception</em>, 1979.  </li>
+<li>J. O’Keefe &amp; L. Nadel, <em>The Hippocampus as a Cognitive Map</em>, 1978.  </li>
+<li>P.-P. Grassé, “La théorie de la stigmergie,” <em>Insectes Sociaux</em>, 1959.</li>
+</ul>
+<p>Homeostatic RL and animal-like behavior:</p>
+<ul>
+<li>Mehdi Keramati &amp; Boris Gutkin, “A Reinforcement Learning Theory for Homeostatic Regulation,” <em>NeurIPS 2011</em>.  </li>
+<li>Mehdi Keramati &amp; Boris Gutkin, “<a href="https://elifesciences.org/articles/04811">Homeostatic reinforcement learning for integrating reward collection and physiological stability</a>,” <em>eLife</em> 3:e04811, 2014.(Keramati &amp; Gutkin, 2014)  </li>
+<li>S. Yoshida &amp; Y. Kuniyoshi, “Synthesising integrated robot behaviour through reinforcement learning for homeostasis (Embodied Neural Homeostat),” bioRxiv, 2024.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </li>
+<li>H. Yoshida et al., “Modeling long-term nutritional behaviors using deep homeostatic reinforcement learning,” <em>PNAS Nexus</em> (open-access preprint).(Yoshida et al., 2024)</li>
+</ul>
+<p>Emergent behavior and neurorobotics:</p>
+<ul>
+<li>A. Gómez-Marín, “<a href="https://www.frontiersin.org/articles/10.3389/fnbot.2022.861831/full">Editorial: Emergent Behavior in Animal-Inspired Robotics</a>,” <em>Frontiers in Neurorobotics</em>, 2022.(Gomez-Marin &amp; Zhang, 2022)  </li>
+<li>M. Reséndiz-Benhumea et al., “Testing the social brain hypothesis with minimal models in robotics,” <em>Frontiers in Neurorobotics</em>, 2021.  </li>
+<li>A. Amador &amp; G. B. Mindlin, “Low-dimensional biomechanical model of birdsong production,” <em>Frontiers in Neuroscience</em>, 2021.</li>
+</ul>
+<p>Swarm and emergent control:</p>
+<ul>
+<li>“Learning Emergent Behavior in Robot Swarms with NEAT,” arXiv:2309.14663, 2023.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  </li>
+<li>E. Pagello et al., “Emergent behaviors of a robot team performing cooperative tasks,” <em>Advanced Robotics</em>, 2003.  </li>
+<li>Pranav Rajbhandari, <em>Swarm CoppeliaSim</em> (GitHub).</li>
+</ul>
+<p>Embodied co-design and morphology:</p>
+<ul>
+<li>Y. Wang et al., “<a href="https://github.com/Yuxing-Wang-THU/SurveyBrainBody">Embodied Co-Design for Rapidly Evolving Agents: Taxonomy, Frontiers, and Challenges</a>,” survey with code links, 2023.(Wang, 2024/2026)</li>
+</ul>
+<p>And many more in the overlapping literatures of artificial life, developmental robotics, and believable agents.</p>
+
+	
+
+</body></html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html><html><head><title></title><meta charset="utf-8"><style>/* Shared stylesheet for rendered markdown pages (article, roadmap). */
+
+* { box-sizing: border-box; }
+html, body {
+  background: #fafaf8;
+  color: #111111;
+}
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap, body > * {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+body {
+  padding: 3rem 0 5rem;
+}
+
+a { color: #c23a1f; }
+a:hover { color: #8f2a15; }
+
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: 1.9rem;
+  text-transform: uppercase;
+  border-bottom: 3px solid #111111;
+  padding-bottom: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+h2 {
+  font-size: 1.25rem;
+  border-bottom: 1px solid #ddd9d0;
+  padding-bottom: 0.4rem;
+  margin-top: 2.5rem;
+}
+h3 {
+  font-size: 1.05rem;
+  margin-top: 2rem;
+}
+h4 {
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+}
+
+p, ul, ol { margin: 0 0 1.1rem; }
+li { margin: 0.2rem 0; }
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.9rem 1.1rem;
+  border-left: 3px solid #c23a1f;
+  background: #f1f0ec;
+  font-style: italic;
+}
+blockquote p { margin: 0; }
+
+code {
+  background: #f1f0ec;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.9em;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+}
+pre {
+  background: #f1f0ec;
+  padding: 1rem;
+  overflow-x: auto;
+}
+pre code {
+  background: none;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 1.5rem;
+  font-size: 0.92rem;
+}
+th, td {
+  border: 1px solid #ddd9d0;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+th {
+  background: #f1f0ec;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ddd9d0;
+  margin: 2.5rem 0;
+}
+
+img { max-width: 100%; }
+/*# sourceURL=docs/assets/article.css*/</style><style>pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em
+}
+code.hljs {
+  padding: 3px 5px
+}
+/*!
+  Theme: GitHub
+  Description: Light theme as seen on github.com
+  Author: github.com
+  Maintainer: @Hirse
+  Updated: 2021-05-15
+
+  Outdated base version: https://github.com/primer/github-syntax-light
+  Current colors taken from GitHub's CSS
+*/
+.hljs {
+  color: #24292e;
+  background: #ffffff
+}
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  /* prettylights-syntax-keyword */
+  color: #d73a49
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  /* prettylights-syntax-entity */
+  color: #6f42c1
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  /* prettylights-syntax-constant */
+  color: #005cc5
+}
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  /* prettylights-syntax-string */
+  color: #032f62
+}
+.hljs-built_in,
+.hljs-symbol {
+  /* prettylights-syntax-variable */
+  color: #e36209
+}
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  /* prettylights-syntax-comment */
+  color: #6a737d
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  /* prettylights-syntax-entity-tag */
+  color: #22863a
+}
+.hljs-subst {
+  /* prettylights-syntax-storage-modifier-import */
+  color: #24292e
+}
+.hljs-section {
+  /* prettylights-syntax-markup-heading */
+  color: #005cc5;
+  font-weight: bold
+}
+.hljs-bullet {
+  /* prettylights-syntax-markup-list */
+  color: #735c0f
+}
+.hljs-emphasis {
+  /* prettylights-syntax-markup-italic */
+  color: #24292e;
+  font-style: italic
+}
+.hljs-strong {
+  /* prettylights-syntax-markup-bold */
+  color: #24292e;
+  font-weight: bold
+}
+.hljs-addition {
+  /* prettylights-syntax-markup-inserted */
+  color: #22863a;
+  background-color: #f0fff4
+}
+.hljs-deletion {
+  /* prettylights-syntax-markup-deleted */
+  color: #b31d28;
+  background-color: #ffeef0
+}
+.hljs-char.escape_,
+.hljs-link,
+.hljs-params,
+.hljs-property,
+.hljs-punctuation,
+.hljs-tag {
+  /* purposely ignored */
+  
+}/*# sourceURL=/home/nihil/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+	<body class="">
+		<h1 id="roadmap">Roadmap</h1>
+<p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
+(<code>1.0.0</code>, <code>2.0.0</code>, ...) is a deliberate decision made by a human — never automated.</p>
+<p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
+current one is closed out, unless explicitly reprioritized.</p>
+<h2 id="status">Status</h2>
+<p><strong>Current release: v0.1.0</strong> (complete — next up: v0.2.0)</p>
+<hr>
+<h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Git repo initialized</li>
+<li><input checked="" disabled="" type="checkbox"> <code>docs/</code> site skeleton (<code>index.html</code> frontpage, <code>synth-behavior.md</code>, this roadmap)</li>
+<li><input checked="" disabled="" type="checkbox"> GitHub Actions workflow to rebuild <code>synth-behavior.pdf</code> from the markdown source</li>
+<li><input checked="" disabled="" type="checkbox"> ESP32 PlatformIO project skeleton (<code>src/esp32</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> Board configuration abstraction (per-board pin/IO profiles)</li>
+<li><input checked="" disabled="" type="checkbox"> Push to GitHub, enable Pages (serve from <code>docs/</code> on <code>main</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> CI: PlatformIO build check for at least one board target</li>
+</ul>
+<h2 id="v020--body-layer-sensors--actuators">v0.2.0 — Body layer: sensors &amp; actuators</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Generic <code>Actuator</code> interface (range, rate limit, cost estimate, safety envelope)</li>
+<li><input disabled="" type="checkbox"> Generic <code>Sensor</code> interface (normalized numeric channel, update rate)</li>
+<li><input disabled="" type="checkbox"> IO profile format mapping named channels to physical pins/drivers</li>
+<li><input disabled="" type="checkbox"> Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
+ADC-based sensors (battery voltage/current), digital touch/bump</li>
+<li><input disabled="" type="checkbox"> Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)</li>
+<li><input disabled="" type="checkbox"> Sensor/actuator self-test routine over serial</li>
+</ul>
+<h2 id="v030--wifi-hotspot--dashboard">v0.3.0 — WiFi hotspot &amp; dashboard</h2>
+<ul>
+<li><input disabled="" type="checkbox"> SoftAP mode, SSID/password configurable per board profile</li>
+<li><input disabled="" type="checkbox"> Async web server serving the dashboard UI</li>
+<li><input disabled="" type="checkbox"> Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs</li>
+<li><input disabled="" type="checkbox"> Minimal dashboard front-end served from firmware (LittleFS)</li>
+<li><input disabled="" type="checkbox"> Config page: adjust IO mapping / drive targets without reflashing</li>
+</ul>
+<h2 id="v040--physiology--drives">v0.4.0 — Physiology &amp; drives</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Internal variable vector (<code>h_energy</code>, <code>h_fatigue</code>, <code>h_safety</code>, <code>h_arousal</code>,
+<code>h_curiosity</code>, <code>h_boredom</code>, <code>h_social</code>)</li>
+<li><input disabled="" type="checkbox"> Update rules: decay/recovery, sensor coupling, actuator-cost coupling</li>
+<li><input disabled="" type="checkbox"> Drive computation from deviation against target bands</li>
+<li><input disabled="" type="checkbox"> Fuzz-scale / exploration modulation from drives</li>
+<li><input disabled="" type="checkbox"> Dashboard: live physiology &amp; drive readout</li>
+</ul>
+<h2 id="v050--contingency-memory">v0.5.0 — Contingency memory</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Fixed-size action-delta / sensor-delta record structure</li>
+<li><input disabled="" type="checkbox"> Quantization &amp; hashing of deltas</li>
+<li><input disabled="" type="checkbox"> Learn/decay/prune update algorithm bounded to <code>MAX_ENTRIES</code></li>
+<li><input disabled="" type="checkbox"> Contingency-biased action query</li>
+<li><input disabled="" type="checkbox"> Dashboard: inspect top contingency entries</li>
+</ul>
+<h2 id="v060--spatial-memory--navigation">v0.6.0 — Spatial memory &amp; navigation</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Coarse grid / place-cell representation</li>
+<li><input disabled="" type="checkbox"> Visit stats + drive-improvement profile per cell</li>
+<li><input disabled="" type="checkbox"> Spatial bias contribution to action generation</li>
+<li><input disabled="" type="checkbox"> Dashboard: simple 2D map view of visited cells</li>
+</ul>
+<h2 id="v070--core-loop-integration">v0.7.0 — Core loop integration</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Full tick loop wired end-to-end (sense → physiology → drives → memory query →
+action → actuate → learn)</li>
+<li><input disabled="" type="checkbox"> Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
+slow tasks (~1 Hz logging/checkpoints)</li>
+<li><input disabled="" type="checkbox"> Fixed-point/integer arithmetic pass for the hot loop</li>
+<li><input disabled="" type="checkbox"> On-device logging to flash for later analysis</li>
+</ul>
+<h2 id="v080--life-state-persistence">v0.8.0 — Life-state persistence</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Organism state serialization (physiology, drives, contingencies, spatial memory, stats)</li>
+<li><input disabled="" type="checkbox"> Download/upload state via the dashboard</li>
+<li><input disabled="" type="checkbox"> Channel-fingerprint + remapping layer for transferring state across bodies</li>
+</ul>
+<h2 id="v090--charging-station-integration">v0.9.0 — Charging station integration</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
+audio cue, power module states: IDLE/CHARGING/FULL)</li>
+<li><input disabled="" type="checkbox"> Robot-side: <code>battery_voltage</code>/<code>current</code> as ordinary sensor channels feeding <code>h_energy</code></li>
+<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions</li>
+</ul>
+<h2 id="v100--first-stable-alive-release-human-gated">v1.0.0 — First stable "alive" release (human-gated)</h2>
+<ul>
+<li><input disabled="" type="checkbox"> All of the above validated on real hardware</li>
+<li><input disabled="" type="checkbox"> Experimental program from the paper (§15) run at least once: homeostasis quality,
+exploration structure, history dependence, perceived aliveness</li>
+<li><input disabled="" type="checkbox"> Ablation switches implemented (disable stochasticity, freeze contingency memory,
+clear spatial memory, flatten drives, decouple battery from <code>h_energy</code>)</li>
+<li><input disabled="" type="checkbox"> Human sign-off to cut 1.0.0</li>
+</ul>
+<h2 id="backlog--later">Backlog / later</h2>
+<ul>
+<li>Multi-agent / multi-robot stigmergic experiments (scent, RF, light tags)</li>
+<li>Mechanical voice / prosody experiments</li>
+<li>Additional board support as hardware becomes available</li>
+<li>Formal comparison against HRL baselines</li>
+</ul>
+
+	
+
+</body></html>
