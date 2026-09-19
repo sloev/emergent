@@ -23,7 +23,9 @@ jobs:
           node-version: "20"
 
       - name: Render PDF from markdown
-        run: npx --yes md-to-pdf docs/synth-behavior.md
+        run: |
+          npx --yes md-to-pdf docs/synth-behavior.md \
+            --launch-options '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
 
       - name: Commit updated PDF
         run: |
