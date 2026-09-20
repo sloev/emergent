@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/synth-behavior.pdf docs/synth-behavior.html docs/roadmap.html
+          git add docs/synth-behavior.pdf docs/synth-behavior.html docs/roadmap.html docs/index.html
           if git diff --cached --quiet; then
             echo "No changes to rendered docs"
           else

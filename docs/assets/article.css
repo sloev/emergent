@@ -108,6 +108,8 @@ pre code {
 }
 
 table {
+  display: block;
+  overflow-x: auto;
   border-collapse: collapse;
   width: 100%;
   margin-top: 0;
@@ -118,6 +120,7 @@ th, td {
   border: 1px solid #ddd9d0;
   padding: 0.5rem 0.7rem;
   text-align: left;
+  white-space: nowrap;
 }
 th {
   background: #f1f0ec;
