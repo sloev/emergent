@@ -24,6 +24,7 @@ void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
         o["min"] = a.spec().range_min;
         o["max"] = a.spec().range_max;
         o["value"] = a.value();
+        o["manual"] = a.manual_override_active(millis());
     }
 
     JsonArray sensors = doc["sensors"].to<JsonArray>();
@@ -125,7 +126,7 @@ void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, Spatial
             float value = doc["value"] | 0.0f;
 
             Actuator* act = body.actuator(name);
-            if (act) act->write(value);
+            if (act) act->write_manual(value);
         }
     });
     server.addHandler(&ws);

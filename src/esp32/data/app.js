@@ -130,7 +130,9 @@
       const row = document.createElement("div");
       row.className = "channel";
       row.innerHTML =
-        '<span class="name">' + a.name + "</span>" +
+        '<span class="name">' + a.name +
+        ' <span class="tag manual" data-actuator-manual="' + a.name + '" style="display:' +
+        (a.manual ? "inline-block" : "none") + '">M</span></span>' +
         '<input type="range" min="' + a.min + '" max="' + a.max +
         '" step="0.01" value="' + a.value + '" data-actuator="' + a.name + '">' +
         '<span class="value" data-actuator-value="' + a.name + '">' + a.value.toFixed(2) + "</span>";
@@ -169,6 +171,8 @@
     data.actuators.forEach((a) => {
       const input = actuatorsEl.querySelector('input[data-actuator="' + a.name + '"]');
       const valueEl = actuatorsEl.querySelector('[data-actuator-value="' + a.name + '"]');
+      const manualEl = actuatorsEl.querySelector('[data-actuator-manual="' + a.name + '"]');
+      if (manualEl) manualEl.style.display = a.manual ? "inline-block" : "none";
       // Don't fight the user while they're dragging a slider.
       if (document.activeElement === input) return;
       if (input) input.value = a.value;

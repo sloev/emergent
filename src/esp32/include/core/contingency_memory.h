@@ -7,10 +7,11 @@
 // leaves implicit, a running estimate of whether that pattern coincided with
 // falling total drive pressure (things getting better). Every record is
 // keyed purely by quantized deltas and a coarse physiology context; nothing
-// here is told what a channel means. No action generator exists yet
-// (v0.7.0), so update() only learns from whatever moves the actuators today
-// — dashboard sliders, the heartbeat blink — and query_bias() is exposed but
-// unconsumed until the core loop lands.
+// here is told what a channel means. Consumed by ActionGenerator (v0.7.0)
+// via query_bias() against the sensor-delta code this memory just observed
+// (last_sensor_code()) — so the action generator always asks "what have I
+// seen follow *this exact* pattern" rather than recomputing its own guess
+// at the current delta.
 
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +46,11 @@ public:
     size_t count() const { return count_; }
     static constexpr size_t capacity() { return kCapacity; }
 
+    // The sensor-delta code computed on the most recent update() — what to
+    // pass to query_bias() to ask "what usually happens after what I'm
+    // seeing right now".
+    uint32_t last_sensor_code() const { return last_sensor_code_; }
+
     // Best-effort recall: does memory contain a pattern whose sensor_code
     // matches `sensor_code` and that historically preceded falling drive
     // pressure? If so, fills out_action_code (decode with decode_channel())
@@ -72,4 +78,5 @@ private:
     float prev_sensor_[Body::kMaxSensors] = {};
     bool has_prev_ = false;
     float prev_total_drive_ = 0.0f;
+    uint32_t last_sensor_code_ = 0;
 };

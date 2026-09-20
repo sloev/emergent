@@ -16,6 +16,15 @@ public:
     // `value` if rate-limited).
     float write(float value);
 
+    // Same as write(), but marks this channel as human-controlled for the
+    // next `window_ms` (see manual_override_active()) — used by the
+    // dashboard's manual sliders so the action generator backs off a
+    // channel a person is actively driving instead of fighting it.
+    float write_manual(float value);
+
+    // True if write_manual() was called within the last `window_ms`.
+    bool manual_override_active(uint32_t now_ms, uint32_t window_ms = 3000) const;
+
     float value() const { return current_; }
     float cost() const;
     const char* name() const { return spec_.name; }
@@ -27,6 +36,7 @@ private:
     ActuatorSpec spec_{};
     float current_ = 0.0f;
     uint32_t last_write_us_ = 0;
+    uint32_t last_manual_ms_ = 0;
     uint8_t channel_ = 0;  // ledc channel, for PWM/servo kinds
     bool initialized_ = false;
 };

@@ -7,6 +7,8 @@
   --accent: #c23a1f;
 }
 html, body { background: var(--bg); color: var(--fg); }
+a { color: var(--accent); }
+a:hover { color: #8f2a15; }
 body {
   margin: 0 auto;
   max-width: 480px;
@@ -162,7 +164,7 @@ p.hint code {
 .entry .entry-head .drive-good { color: #2f7a3d; }
 .entry .entry-head .drive-bad { color: var(--accent); }
 .entry .row { margin: 0.15rem 0; }
-.entry .tag {
+.tag {
   display: inline-block;
   background: #f1f0ec;
   padding: 0.05rem 0.4rem;
@@ -171,6 +173,14 @@ p.hint code {
 }
 .entry .tag.up::before { content: "\2191 "; }
 .entry .tag.down::before { content: "\2193 "; }
+.tag.manual {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
 .empty-hint { color: var(--fg-muted); font-size: 0.85rem; }
 
 .spatial-grid {

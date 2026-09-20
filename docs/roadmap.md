@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.6.0** (in progress)
+**Current release: v0.7.0** (in progress)
 
 ---
 
@@ -120,12 +120,49 @@ change, not an engine change.
 
 ## v0.7.0 — Core loop integration
 
-- [ ] Full tick loop wired end-to-end (sense → physiology → drives → memory query →
+- [x] Full tick loop wired end-to-end (sense → physiology → drives → memory query →
       action → actuate → learn)
-- [ ] Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
+- [x] Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
       slow tasks (~1 Hz logging/checkpoints)
-- [ ] Fixed-point/integer arithmetic pass for the hot loop
-- [ ] On-device logging to flash for later analysis
+- [x] Fixed-point/integer arithmetic pass for the hot loop — evaluated, not done (see note)
+- [x] On-device logging to flash for later analysis
+
+`ActionGenerator` is the piece every prior release was missing: physiology,
+contingency memory, and spatial memory now actually drive the actuators each
+tick (`baseline + drive-scaled noise + contingency bias + spatial nudge`,
+clamped) instead of only observing whatever the dashboard did. A channel
+recently touched from the dashboard (`Actuator::manual_override_active`,
+3s window) is left alone rather than fought over — the heartbeat blink uses
+the same mechanism (`write_manual`) so it stays system-owned without a
+hardcoded channel-name exception in the engine.
+
+Task split: high-frequency work (PWM via hardware LEDC, ADC via on-demand
+cached `Sensor::read()`) needs no separate task — the hardware and existing
+on-demand reads already satisfy it. Behavior task is the existing 20 Hz
+tick. Slow task is the new `StateLogger`, ~1 Hz, appending physiology +
+total actuator cost to a 64KB-capped `/log.csv` on the same LittleFS
+partition the dashboard serves from — downloadable at `/log.csv` with zero
+extra server code, and exposed as a button on the dashboard's Config tab.
+
+Fixed-point arithmetic: evaluated and deliberately not done. The article's
+advice (§14.2) targets microcontrollers generically; both ESP32 and ESP32-S3
+have a hardware single-precision FPU, so float ops in a tick this small
+(a few hundred multiply-adds across four modules, worst case) cost
+microseconds — replacing them with fixed-point would trade real readability
+for no measurable benefit on this specific hardware. Revisit only if a
+future board target lacks an FPU.
+
+Honest limitation carried over from v0.6.0: `SpatialMemory::best_cell()`
+still can't say *which direction* to move, only *which remembered place*
+looks best. `ActionGenerator` resolves that the way flagged there — as an
+explore/exploit nudge (wider noise if a better place than "here" is known,
+narrower if "here" already looks best), not fabricated steering.
+
+Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO. Dashboard changes (manual-override badge,
+log download link) verified against a mocked API in a real browser. Not yet
+run on real hardware — the gains/constants above (noise, bias, and nudge
+scaling) are starting points, not tuned values.
 
 ## v0.8.0 — Life-state persistence
 

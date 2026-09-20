@@ -81,6 +81,16 @@ float Actuator::write(float value) {
     return current_;
 }
 
+float Actuator::write_manual(float value) {
+    float applied = write(value);
+    last_manual_ms_ = millis();
+    return applied;
+}
+
+bool Actuator::manual_override_active(uint32_t now_ms, uint32_t window_ms) const {
+    return last_manual_ms_ != 0 && (now_ms - last_manual_ms_) < window_ms;
+}
+
 float Actuator::cost() const {
     return fabsf(current_) * spec_.cost_per_unit;
 }

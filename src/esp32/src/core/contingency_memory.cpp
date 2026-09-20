@@ -151,6 +151,7 @@ void ContingencyMemory::update(Body& body, Physiology& phys, float dt_s) {
         uint8_t ctx = context_hash(phys);
         float drive_delta = prev_total_drive_ - total_drive;  // positive = things got better
 
+        last_sensor_code_ = sensor_code;
         insert_or_reinforce(action_code, sensor_code, ctx, drive_delta);
     }
 

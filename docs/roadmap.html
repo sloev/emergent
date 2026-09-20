@@ -158,7 +158,7 @@ figure.mermaid svg {
   h2 { font-size: 1.1rem; }
   pre, code { font-size: 0.85rem; }
 }
-/*# sourceURL=/home/runner/work/emergent/emergent/docs/assets/article.css*/</style><style>pre code.hljs {
+/*# sourceURL=/home/nihil/Developer/emergent/docs/assets/article.css*/</style><style>pre code.hljs {
   display: block;
   overflow-x: auto;
   padding: 1em
@@ -275,7 +275,7 @@ code.hljs {
 .hljs-tag {
   /* purposely ignored */
   
-}/*# sourceURL=/home/runner/work/emergent/emergent/node_modules/highlight.js/styles/github.css*/</style></head>
+}/*# sourceURL=/home/nihil/Developer/emergent/node_modules/highlight.js/styles/github.css*/</style></head>
 	<body class="">
 		<h1 id="roadmap">Roadmap</h1>
 <p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
@@ -283,7 +283,7 @@ code.hljs {
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.6.0</strong> (in progress)</p>
+<p><strong>Current release: v0.7.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -387,13 +387,45 @@ differentiation needs richer sensor profiles, which is a board-config
 change, not an engine change.</p>
 <h2 id="v070--core-loop-integration">v0.7.0 — Core loop integration</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Full tick loop wired end-to-end (sense → physiology → drives → memory query →
+<li><input checked="" disabled="" type="checkbox"> Full tick loop wired end-to-end (sense → physiology → drives → memory query →
 action → actuate → learn)</li>
-<li><input disabled="" type="checkbox"> Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
+<li><input checked="" disabled="" type="checkbox"> Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
 slow tasks (~1 Hz logging/checkpoints)</li>
-<li><input disabled="" type="checkbox"> Fixed-point/integer arithmetic pass for the hot loop</li>
-<li><input disabled="" type="checkbox"> On-device logging to flash for later analysis</li>
+<li><input checked="" disabled="" type="checkbox"> Fixed-point/integer arithmetic pass for the hot loop — evaluated, not done (see note)</li>
+<li><input checked="" disabled="" type="checkbox"> On-device logging to flash for later analysis</li>
 </ul>
+<p><code>ActionGenerator</code> is the piece every prior release was missing: physiology,
+contingency memory, and spatial memory now actually drive the actuators each
+tick (<code>baseline + drive-scaled noise + contingency bias + spatial nudge</code>,
+clamped) instead of only observing whatever the dashboard did. A channel
+recently touched from the dashboard (<code>Actuator::manual_override_active</code>,
+3s window) is left alone rather than fought over — the heartbeat blink uses
+the same mechanism (<code>write_manual</code>) so it stays system-owned without a
+hardcoded channel-name exception in the engine.</p>
+<p>Task split: high-frequency work (PWM via hardware LEDC, ADC via on-demand
+cached <code>Sensor::read()</code>) needs no separate task — the hardware and existing
+on-demand reads already satisfy it. Behavior task is the existing 20 Hz
+tick. Slow task is the new <code>StateLogger</code>, ~1 Hz, appending physiology +
+total actuator cost to a 64KB-capped <code>/log.csv</code> on the same LittleFS
+partition the dashboard serves from — downloadable at <code>/log.csv</code> with zero
+extra server code, and exposed as a button on the dashboard's Config tab.</p>
+<p>Fixed-point arithmetic: evaluated and deliberately not done. The article's
+advice (§14.2) targets microcontrollers generically; both ESP32 and ESP32-S3
+have a hardware single-precision FPU, so float ops in a tick this small
+(a few hundred multiply-adds across four modules, worst case) cost
+microseconds — replacing them with fixed-point would trade real readability
+for no measurable benefit on this specific hardware. Revisit only if a
+future board target lacks an FPU.</p>
+<p>Honest limitation carried over from v0.6.0: <code>SpatialMemory::best_cell()</code>
+still can't say <em>which direction</em> to move, only <em>which remembered place</em>
+looks best. <code>ActionGenerator</code> resolves that the way flagged there — as an
+explore/exploit nudge (wider noise if a better place than "here" is known,
+narrower if "here" already looks best), not fabricated steering.</p>
+<p>Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO. Dashboard changes (manual-override badge,
+log download link) verified against a mocked API in a real browser. Not yet
+run on real hardware — the gains/constants above (noise, bias, and nudge
+scaling) are starting points, not tuned values.</p>
 <h2 id="v080--life-state-persistence">v0.8.0 — Life-state persistence</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Organism state serialization (physiology, drives, contingencies, spatial memory, stats)</li>

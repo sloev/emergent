@@ -24,6 +24,12 @@
     <div id="sensors" class="channels"></div>
 
     <h2>Actuators</h2>
+    <p class="hint">
+      Driven autonomously (baseline + drive-scaled noise + memory bias)
+      unless you move a slider — dragging one hands that channel to you for
+      a few seconds, tagged <span class="tag">M</span>, before control
+      returns on its own.
+    </p>
     <div id="actuators" class="channels"></div>
   </section>
 
@@ -33,8 +39,8 @@
       What the board has learned so far: patterns of "actuators moved like
       this, sensors moved like that" and whether that pattern coincided with
       falling drive pressure (<code>Δdrive</code>, higher is better).
-      Strongest entries first. Nothing acts on this yet — no action generator
-      exists until v0.7.0.
+      Strongest entries first. The action generator queries this every tick
+      to bias its next move toward whatever has helped before.
     </p>
     <div id="contingency" class="entries"></div>
 
@@ -43,7 +49,10 @@
       This board has no positioning sensor, so a "place" is a coarse
       signature of current sensor readings — same ambient conditions read as
       the same place. Each square is one remembered place; brighter = more
-      promising for what's pressing right now.
+      promising for what's pressing right now. There's no direction to steer
+      in without real coordinates, so this only widens or narrows the action
+      generator's exploration noise — wider if a better place than "here" is
+      known, narrower if "here" already looks best.
     </p>
     <div id="spatial-grid" class="spatial-grid"></div>
   </section>
@@ -56,6 +65,14 @@
       <button type="submit">Save &amp; restart</button>
     </form>
     <p id="wifi-status"></p>
+
+    <h2>Log</h2>
+    <p class="hint">
+      A snapshot of physiology and total actuator cost is appended about
+      once a second. Capped at 64KB — once full, it starts over from empty
+      rather than growing without bound.
+    </p>
+    <p><a href="/log.csv" download>Download state log (log.csv)</a></p>
   </section>
 
   <script src="app.js"></script>
