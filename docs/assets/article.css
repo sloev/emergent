@@ -1,4 +1,16 @@
-/* Shared stylesheet for rendered markdown pages (article, roadmap). */
+/* Shared stylesheet for rendered markdown pages (article, roadmap).
+ *
+ * Layout rule: `body > *` is the ONLY rule allowed to set horizontal
+ * margin/width/padding — it centers every top-level block in one 760px
+ * reading column with consistent side gutters. Every other rule below may
+ * only set vertical (top/bottom) margin. A rule that sets shorthand
+ * `margin: Xrem 0` on a direct body child silently resets left/right to 0
+ * and — at equal specificity — wins by source order, breaking centering on
+ * viewports wider than 760px. (This bit us once already: blockquote, table,
+ * hr, h1, and the p/ul/ol group had all quietly gone flush-left while
+ * headings stayed centered.) If you add a rule here for a body-level
+ * element, use margin-top/margin-bottom, never the margin shorthand.
+ */
 
 * { box-sizing: border-box; }
 html, body {
@@ -8,16 +20,19 @@ html, body {
 body {
   margin: 0;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 .wrap, body > * {
   max-width: 760px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 body {
-  padding: 3rem 0 5rem;
+  padding-top: 3rem;
+  padding-bottom: 5rem;
 }
 
 a { color: #c23a1f; }
@@ -28,32 +43,43 @@ h1, h2, h3, h4 {
   letter-spacing: 0.01em;
 }
 h1 {
-  font-size: 1.9rem;
-  text-transform: uppercase;
+  font-size: 1.7rem;
+  line-height: 1.3;
   border-bottom: 3px solid #111111;
-  padding-bottom: 0.75rem;
-  margin: 0 0 1.5rem;
+  padding-bottom: 0.9rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+h1 + p {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #5a5a5a;
+  font-size: 0.95rem;
 }
 h2 {
   font-size: 1.25rem;
   border-bottom: 1px solid #ddd9d0;
   padding-bottom: 0.4rem;
   margin-top: 2.5rem;
+  margin-bottom: 1rem;
 }
 h3 {
   font-size: 1.05rem;
   margin-top: 2rem;
+  margin-bottom: 0.75rem;
 }
 h4 {
   font-size: 0.95rem;
   margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
-p, ul, ol { margin: 0 0 1.1rem; }
-li { margin: 0.2rem 0; }
+p, ul, ol { margin-top: 0; margin-bottom: 1.1rem; }
+li { margin-top: 0.2rem; margin-bottom: 0.2rem; }
 
 blockquote {
-  margin: 1.5rem 0;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
   padding: 0.9rem 1.1rem;
   border-left: 3px solid #c23a1f;
   background: #f1f0ec;
@@ -66,21 +92,26 @@ code {
   padding: 0.1rem 0.35rem;
   font-size: 0.9em;
   font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  word-break: break-word;
 }
 pre {
   background: #f1f0ec;
   padding: 1rem;
   overflow-x: auto;
+  margin-top: 0;
+  margin-bottom: 1.1rem;
 }
 pre code {
   background: none;
   padding: 0;
+  word-break: normal;
 }
 
 table {
   border-collapse: collapse;
   width: 100%;
-  margin: 0 0 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
   font-size: 0.92rem;
 }
 th, td {
@@ -95,13 +126,15 @@ th {
 hr {
   border: none;
   border-top: 1px solid #ddd9d0;
-  margin: 2.5rem 0;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
 }
 
 img { max-width: 100%; }
 
 figure.mermaid {
-  margin: 2rem 0;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
   padding: 1rem;
   background: #f1f0ec;
   text-align: center;
@@ -110,4 +143,15 @@ figure.mermaid {
 figure.mermaid svg {
   max-width: 100%;
   height: auto;
+}
+
+@media (max-width: 480px) {
+  .wrap, body > * {
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+  }
+  body { padding-top: 2rem; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; }
+  pre, code { font-size: 0.85rem; }
 }

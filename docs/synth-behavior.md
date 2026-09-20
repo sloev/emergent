@@ -1,3 +1,7 @@
+# Emergent: A Synthetic Ethology Platform for ESP32-Class Hardware
+
+[← Back to project overview](index.html)
+
 ## Table of Contents
 
 1. [Introduction](#1-introduction)  
