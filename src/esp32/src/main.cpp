@@ -1,12 +1,12 @@
-// Emergent firmware — v0.5.0: contingency memory.
+// Emergent firmware — v0.6.0: spatial memory.
 //
-// The behavior tick now also runs ContingencyMemory: a bounded, decaying
-// table of "actuators moved like X, sensors moved like Y, and drive pressure
-// changed by Z" records (docs/synth-behavior.md §7). It learns from whatever
-// moves the actuators today — dashboard sliders, the heartbeat blink — since
-// there is still no autonomous action generator; that's v0.7.0, once spatial
-// memory (v0.6.0) also exists to help bias it. The memory's query API is
-// exposed and testable via the dashboard, just not consumed by anything yet.
+// The behavior tick now also runs SpatialMemory: since this hardware has no
+// positioning sensor, "place" is a coarse signature of the current sensor
+// readings rather than (x,y) coordinates (docs/synth-behavior.md §8 offers
+// this as an explicit alternative to a real grid). Each place cell tracks
+// visit count and an EMA of how drives changed while there, so best_cell()
+// can answer "which remembered place has helped most with what's pressing
+// right now" — still with no action generator to act on it (that's v0.7.0).
 // See docs/roadmap.md for what's next.
 
 #include <Arduino.h>
@@ -15,6 +15,7 @@
 #include "board_config.h"
 #include "core/contingency_memory.h"
 #include "core/physiology.h"
+#include "core/spatial_memory.h"
 #include "net/dashboard_server.h"
 #include "net/wifi_ap.h"
 
@@ -25,6 +26,7 @@ constexpr uint32_t kBehaviorTickMs = 50;  // 20 Hz, within the 15-30 Hz the arti
 static Body body(active_board());
 static Physiology phys;
 static ContingencyMemory contingency;
+static SpatialMemory spatial;
 
 static void self_test() {
     const BoardConfig& board = active_board();
@@ -67,9 +69,10 @@ void setup() {
     self_test();
     phys.begin(body);
     contingency.begin(body);
+    spatial.begin(body);
 
     wifi_ap::begin(active_board());
-    dashboard::begin(body, phys, contingency);
+    dashboard::begin(body, phys, contingency, spatial);
 }
 
 void loop() {
@@ -87,13 +90,13 @@ void loop() {
         last_toggle_ms = now;
     }
 
-    // Behavior tick: physiology/drives and contingency memory update at a
-    // fixed rate. Contingency memory reads actuator/sensor state *after*
-    // physiology this tick, so both see the same snapshot.
+    // Behavior tick: physiology/drives, contingency memory, and spatial
+    // memory all update at a fixed rate from the same snapshot.
     if (now - last_tick_ms >= kBehaviorTickMs) {
         float dt_s = (now - last_tick_ms) / 1000.0f;
         phys.update(body, dt_s);
         contingency.update(body, phys, dt_s);
+        spatial.update(body, phys, dt_s);
         last_tick_ms = now;
     }
 

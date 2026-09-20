@@ -5,8 +5,15 @@
   const fuzzEl = document.getElementById("fuzz-scale");
   const contingencyEl = document.getElementById("contingency");
   const contingencyCountEl = document.getElementById("contingency-count");
+  const spatialGridEl = document.getElementById("spatial-grid");
+  const spatialCountEl = document.getElementById("spatial-count");
   let ws;
-  let contingencyPoll;
+  let memoryPoll;
+
+  function fetchMemoryTab() {
+    fetchContingency();
+    fetchSpatial();
+  }
 
   document.querySelectorAll("nav button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -16,11 +23,11 @@
       document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
 
       if (btn.dataset.tab === "memory") {
-        fetchContingency();
-        contingencyPoll = setInterval(fetchContingency, 2000);
-      } else if (contingencyPoll) {
-        clearInterval(contingencyPoll);
-        contingencyPoll = null;
+        fetchMemoryTab();
+        memoryPoll = setInterval(fetchMemoryTab, 2000);
+      } else if (memoryPoll) {
+        clearInterval(memoryPoll);
+        memoryPoll = null;
       }
     });
   });
@@ -59,6 +66,36 @@
     fetch("/api/contingency")
       .then((r) => r.json())
       .then(renderContingency)
+      .catch(() => {});
+  }
+
+  function renderSpatial(data) {
+    spatialCountEl.textContent = data.count + " / " + data.capacity + " places";
+    spatialGridEl.innerHTML = "";
+
+    // Normalize score against the strongest cell present so brightness is
+    // relative, not tied to an arbitrary absolute scale.
+    const maxAbsScore = Math.max(
+      0.001,
+      ...data.cells.filter((c) => c.occupied).map((c) => Math.abs(c.score || 0))
+    );
+
+    data.cells.forEach((c) => {
+      const sq = document.createElement("div");
+      sq.className = "spatial-cell" + (c.occupied ? " occupied" : "");
+      if (c.occupied) {
+        const norm = Math.max(0, (c.score || 0) / maxAbsScore);
+        sq.style.background = "rgba(194, 58, 31, " + (0.15 + 0.65 * norm) + ")";
+        sq.title = "visits " + c.visit_count + " · age " + c.age + " · score " + (c.score || 0).toFixed(3);
+      }
+      spatialGridEl.appendChild(sq);
+    });
+  }
+
+  function fetchSpatial() {
+    fetch("/api/spatial")
+      .then((r) => r.json())
+      .then(renderSpatial)
       .catch(() => {});
   }
 

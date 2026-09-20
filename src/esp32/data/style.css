@@ -172,3 +172,17 @@ p.hint code {
 .entry .tag.up::before { content: "\2191 "; }
 .entry .tag.down::before { content: "\2193 "; }
 .empty-hint { color: var(--fg-muted); font-size: 0.85rem; }
+
+.spatial-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+.spatial-cell {
+  aspect-ratio: 1;
+  border: 1px solid #ddd9d0;
+  background: #fff;
+}
+.spatial-cell.occupied {
+  border-color: transparent;
+}

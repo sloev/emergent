@@ -5,16 +5,19 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
-v0.5.0 contingency memory: alongside physiology, a fixed-size (256-entry)
-hash table now records "actuators moved like this, sensors moved like that"
-patterns each behavior tick, decaying over time and reinforcing on repeat,
-tagged with whether the pattern coincided with falling drive pressure
-(`docs/synth-behavior.md` §7). There is still no action generator — that's
-v0.7.0, once spatial memory (v0.6.0) exists too — so it currently learns from
-whatever moves the actuators today (dashboard sliders, the heartbeat blink).
-The query API (`ContingencyMemory::query_bias`) is implemented and exposed
-via the dashboard's new Memory tab, unconsumed until the core loop lands.
-See [`docs/roadmap.md`](../../docs/roadmap.md) for what's next.
+v0.6.0 spatial memory: this hardware has no positioning sensor — no
+encoders, no IMU, no GPS — so rather than fake open-loop odometry from
+commanded motor duty cycle (which would drift into nonsense in seconds),
+"place" is a coarse signature of current sensor readings (`docs/synth-behavior.md`
+§8 explicitly offers this as an alternative to a real grid: same ambient
+light/RF/whatever reads the same, treated as the same place). Each place
+cell tracks visit count and an EMA of how drives changed while there;
+`SpatialMemory::best_cell()` answers "which remembered place has helped
+most with what's pressing right now." There's still no action generator to
+act on any of this — that's v0.7.0 — and without real coordinates there's no
+direction to steer in either, so turning "go there" into motor output is
+deferred honestly rather than faked. See
+[`docs/roadmap.md`](../../docs/roadmap.md) for what's next.
 
 ## Layout
 
@@ -36,11 +39,15 @@ include/core/physiology.h/.cpp
 include/core/contingency_memory.h/.cpp
                               Bounded, decaying action/sensor-delta memory
                               (docs/synth-behavior.md §7)
+include/core/spatial_memory.h/.cpp
+                              Sensor-signature place cells + best_cell() query
+                              (docs/synth-behavior.md §8)
 include/net/wifi_ap.h/.cpp    Brings up the SoftAP; credentials default to the
                                board profile, overridable at runtime (NVS)
 include/net/dashboard_server.h/.cpp
                                ESPAsyncWebServer + WebSocket: serves data/,
-                               /api/channels, /api/contingency, /api/config/wifi
+                               /api/channels, /api/contingency, /api/spatial,
+                               /api/config/wifi
 data/                          Dashboard front-end (served from LittleFS)
 src/board_config.cpp          Picks the active BoardConfig from the -DBOARD_PROFILE_*
                                macro set by the PlatformIO environment
@@ -77,7 +84,8 @@ overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
   actuator for manual control. Updated over WebSocket (`/ws`) at 5 Hz.
 - **Memory tab** — top contingency-memory entries by strength, decoded into
   which channels moved which way and whether it coincided with falling
-  drive pressure. Polled every 2s.
+  drive pressure, plus a fixed 8x4 grid of remembered "places" (sensor
+  signatures) shaded by how promising each looks right now. Polled every 2s.
 - **Config tab** — change the AP's SSID/password. Saved to NVS and applied
   on restart, no reflash needed.
 
@@ -86,6 +94,8 @@ the bundled UI:
 - `GET /api/channels` — JSON snapshot of all actuators/sensors/physiology.
 - `GET /api/contingency` — top contingency-memory entries (strength, age,
   mean drive delta, decoded channel deltas).
+- `GET /api/spatial` — all 32 place-cell slots (occupied or not), each with
+  visit count, age, and current drive-weighted score.
 - WebSocket `/ws` — server pushes the same `/api/channels` shape at 5 Hz;
   send `{"actuator": "<name>", "value": <float>}` to drive a channel.
 - `POST /api/config/wifi` — JSON `{"ssid": "...", "password": "..."}`,

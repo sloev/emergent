@@ -75,11 +75,34 @@ void build_contingency_json(Body& body, ContingencyMemory& contingency, JsonDocu
         add_decoded_channels(o["sensors"].to<JsonArray>(), body, top[i].sensor_code, false);
     }
 }
+
+// Full fixed-size grid (occupied or not) so the dashboard's layout is
+// stable across calls — cells fill in as they're discovered rather than
+// the list reordering/reshuffling.
+void build_spatial_json(SpatialMemory& spatial, Physiology& phys, JsonDocument& doc) {
+    doc["count"] = spatial.count();
+    doc["capacity"] = SpatialMemory::capacity();
+
+    JsonArray cells = doc["cells"].to<JsonArray>();
+    for (size_t i = 0; i < SpatialMemory::capacity(); i++) {
+        const SpatialCell& c = spatial.cell_at(i);
+        JsonObject o = cells.add<JsonObject>();
+        o["occupied"] = c.occupied;
+        if (!c.occupied) continue;
+        o["visit_count"] = c.visit_count;
+        o["age"] = c.age;
+        float score = 0.0f;
+        for (size_t v = 0; v < kPhysVarCount; v++) {
+            score += phys.drive(static_cast<PhysVar>(v)) * c.drive_improvement[v];
+        }
+        o["score"] = score;
+    }
+}
 }  // namespace
 
 namespace dashboard {
 
-void begin(Body& body, Physiology& phys, ContingencyMemory& contingency) {
+void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, SpatialMemory& spatial) {
     if (!LittleFS.begin(true)) {
         Serial.println("[dashboard] LittleFS mount failed");
     }
@@ -118,6 +141,14 @@ void begin(Body& body, Physiology& phys, ContingencyMemory& contingency) {
     server.on("/api/contingency", HTTP_GET, [&body, &contingency](AsyncWebServerRequest* request) {
         JsonDocument doc;
         build_contingency_json(body, contingency, doc);
+        String out;
+        serializeJson(doc, out);
+        request->send(200, "application/json", out);
+    });
+
+    server.on("/api/spatial", HTTP_GET, [&phys, &spatial](AsyncWebServerRequest* request) {
+        JsonDocument doc;
+        build_spatial_json(spatial, phys, doc);
         String out;
         serializeJson(doc, out);
         request->send(200, "application/json", out);

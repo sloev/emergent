@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.5.0** (in progress)
+**Current release: v0.6.0** (in progress)
 
 ---
 
@@ -88,10 +88,35 @@ whatever a human does via the dashboard sliders or the heartbeat blink.
 
 ## v0.6.0 — Spatial memory & navigation
 
-- [ ] Coarse grid / place-cell representation
-- [ ] Visit stats + drive-improvement profile per cell
-- [ ] Spatial bias contribution to action generation
-- [ ] Dashboard: simple 2D map view of visited cells
+- [x] Coarse grid / place-cell representation
+- [x] Visit stats + drive-improvement profile per cell
+- [x] Spatial bias contribution to action generation
+- [x] Dashboard: simple 2D map view of visited cells
+
+Verified: both board targets build clean with PlatformIO. Not yet run on
+real hardware. A significant, deliberate departure from the article's
+pseudocode: this hardware has no positioning sensor (no encoders/IMU/GPS),
+and the article's `spatial_bias(position, drives, spatial_map)` assumes
+`position` already exists without saying where it comes from. Rather than
+fabricate open-loop odometry from commanded motor duty cycle — which would
+drift into meaninglessness within seconds, since duty cycle isn't measured
+displacement — this uses the article's own explicitly offered alternative
+(§8.1): "a coarse 2-D grid OR a set of place cells". A place cell here is a
+coarse signature of current sensor readings; same ambient conditions are
+treated as the same place, which is the same gradient-following idea §10
+already uses for individual channels (light, RF), just made the identity of
+a location instead of a single bias term.
+
+Consequence: `best_cell()` (the "spatial bias contribution" task) answers
+*which* remembered place looks most promising for current drives, but not
+*which direction* to move — there's no direction without real coordinates.
+Turning that into actual motor output is deferred to v0.7.0's core loop,
+which will need a concrete policy for it (most likely: bias exploration
+persistence/exploitation balance rather than literal steering, given the
+hardware). Currently, with only 2 sensor channels on both board profiles,
+signature entropy is low (few distinguishable "places") — richer
+differentiation needs richer sensor profiles, which is a board-config
+change, not an engine change.
 
 ## v0.7.0 — Core loop integration
 

@@ -155,7 +155,7 @@ figure.mermaid svg {
   h2 { font-size: 1.1rem; }
   pre, code { font-size: 0.85rem; }
 }
-/*# sourceURL=/home/runner/work/emergent/emergent/docs/assets/article.css*/</style><style>pre code.hljs {
+/*# sourceURL=/home/nihil/Developer/emergent/docs/assets/article.css*/</style><style>pre code.hljs {
   display: block;
   overflow-x: auto;
   padding: 1em
@@ -272,7 +272,7 @@ code.hljs {
 .hljs-tag {
   /* purposely ignored */
   
-}/*# sourceURL=/home/runner/work/emergent/emergent/node_modules/highlight.js/styles/github.css*/</style></head>
+}/*# sourceURL=/home/nihil/Developer/emergent/node_modules/highlight.js/styles/github.css*/</style></head>
 	<body class="">
 		<h1 id="roadmap">Roadmap</h1>
 <p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
@@ -280,7 +280,7 @@ code.hljs {
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.5.0</strong> (in progress)</p>
+<p><strong>Current release: v0.6.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -354,11 +354,34 @@ action generator exists until v0.7.0, so today the table only learns from
 whatever a human does via the dashboard sliders or the heartbeat blink.</p>
 <h2 id="v060--spatial-memory--navigation">v0.6.0 — Spatial memory &amp; navigation</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Coarse grid / place-cell representation</li>
-<li><input disabled="" type="checkbox"> Visit stats + drive-improvement profile per cell</li>
-<li><input disabled="" type="checkbox"> Spatial bias contribution to action generation</li>
-<li><input disabled="" type="checkbox"> Dashboard: simple 2D map view of visited cells</li>
+<li><input checked="" disabled="" type="checkbox"> Coarse grid / place-cell representation</li>
+<li><input checked="" disabled="" type="checkbox"> Visit stats + drive-improvement profile per cell</li>
+<li><input checked="" disabled="" type="checkbox"> Spatial bias contribution to action generation</li>
+<li><input checked="" disabled="" type="checkbox"> Dashboard: simple 2D map view of visited cells</li>
 </ul>
+<p>Verified: both board targets build clean with PlatformIO. Not yet run on
+real hardware. A significant, deliberate departure from the article's
+pseudocode: this hardware has no positioning sensor (no encoders/IMU/GPS),
+and the article's <code>spatial_bias(position, drives, spatial_map)</code> assumes
+<code>position</code> already exists without saying where it comes from. Rather than
+fabricate open-loop odometry from commanded motor duty cycle — which would
+drift into meaninglessness within seconds, since duty cycle isn't measured
+displacement — this uses the article's own explicitly offered alternative
+(§8.1): "a coarse 2-D grid OR a set of place cells". A place cell here is a
+coarse signature of current sensor readings; same ambient conditions are
+treated as the same place, which is the same gradient-following idea §10
+already uses for individual channels (light, RF), just made the identity of
+a location instead of a single bias term.</p>
+<p>Consequence: <code>best_cell()</code> (the "spatial bias contribution" task) answers
+<em>which</em> remembered place looks most promising for current drives, but not
+<em>which direction</em> to move — there's no direction without real coordinates.
+Turning that into actual motor output is deferred to v0.7.0's core loop,
+which will need a concrete policy for it (most likely: bias exploration
+persistence/exploitation balance rather than literal steering, given the
+hardware). Currently, with only 2 sensor channels on both board profiles,
+signature entropy is low (few distinguishable "places") — richer
+differentiation needs richer sensor profiles, which is a board-config
+change, not an engine change.</p>
 <h2 id="v070--core-loop-integration">v0.7.0 — Core loop integration</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Full tick loop wired end-to-end (sense → physiology → drives → memory query →
