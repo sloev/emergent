@@ -5,17 +5,21 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
-v0.3.0 WiFi hotspot & dashboard: the board brings up its own AP and serves a
-live dashboard — telemetry over WebSocket, manual actuator control, and a
-config page to change WiFi credentials without reflashing. The behavior
-engine (physiology, drives, memory) is not here yet — see
+v0.4.0 physiology & drives: a behavior tick runs at 20 Hz, folding sensor
+change and actuator cost into a small vector of internal variables
+(`h_energy`, `h_fatigue`, `h_safety`, `h_arousal`, `h_curiosity`,
+`h_boredom`, `h_social`), decaying/recovering them, and deriving drives plus
+an exploration scale (`fuzz_scale`) from deviation against per-variable
+target bands. Nothing acts on the drives yet — the action generator is not
+here until contingency memory and spatial memory exist. Physiology is live
+on the dashboard's new Physiology section. See
 [`docs/roadmap.md`](../../docs/roadmap.md) for what's next.
 
 ## Layout
 
 ```
 platformio.ini                Board environments (one per supported ESP32 variant)
-include/board_config.h        BoardConfig: a board's WiFi defaults + channel lists
+include/board_config.h        BoardConfig: WiFi defaults, channel lists, energy_sensor
 include/boards/                One header per supported board, each defining its
                                 channel arrays and a BoardConfig instance
 include/body/actuator_spec.h  Actuator channel description (kind, pins, range,
@@ -25,6 +29,9 @@ include/body/actuator.h/.cpp  Actuator: clamps, rate-limits, drives hardware
 include/body/sensor.h/.cpp    Sensor: reads and normalizes, caches per sample rate
 include/body/body.h/.cpp      Body: owns the live Actuator/Sensor instances for
                                a board, looked up by name
+include/core/physiology.h/.cpp
+                              Internal variables + drives + exploration scale
+                              (docs/synth-behavior.md §6)
 include/net/wifi_ap.h/.cpp    Brings up the SoftAP; credentials default to the
                                board profile, overridable at runtime (NVS)
 include/net/dashboard_server.h/.cpp
@@ -33,12 +40,16 @@ include/net/dashboard_server.h/.cpp
 data/                          Dashboard front-end (served from LittleFS)
 src/board_config.cpp          Picks the active BoardConfig from the -DBOARD_PROFILE_*
                                macro set by the PlatformIO environment
-src/main.cpp                  Entry point: self-test, WiFi/dashboard bring-up, loop
+src/main.cpp                  Entry point: self-test, WiFi/dashboard bring-up,
+                               heartbeat + 20 Hz behavior tick
 ```
 
 Nothing outside `board_config.*` and `boards/` ever sees a pin number or
-mentions what a channel is "for" — the behavior engine that lands in later
-releases will only ever ask the `Body` for a named channel.
+mentions what a channel is "for" — the behavior engine only ever asks the
+`Body` for a named channel. The one privileged wiring the article's design
+allows (battery → `h_energy`) is expressed as `BoardConfig::energy_sensor` —
+a channel *name*, so it stays a fact about how the chassis is built rather
+than a semantic baked into the engine.
 
 ## Channel kinds
 
@@ -57,14 +68,15 @@ Sensors (`SensorKind`):
 On boot the board starts a SoftAP (SSID/password from the board profile,
 overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
 
-- **Dashboard tab** — every sensor's live value, and a slider per actuator
-  for manual control. Updated over WebSocket (`/ws`) at 5 Hz.
+- **Dashboard tab** — physiology (value + drive per internal variable,
+  overall `fuzz_scale`), every sensor's live value, and a slider per
+  actuator for manual control. Updated over WebSocket (`/ws`) at 5 Hz.
 - **Config tab** — change the AP's SSID/password. Saved to NVS and applied
   on restart, no reflash needed.
 
 API, for anything that wants to talk to the board directly instead of using
 the bundled UI:
-- `GET /api/channels` — JSON snapshot of all actuators/sensors.
+- `GET /api/channels` — JSON snapshot of all actuators/sensors/physiology.
 - WebSocket `/ws` — server pushes the same JSON shape at 5 Hz; send
   `{"actuator": "<name>", "value": <float>}` to drive a channel.
 - `POST /api/config/wifi` — JSON `{"ssid": "...", "password": "..."}`,
@@ -73,7 +85,8 @@ the bundled UI:
 ## Adding a board
 
 1. Define `ActuatorSpec[]` / `SensorSpec[]` arrays and a `BoardConfig`
-   (including `ap_ssid`/`ap_password` defaults) in `include/boards/board_<name>.h`.
+   (WiFi defaults + optional `energy_sensor` channel name) in
+   `include/boards/board_<name>.h`.
 2. Add a case for it in `src/board_config.cpp` (`#if defined(BOARD_PROFILE_<NAME>)`).
 3. Add a `[env:<name>]` section in `platformio.ini` with
    `-DBOARD_PROFILE_<NAME>` in `build_flags`.

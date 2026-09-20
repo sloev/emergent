@@ -99,7 +99,19 @@ hr {
 }
 
 img { max-width: 100%; }
-/*# sourceURL=docs/assets/article.css*/</style><style>pre code.hljs {
+
+figure.mermaid {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f1f0ec;
+  text-align: center;
+  overflow-x: auto;
+}
+figure.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+/*# sourceURL=/home/nihil/Developer/emergent/docs/assets/article.css*/</style><style>pre code.hljs {
   display: block;
   overflow-x: auto;
   padding: 1em
@@ -216,7 +228,7 @@ code.hljs {
 .hljs-tag {
   /* purposely ignored */
   
-}/*# sourceURL=/home/runner/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+}/*# sourceURL=/home/nihil/Developer/emergent/node_modules/highlight.js/styles/github.css*/</style></head>
 	<body class="">
 		<h1 id="roadmap">Roadmap</h1>
 <p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
@@ -224,7 +236,7 @@ code.hljs {
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.3.0</strong> (in progress)</p>
+<p><strong>Current release: v0.4.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -263,13 +275,21 @@ deferred to v0.4.0, once drives exist to configure — for now the dashboard's
 manual actuator sliders stand in for direct output control.</p>
 <h2 id="v040--physiology--drives">v0.4.0 — Physiology &amp; drives</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Internal variable vector (<code>h_energy</code>, <code>h_fatigue</code>, <code>h_safety</code>, <code>h_arousal</code>,
+<li><input checked="" disabled="" type="checkbox"> Internal variable vector (<code>h_energy</code>, <code>h_fatigue</code>, <code>h_safety</code>, <code>h_arousal</code>,
 <code>h_curiosity</code>, <code>h_boredom</code>, <code>h_social</code>)</li>
-<li><input disabled="" type="checkbox"> Update rules: decay/recovery, sensor coupling, actuator-cost coupling</li>
-<li><input disabled="" type="checkbox"> Drive computation from deviation against target bands</li>
-<li><input disabled="" type="checkbox"> Fuzz-scale / exploration modulation from drives</li>
-<li><input disabled="" type="checkbox"> Dashboard: live physiology &amp; drive readout</li>
+<li><input checked="" disabled="" type="checkbox"> Update rules: decay/recovery, sensor coupling, actuator-cost coupling</li>
+<li><input checked="" disabled="" type="checkbox"> Drive computation from deviation against target bands</li>
+<li><input checked="" disabled="" type="checkbox"> Fuzz-scale / exploration modulation from drives</li>
+<li><input checked="" disabled="" type="checkbox"> Dashboard: live physiology &amp; drive readout</li>
 </ul>
+<p>Verified: both board targets build clean with PlatformIO; a 20 Hz behavior
+tick runs <code>Physiology::update()</code> and the dashboard's new Physiology section
+shows live value/drive per variable plus <code>fuzz_scale</code>. Not yet run on real
+hardware, so the tuning constants (decay/recovery/coupling rates) are
+starting points, not calibrated values. <code>h_social</code> has no sensor source yet
+(needs another robot/human present) and sits at rest until a later release.
+<code>h_curiosity</code>'s novelty signal is a placeholder (proportional to raw sensor
+change) — real prediction error arrives with contingency memory in v0.5.0.</p>
 <h2 id="v050--contingency-memory">v0.5.0 — Contingency memory</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Fixed-size action-delta / sensor-delta record structure</li>

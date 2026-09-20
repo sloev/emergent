@@ -1,19 +1,27 @@
-// Emergent firmware — v0.3.0: WiFi hotspot & dashboard.
+// Emergent firmware — v0.4.0: physiology & drives.
 //
-// The board now brings up its own AP and serves a live dashboard (LittleFS
-// front-end, JSON + WebSocket telemetry, manual actuator control, and a
-// config page to change the AP's WiFi credentials without reflashing). The
-// behavior engine (physiology, drives, memory) is not here yet — see
-// docs/roadmap.md.
+// A behavior tick now runs alongside the heartbeat: Physiology folds sensor
+// change and actuator cost into a small vector of internal variables
+// (docs/synth-behavior.md §6), decays/recovers them, and derives drives plus
+// an exploration scale. Nothing acts on the drives yet — there is no action
+// generator until contingency memory (v0.5.0) and spatial memory (v0.6.0)
+// exist to bias it — but physiology/drives are live and visible on the
+// dashboard. See docs/roadmap.md for what's next.
 
 #include <Arduino.h>
 
 #include "body/body.h"
 #include "board_config.h"
+#include "core/physiology.h"
 #include "net/dashboard_server.h"
 #include "net/wifi_ap.h"
 
+namespace {
+constexpr uint32_t kBehaviorTickMs = 50;  // 20 Hz, within the 15-30 Hz the article targets
+}
+
 static Body body(active_board());
+static Physiology phys;
 
 static void self_test() {
     const BoardConfig& board = active_board();
@@ -54,24 +62,33 @@ void setup() {
 
     body.begin();
     self_test();
+    phys.begin(body);
 
     wifi_ap::begin(active_board());
-    dashboard::begin(body);
+    dashboard::begin(body, phys);
 }
 
 void loop() {
     static uint32_t last_toggle_ms = 0;
+    static uint32_t last_tick_ms = 0;
     static bool led_on = false;
 
-    Actuator* led = body.actuator("led_status");
     uint32_t now = millis();
 
     // Heartbeat: proves a flashed board is alive without a serial monitor.
+    Actuator* led = body.actuator("led_status");
     if (now - last_toggle_ms >= (led_on ? 150u : 850u)) {
         led_on = !led_on;
         if (led) led->write(led_on ? 1.0f : 0.0f);
         last_toggle_ms = now;
     }
 
-    dashboard::loop_tick(body);
+    // Behavior tick: physiology/drives update at a fixed rate.
+    if (now - last_tick_ms >= kBehaviorTickMs) {
+        float dt_s = (now - last_tick_ms) / 1000.0f;
+        phys.update(body, dt_s);
+        last_tick_ms = now;
+    }
+
+    dashboard::loop_tick(body, phys);
 }

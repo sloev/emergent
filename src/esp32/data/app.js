@@ -1,6 +1,8 @@
 (function () {
+  const physiologyEl = document.getElementById("physiology");
   const sensorsEl = document.getElementById("sensors");
   const actuatorsEl = document.getElementById("actuators");
+  const fuzzEl = document.getElementById("fuzz-scale");
   let ws;
 
   document.querySelectorAll("nav button").forEach((btn) => {
@@ -13,6 +15,21 @@
   });
 
   function renderChannels(data) {
+    physiologyEl.innerHTML = "";
+    (data.physiology || []).forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "channel";
+      row.innerHTML =
+        '<span class="name">' + p.name + "</span>" +
+        '<span class="bar"><span data-phys-bar="' + p.name + '" style="width:' + (p.value * 100) + '%"></span></span>' +
+        '<span class="value" data-phys="' + p.name + '">' + p.value.toFixed(2) + "</span>" +
+        '<span class="drive" data-phys-drive="' + p.name + '">d ' + p.drive.toFixed(2) + "</span>";
+      physiologyEl.appendChild(row);
+    });
+    if (typeof data.fuzz_scale === "number") {
+      fuzzEl.textContent = "fuzz " + data.fuzz_scale.toFixed(2);
+    }
+
     sensorsEl.innerHTML = "";
     data.sensors.forEach((s) => {
       const row = document.createElement("div");
@@ -48,6 +65,18 @@
   }
 
   function applyTelemetry(data) {
+    (data.physiology || []).forEach((p) => {
+      const valueEl = physiologyEl.querySelector('[data-phys="' + p.name + '"]');
+      const driveEl = physiologyEl.querySelector('[data-phys-drive="' + p.name + '"]');
+      const barEl = physiologyEl.querySelector('[data-phys-bar="' + p.name + '"]');
+      if (valueEl) valueEl.textContent = p.value.toFixed(2);
+      if (driveEl) driveEl.textContent = "d " + p.drive.toFixed(2);
+      if (barEl) barEl.style.width = p.value * 100 + "%";
+    });
+    if (typeof data.fuzz_scale === "number") {
+      fuzzEl.textContent = "fuzz " + data.fuzz_scale.toFixed(2);
+    }
+
     data.sensors.forEach((s) => {
       const el = sensorsEl.querySelector('[data-sensor="' + s.name + '"]');
       if (el) el.textContent = s.value.toFixed(3);

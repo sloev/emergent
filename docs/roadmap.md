@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.3.0** (in progress)
+**Current release: v0.4.0** (in progress)
 
 ---
 
@@ -51,12 +51,21 @@ manual actuator sliders stand in for direct output control.
 
 ## v0.4.0 — Physiology & drives
 
-- [ ] Internal variable vector (`h_energy`, `h_fatigue`, `h_safety`, `h_arousal`,
+- [x] Internal variable vector (`h_energy`, `h_fatigue`, `h_safety`, `h_arousal`,
       `h_curiosity`, `h_boredom`, `h_social`)
-- [ ] Update rules: decay/recovery, sensor coupling, actuator-cost coupling
-- [ ] Drive computation from deviation against target bands
-- [ ] Fuzz-scale / exploration modulation from drives
-- [ ] Dashboard: live physiology & drive readout
+- [x] Update rules: decay/recovery, sensor coupling, actuator-cost coupling
+- [x] Drive computation from deviation against target bands
+- [x] Fuzz-scale / exploration modulation from drives
+- [x] Dashboard: live physiology & drive readout
+
+Verified: both board targets build clean with PlatformIO; a 20 Hz behavior
+tick runs `Physiology::update()` and the dashboard's new Physiology section
+shows live value/drive per variable plus `fuzz_scale`. Not yet run on real
+hardware, so the tuning constants (decay/recovery/coupling rates) are
+starting points, not calibrated values. `h_social` has no sensor source yet
+(needs another robot/human present) and sits at rest until a later release.
+`h_curiosity`'s novelty signal is a placeholder (proportional to raw sensor
+change) — real prediction error arrives with contingency memory in v0.5.0.
 
 ## v0.5.0 — Contingency memory
 

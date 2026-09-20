@@ -29,4 +29,5 @@ static const BoardConfig kBoardEsp32S3 = {
     .actuator_count = sizeof(kActuatorsEsp32S3) / sizeof(kActuatorsEsp32S3[0]),
     .sensors = kSensorsEsp32S3,
     .sensor_count = sizeof(kSensorsEsp32S3) / sizeof(kSensorsEsp32S3[0]),
+    .energy_sensor = "battery_voltage",
 };

@@ -53,6 +53,32 @@ h2 {
   padding-bottom: 0.35rem;
   margin-top: 2rem;
 }
+h2 .subtle {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--fg-muted);
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
+.channel .drive {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  min-width: 3.2rem;
+  text-align: right;
+  font-size: 0.82rem;
+}
+.channel .bar {
+  flex: 1;
+  height: 6px;
+  background: #ecebe6;
+  position: relative;
+}
+.channel .bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--line);
+}
 
 .channel {
   display: flex;

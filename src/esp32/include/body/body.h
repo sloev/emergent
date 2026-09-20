@@ -18,6 +18,8 @@ public:
 
     void begin();
 
+    const BoardConfig& board() const { return board_; }
+
     size_t actuator_count() const { return actuator_count_; }
     size_t sensor_count() const { return sensor_count_; }
 

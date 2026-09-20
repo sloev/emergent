@@ -14,7 +14,7 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 uint32_t last_broadcast_ms = 0;
 
-void build_channels_json(Body& body, JsonDocument& doc) {
+void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
     JsonArray actuators = doc["actuators"].to<JsonArray>();
     for (size_t i = 0; i < body.actuator_count(); i++) {
         Actuator& a = body.actuator_at(i);
@@ -32,12 +32,22 @@ void build_channels_json(Body& body, JsonDocument& doc) {
         o["name"] = s.name();
         o["value"] = s.last_value();
     }
+
+    JsonArray physiology = doc["physiology"].to<JsonArray>();
+    for (size_t i = 0; i < kPhysVarCount; i++) {
+        PhysVar v = static_cast<PhysVar>(i);
+        JsonObject o = physiology.add<JsonObject>();
+        o["name"] = Physiology::var_name(v);
+        o["value"] = phys.value(v);
+        o["drive"] = phys.drive(v);
+    }
+    doc["fuzz_scale"] = phys.fuzz_scale();
 }
 }  // namespace
 
 namespace dashboard {
 
-void begin(Body& body) {
+void begin(Body& body, Physiology& phys) {
     if (!LittleFS.begin(true)) {
         Serial.println("[dashboard] LittleFS mount failed");
     }
@@ -65,9 +75,9 @@ void begin(Body& body) {
     });
     server.addHandler(&ws);
 
-    server.on("/api/channels", HTTP_GET, [&body](AsyncWebServerRequest* request) {
+    server.on("/api/channels", HTTP_GET, [&body, &phys](AsyncWebServerRequest* request) {
         JsonDocument doc;
-        build_channels_json(body, doc);
+        build_channels_json(body, phys, doc);
         String out;
         serializeJson(doc, out);
         request->send(200, "application/json", out);
@@ -100,7 +110,7 @@ void begin(Body& body) {
     Serial.println("[dashboard] server started on port 80");
 }
 
-void loop_tick(Body& body) {
+void loop_tick(Body& body, Physiology& phys) {
     ws.cleanupClients();
 
     uint32_t now = millis();
@@ -110,7 +120,7 @@ void loop_tick(Body& body) {
     if (ws.count() == 0) return;
 
     JsonDocument doc;
-    build_channels_json(body, doc);
+    build_channels_json(body, phys, doc);
     String out;
     serializeJson(doc, out);
     ws.textAll(out);
