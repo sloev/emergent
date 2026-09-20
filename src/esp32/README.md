@@ -5,15 +5,16 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
-v0.4.0 physiology & drives: a behavior tick runs at 20 Hz, folding sensor
-change and actuator cost into a small vector of internal variables
-(`h_energy`, `h_fatigue`, `h_safety`, `h_arousal`, `h_curiosity`,
-`h_boredom`, `h_social`), decaying/recovering them, and deriving drives plus
-an exploration scale (`fuzz_scale`) from deviation against per-variable
-target bands. Nothing acts on the drives yet — the action generator is not
-here until contingency memory and spatial memory exist. Physiology is live
-on the dashboard's new Physiology section. See
-[`docs/roadmap.md`](../../docs/roadmap.md) for what's next.
+v0.5.0 contingency memory: alongside physiology, a fixed-size (256-entry)
+hash table now records "actuators moved like this, sensors moved like that"
+patterns each behavior tick, decaying over time and reinforcing on repeat,
+tagged with whether the pattern coincided with falling drive pressure
+(`docs/synth-behavior.md` §7). There is still no action generator — that's
+v0.7.0, once spatial memory (v0.6.0) exists too — so it currently learns from
+whatever moves the actuators today (dashboard sliders, the heartbeat blink).
+The query API (`ContingencyMemory::query_bias`) is implemented and exposed
+via the dashboard's new Memory tab, unconsumed until the core loop lands.
+See [`docs/roadmap.md`](../../docs/roadmap.md) for what's next.
 
 ## Layout
 
@@ -32,11 +33,14 @@ include/body/body.h/.cpp      Body: owns the live Actuator/Sensor instances for
 include/core/physiology.h/.cpp
                               Internal variables + drives + exploration scale
                               (docs/synth-behavior.md §6)
+include/core/contingency_memory.h/.cpp
+                              Bounded, decaying action/sensor-delta memory
+                              (docs/synth-behavior.md §7)
 include/net/wifi_ap.h/.cpp    Brings up the SoftAP; credentials default to the
                                board profile, overridable at runtime (NVS)
 include/net/dashboard_server.h/.cpp
                                ESPAsyncWebServer + WebSocket: serves data/,
-                               /api/channels, /api/config/wifi
+                               /api/channels, /api/contingency, /api/config/wifi
 data/                          Dashboard front-end (served from LittleFS)
 src/board_config.cpp          Picks the active BoardConfig from the -DBOARD_PROFILE_*
                                macro set by the PlatformIO environment
@@ -71,14 +75,19 @@ overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
 - **Dashboard tab** — physiology (value + drive per internal variable,
   overall `fuzz_scale`), every sensor's live value, and a slider per
   actuator for manual control. Updated over WebSocket (`/ws`) at 5 Hz.
+- **Memory tab** — top contingency-memory entries by strength, decoded into
+  which channels moved which way and whether it coincided with falling
+  drive pressure. Polled every 2s.
 - **Config tab** — change the AP's SSID/password. Saved to NVS and applied
   on restart, no reflash needed.
 
 API, for anything that wants to talk to the board directly instead of using
 the bundled UI:
 - `GET /api/channels` — JSON snapshot of all actuators/sensors/physiology.
-- WebSocket `/ws` — server pushes the same JSON shape at 5 Hz; send
-  `{"actuator": "<name>", "value": <float>}` to drive a channel.
+- `GET /api/contingency` — top contingency-memory entries (strength, age,
+  mean drive delta, decoded channel deltas).
+- WebSocket `/ws` — server pushes the same `/api/channels` shape at 5 Hz;
+  send `{"actuator": "<name>", "value": <float>}` to drive a channel.
 - `POST /api/config/wifi` — JSON `{"ssid": "...", "password": "..."}`,
   persists and restarts the board.
 

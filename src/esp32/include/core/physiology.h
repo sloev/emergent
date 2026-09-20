@@ -51,6 +51,16 @@ public:
     // changed" signal that curiosity, boredom and arousal are built from.
     float sensor_activity() const { return activity_; }
 
+    // Sum of all drives — a single scalar "how much pressure is the organism
+    // under right now". Falling total_drive() is "things got better"; used
+    // by contingency memory to judge whether an action/sensor pattern
+    // historically helped.
+    float total_drive() const {
+        float sum = 0.0f;
+        for (size_t i = 0; i < kPhysVarCount; i++) sum += drive_[i];
+        return sum;
+    }
+
     static const char* var_name(PhysVar v);
     static void target_band(PhysVar v, float& lo, float& hi);
 

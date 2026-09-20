@@ -1,17 +1,19 @@
-// Emergent firmware — v0.4.0: physiology & drives.
+// Emergent firmware — v0.5.0: contingency memory.
 //
-// A behavior tick now runs alongside the heartbeat: Physiology folds sensor
-// change and actuator cost into a small vector of internal variables
-// (docs/synth-behavior.md §6), decays/recovers them, and derives drives plus
-// an exploration scale. Nothing acts on the drives yet — there is no action
-// generator until contingency memory (v0.5.0) and spatial memory (v0.6.0)
-// exist to bias it — but physiology/drives are live and visible on the
-// dashboard. See docs/roadmap.md for what's next.
+// The behavior tick now also runs ContingencyMemory: a bounded, decaying
+// table of "actuators moved like X, sensors moved like Y, and drive pressure
+// changed by Z" records (docs/synth-behavior.md §7). It learns from whatever
+// moves the actuators today — dashboard sliders, the heartbeat blink — since
+// there is still no autonomous action generator; that's v0.7.0, once spatial
+// memory (v0.6.0) also exists to help bias it. The memory's query API is
+// exposed and testable via the dashboard, just not consumed by anything yet.
+// See docs/roadmap.md for what's next.
 
 #include <Arduino.h>
 
 #include "body/body.h"
 #include "board_config.h"
+#include "core/contingency_memory.h"
 #include "core/physiology.h"
 #include "net/dashboard_server.h"
 #include "net/wifi_ap.h"
@@ -22,6 +24,7 @@ constexpr uint32_t kBehaviorTickMs = 50;  // 20 Hz, within the 15-30 Hz the arti
 
 static Body body(active_board());
 static Physiology phys;
+static ContingencyMemory contingency;
 
 static void self_test() {
     const BoardConfig& board = active_board();
@@ -63,9 +66,10 @@ void setup() {
     body.begin();
     self_test();
     phys.begin(body);
+    contingency.begin(body);
 
     wifi_ap::begin(active_board());
-    dashboard::begin(body, phys);
+    dashboard::begin(body, phys, contingency);
 }
 
 void loop() {
@@ -83,10 +87,13 @@ void loop() {
         last_toggle_ms = now;
     }
 
-    // Behavior tick: physiology/drives update at a fixed rate.
+    // Behavior tick: physiology/drives and contingency memory update at a
+    // fixed rate. Contingency memory reads actuator/sensor state *after*
+    // physiology this tick, so both see the same snapshot.
     if (now - last_tick_ms >= kBehaviorTickMs) {
         float dt_s = (now - last_tick_ms) / 1000.0f;
         phys.update(body, dt_s);
+        contingency.update(body, phys, dt_s);
         last_tick_ms = now;
     }
 

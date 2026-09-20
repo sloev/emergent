@@ -3,7 +3,10 @@
   const sensorsEl = document.getElementById("sensors");
   const actuatorsEl = document.getElementById("actuators");
   const fuzzEl = document.getElementById("fuzz-scale");
+  const contingencyEl = document.getElementById("contingency");
+  const contingencyCountEl = document.getElementById("contingency-count");
   let ws;
+  let contingencyPoll;
 
   document.querySelectorAll("nav button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -11,8 +14,53 @@
       document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+
+      if (btn.dataset.tab === "memory") {
+        fetchContingency();
+        contingencyPoll = setInterval(fetchContingency, 2000);
+      } else if (contingencyPoll) {
+        clearInterval(contingencyPoll);
+        contingencyPoll = null;
+      }
     });
   });
+
+  function renderContingency(data) {
+    contingencyCountEl.textContent = data.count + " / " + data.capacity + " slots";
+    contingencyEl.innerHTML = "";
+
+    if (!data.entries || data.entries.length === 0) {
+      contingencyEl.innerHTML = '<p class="empty-hint">Nothing learned yet — move an actuator to give it something to notice.</p>';
+      return;
+    }
+
+    data.entries.forEach((e) => {
+      const card = document.createElement("div");
+      card.className = "entry";
+      const driveClass = e.mean_drive_delta >= 0 ? "drive-good" : "drive-bad";
+      const actuatorTags = e.actuators
+        .map((c) => '<span class="tag ' + (c.delta > 0 ? "up" : "down") + '">' + c.name + "</span>")
+        .join("") || '<span class="tag">none</span>';
+      const sensorTags = e.sensors
+        .map((c) => '<span class="tag ' + (c.delta > 0 ? "up" : "down") + '">' + c.name + "</span>")
+        .join("") || '<span class="tag">none</span>';
+      card.innerHTML =
+        '<div class="entry-head">' +
+        "<span>strength " + e.strength.toFixed(2) + " · age " + e.age + "</span>" +
+        '<span class="' + driveClass + '">Δdrive ' + e.mean_drive_delta.toFixed(3) + "</span>" +
+        "</div>" +
+        '<div class="row"><strong>actuators</strong> ' + actuatorTags + "</div>" +
+        '<div class="row"><strong>sensors</strong> ' + sensorTags + "</div>";
+      contingencyEl.appendChild(card);
+    });
+  }
+
+  function fetchContingency() {
+    fetch("/api/contingency")
+      .then((r) => r.json())
+      .then(renderContingency)
+      .catch(() => {});
+  }
 
   function renderChannels(data) {
     physiologyEl.innerHTML = "";

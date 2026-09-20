@@ -17,8 +17,10 @@ body {
 
 header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   border-bottom: 3px solid var(--line);
   padding-bottom: 0.75rem;
   margin-bottom: 1.5rem;
@@ -29,6 +31,12 @@ h1 {
   letter-spacing: 0.02em;
   margin: 0;
 }
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
 nav button {
   background: none;
   border: 2px solid var(--line);
@@ -38,7 +46,6 @@ nav button {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
-  margin-left: 0.4rem;
 }
 nav button.active { background: var(--line); color: #fff; }
 
@@ -128,3 +135,40 @@ form button {
   color: var(--fg-muted);
   font-size: 0.85rem;
 }
+
+p.hint {
+  color: var(--fg-muted);
+  font-size: 0.82rem;
+  margin: 0.6rem 0 1rem;
+}
+p.hint code {
+  background: #f1f0ec;
+  padding: 0.05rem 0.3rem;
+}
+
+.entries { display: grid; gap: 0.6rem; }
+.entry {
+  border: 1px solid #ddd9d0;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+}
+.entry .entry-head {
+  display: flex;
+  justify-content: space-between;
+  color: var(--fg-muted);
+  margin-bottom: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+.entry .entry-head .drive-good { color: #2f7a3d; }
+.entry .entry-head .drive-bad { color: var(--accent); }
+.entry .row { margin: 0.15rem 0; }
+.entry .tag {
+  display: inline-block;
+  background: #f1f0ec;
+  padding: 0.05rem 0.4rem;
+  margin: 0.1rem 0.2rem 0.1rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.entry .tag.up::before { content: "\2191 "; }
+.entry .tag.down::before { content: "\2193 "; }
+.empty-hint { color: var(--fg-muted); font-size: 0.85rem; }

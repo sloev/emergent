@@ -9,6 +9,7 @@
 
 namespace {
 constexpr uint32_t kBroadcastIntervalMs = 200;  // 5 Hz
+constexpr size_t kContingencyTopN = 20;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -43,11 +44,42 @@ void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
     }
     doc["fuzz_scale"] = phys.fuzz_scale();
 }
+
+// Decodes a packed delta code back into {name, delta} pairs for display —
+// delta is -1/0/+1, matching ContingencyMemory's quantization.
+void add_decoded_channels(JsonArray arr, Body& body, uint32_t code, bool is_actuator) {
+    size_t n = is_actuator ? body.actuator_count() : body.sensor_count();
+    for (size_t i = 0; i < n; i++) {
+        int8_t d = ContingencyMemory::decode_channel(code, i);
+        if (d == 0) continue;  // only list channels that moved
+        JsonObject o = arr.add<JsonObject>();
+        o["name"] = is_actuator ? body.actuator_at(i).name() : body.sensor_at(i).name();
+        o["delta"] = d;
+    }
+}
+
+void build_contingency_json(Body& body, ContingencyMemory& contingency, JsonDocument& doc) {
+    doc["count"] = contingency.count();
+    doc["capacity"] = ContingencyMemory::capacity();
+
+    static ContingencyEntry top[kContingencyTopN];
+    size_t n = contingency.top_entries(top, kContingencyTopN);
+
+    JsonArray entries = doc["entries"].to<JsonArray>();
+    for (size_t i = 0; i < n; i++) {
+        JsonObject o = entries.add<JsonObject>();
+        o["strength"] = top[i].strength;
+        o["age"] = top[i].age;
+        o["mean_drive_delta"] = top[i].mean_drive_delta;
+        add_decoded_channels(o["actuators"].to<JsonArray>(), body, top[i].action_code, true);
+        add_decoded_channels(o["sensors"].to<JsonArray>(), body, top[i].sensor_code, false);
+    }
+}
 }  // namespace
 
 namespace dashboard {
 
-void begin(Body& body, Physiology& phys) {
+void begin(Body& body, Physiology& phys, ContingencyMemory& contingency) {
     if (!LittleFS.begin(true)) {
         Serial.println("[dashboard] LittleFS mount failed");
     }
@@ -78,6 +110,14 @@ void begin(Body& body, Physiology& phys) {
     server.on("/api/channels", HTTP_GET, [&body, &phys](AsyncWebServerRequest* request) {
         JsonDocument doc;
         build_channels_json(body, phys, doc);
+        String out;
+        serializeJson(doc, out);
+        request->send(200, "application/json", out);
+    });
+
+    server.on("/api/contingency", HTTP_GET, [&body, &contingency](AsyncWebServerRequest* request) {
+        JsonDocument doc;
+        build_contingency_json(body, contingency, doc);
         String out;
         serializeJson(doc, out);
         request->send(200, "application/json", out);

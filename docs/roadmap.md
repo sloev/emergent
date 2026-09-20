@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.4.0** (in progress)
+**Current release: v0.5.0** (in progress)
 
 ---
 
@@ -69,11 +69,22 @@ change) — real prediction error arrives with contingency memory in v0.5.0.
 
 ## v0.5.0 — Contingency memory
 
-- [ ] Fixed-size action-delta / sensor-delta record structure
-- [ ] Quantization & hashing of deltas
-- [ ] Learn/decay/prune update algorithm bounded to `MAX_ENTRIES`
-- [ ] Contingency-biased action query
-- [ ] Dashboard: inspect top contingency entries
+- [x] Fixed-size action-delta / sensor-delta record structure
+- [x] Quantization & hashing of deltas
+- [x] Learn/decay/prune update algorithm bounded to `MAX_ENTRIES`
+- [x] Contingency-biased action query
+- [x] Dashboard: inspect top contingency entries
+
+Verified: both board targets build clean with PlatformIO (RAM use +7KB for
+the 256-entry table). Not yet run on real hardware. The article's pseudocode
+doesn't specify how a sensor-delta pattern gets linked to "led to improving
+drives" — that's left to whoever queries the memory. This implementation
+makes it concrete: each entry tracks an EMA of drive-pressure change
+(`mean_drive_delta`) alongside the action/sensor codes, so `query_bias()` can
+rank matches by whether they historically helped. `query_bias()` is
+implemented and exposed on the dashboard, but nothing calls it yet — no
+action generator exists until v0.7.0, so today the table only learns from
+whatever a human does via the dashboard sliders or the heartbeat blink.
 
 ## v0.6.0 — Spatial memory & navigation
 

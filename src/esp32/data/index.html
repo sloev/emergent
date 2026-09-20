@@ -11,6 +11,7 @@
     <h1>Emergent</h1>
     <nav>
       <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="memory">Memory</button>
       <button data-tab="config">Config</button>
     </nav>
   </header>
@@ -24,6 +25,18 @@
 
     <h2>Actuators</h2>
     <div id="actuators" class="channels"></div>
+  </section>
+
+  <section id="tab-memory" class="tab">
+    <h2>Contingency <span id="contingency-count" class="subtle"></span></h2>
+    <p class="hint">
+      What the board has learned so far: patterns of "actuators moved like
+      this, sensors moved like that" and whether that pattern coincided with
+      falling drive pressure (<code>Δdrive</code>, higher is better).
+      Strongest entries first. Nothing acts on this yet — no action generator
+      exists until v0.7.0.
+    </p>
+    <div id="contingency" class="entries"></div>
   </section>
 
   <section id="tab-config" class="tab">
