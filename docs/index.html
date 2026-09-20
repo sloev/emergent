@@ -233,61 +233,65 @@
   }
   a { color: inherit; }
 
-  /* Embedded article — rendered from synth-behavior.md and spliced in at
-     build time (docs/build/render-docs.mjs). Scoped under #article-content
-     so it can reuse the article's own type rules without touching anything
-     else on this page. */
-  #article-content h2, #article-content h3, #article-content h4 {
+  /* Embedded article + roadmap — rendered from synth-behavior.md/roadmap.md
+     and spliced in at build time (docs/build/render-docs.mjs). Scoped under
+     :is(#article-content, #roadmap-content) so they reuse the same type
+     rules without touching anything else on this page. */
+  :is(#article-content, #roadmap-content) h2,
+  :is(#article-content, #roadmap-content) h3,
+  :is(#article-content, #roadmap-content) h4 {
     font-weight: 700;
     letter-spacing: 0.01em;
   }
-  #article-content h2 {
+  :is(#article-content, #roadmap-content) h2 {
     font-size: 1.15rem;
     border-bottom: 1px solid #ddd9d0;
     padding-bottom: 0.4rem;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
   }
-  #article-content h3 {
+  :is(#article-content, #roadmap-content) h3 {
     font-size: 1.02rem;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
   }
-  #article-content h4 {
+  :is(#article-content, #roadmap-content) h4 {
     font-size: 0.95rem;
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
   }
-  #article-content p, #article-content ul, #article-content ol {
+  :is(#article-content, #roadmap-content) p,
+  :is(#article-content, #roadmap-content) ul,
+  :is(#article-content, #roadmap-content) ol {
     margin-top: 0;
     margin-bottom: 1.1rem;
   }
-  #article-content li { margin: 0.2rem 0; }
-  #article-content a { color: var(--accent); }
-  #article-content a:hover { color: #8f2a15; }
-  #article-content blockquote {
+  :is(#article-content, #roadmap-content) li { margin: 0.2rem 0; }
+  :is(#article-content, #roadmap-content) a { color: var(--accent); }
+  :is(#article-content, #roadmap-content) a:hover { color: #8f2a15; }
+  :is(#article-content, #roadmap-content) blockquote {
     margin: 1.5rem 0;
     padding: 0.9rem 1.1rem;
     border-left: 3px solid var(--accent);
     background: #f1f0ec;
     font-style: italic;
   }
-  #article-content blockquote p { margin: 0; }
-  #article-content code {
+  :is(#article-content, #roadmap-content) blockquote p { margin: 0; }
+  :is(#article-content, #roadmap-content) code {
     background: #f1f0ec;
     padding: 0.1rem 0.35rem;
     font-size: 0.9em;
     font-family: "SFMono-Regular", Consolas, Menlo, monospace;
     word-break: break-word;
   }
-  #article-content pre {
+  :is(#article-content, #roadmap-content) pre {
     background: #f1f0ec;
     padding: 1rem;
     overflow-x: auto;
     margin: 0 0 1.1rem;
   }
-  #article-content pre code { background: none; padding: 0; word-break: normal; }
-  #article-content table {
+  :is(#article-content, #roadmap-content) pre code { background: none; padding: 0; word-break: normal; }
+  :is(#article-content, #roadmap-content) table {
     display: block;
     overflow-x: auto;
     border-collapse: collapse;
@@ -295,30 +299,84 @@
     margin: 0 0 1.5rem;
     font-size: 0.92rem;
   }
-  #article-content th, #article-content td {
+  :is(#article-content, #roadmap-content) th,
+  :is(#article-content, #roadmap-content) td {
     border: 1px solid #ddd9d0;
     padding: 0.5rem 0.7rem;
     text-align: left;
     white-space: nowrap;
   }
-  #article-content th { background: #f1f0ec; }
-  #article-content hr {
+  :is(#article-content, #roadmap-content) th { background: #f1f0ec; }
+  :is(#article-content, #roadmap-content) hr {
     border: none;
     border-top: 1px solid #ddd9d0;
     margin: 2.5rem 0;
   }
-  #article-content img { max-width: 100%; }
-  #article-content figure.mermaid {
+  :is(#article-content, #roadmap-content) img { max-width: 100%; }
+  :is(#article-content, #roadmap-content) figure.mermaid {
     margin: 2rem 0;
     padding: 1rem;
     background: #f1f0ec;
     text-align: center;
     overflow-x: auto;
   }
-  #article-content figure.mermaid svg { max-width: 100%; height: auto; }
+  :is(#article-content, #roadmap-content) figure.mermaid svg { max-width: 100%; height: auto; }
+
+  .article-pdf { margin: 0 0 1.5rem; }
+  .article-pdf a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid var(--line);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .article-pdf a:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .roadmap-detail { margin-top: 1.25rem; }
+  .roadmap-detail summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 0.5rem 0;
+    border-top: 1px solid #ddd9d0;
+    border-bottom: 1px solid #ddd9d0;
+  }
+  .roadmap-detail[open] summary { margin-bottom: 1.5rem; }
+  .roadmap-detail summary::marker { color: var(--accent); }
+
+  .to-top-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    background: var(--line);
+    color: #fff;
+    border: none;
+    font-size: 1.1rem;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+  .to-top-btn.visible { display: flex; }
+  @media (min-width: 641px) {
+    .to-top-btn { display: none !important; }
+  }
 
   @media (max-width: 480px) {
-    #article-content pre, #article-content code { font-size: 0.85rem; }
+    :is(#article-content, #roadmap-content) pre,
+    :is(#article-content, #roadmap-content) code { font-size: 0.85rem; }
   }
 
   @media (max-width: 640px) {
@@ -329,7 +387,7 @@
 </head>
 <body>
 <div class="disclaimer"><strong>Disclaimer:</strong> this project is built with the help of several different AI systems — code, docs, and design included.</div>
-<div class="wrap">
+<div class="wrap" id="top">
 
   <header>
     <div class="title-block">
@@ -337,11 +395,10 @@
       <p class="dict-entry"><span class="phon">/ɪˈmɜːdʒ(ə)nt/</span> — <span class="pos">adj.</span> arising from a system's interactions, not present in any of its parts alone</p>
     </div>
     <nav class="site-nav">
-      <a class="nav-btn" href="#article">Article</a>
-      <a class="nav-btn" href="synth-behavior.pdf" download>PDF</a>
-      <a class="nav-btn" href="https://github.com/sloev/emergent/tree/main/src/esp32">Firmware</a>
-      <a class="nav-btn" href="roadmap.html">Roadmap</a>
       <a class="nav-btn" href="#glossary">Glossary</a>
+      <a class="nav-btn" href="#roadmap">Roadmap</a>
+      <a class="nav-btn" href="#article">Article</a>
+      <a class="nav-btn" href="https://github.com/sloev/emergent/releases/latest">Firmware</a>
     </nav>
   </header>
   <p class="tagline">A synthetic ethology platform for ESP32-class hardware.</p>
@@ -387,25 +444,8 @@
     </ul>
   </section>
 
-  <section>
-    <div class="section-label"><span class="num">02</span><h2>Goals</h2></div>
-    <ul class="goals">
-      <li class="done"><span class="box done"></span><span class="ver">0.1</span><span class="label">Project scaffolding &amp; CI</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.2</span><span class="label">Configurable body: sensors &amp; actuators</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.3</span><span class="label">WiFi hotspot &amp; live dashboard</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.4</span><span class="label">Homeostatic drives</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.5</span><span class="label">Contingency memory</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.6</span><span class="label">Spatial memory &amp; navigation</span></li>
-      <li class="done"><span class="box done"></span><span class="ver">0.7</span><span class="label">Full core loop on hardware</span></li>
-      <li><span class="box"></span><span class="ver">0.8</span><span class="label">Life-state persistence</span></li>
-      <li><span class="box"></span><span class="ver">0.9</span><span class="label">Emergent charging station</span></li>
-      <li><span class="box"></span><span class="ver">1.0</span><span class="label">First stable release <em>(human-gated)</em></span></li>
-    </ul>
-    <p class="goals-foot"><a href="roadmap.html">→ full roadmap, with tasks per release</a></p>
-  </section>
-
   <section id="glossary">
-    <div class="section-label"><span class="num">03</span><h2>Glossary</h2></div>
+    <div class="section-label"><span class="num">02</span><h2>Glossary</h2></div>
     <ul class="glossary">
       <li>
         <p class="term"><strong>emergent</strong> <span class="phon">/ɪˈmɜːdʒ(ə)nt/</span> <span class="pos">adj.</span></p>
@@ -442,8 +482,209 @@
     </ul>
   </section>
 
+  <section id="roadmap">
+    <div class="section-label"><span class="num">03</span><h2>Roadmap</h2></div>
+    <ul class="goals">
+      <li class="done"><span class="box done"></span><span class="ver">0.1</span><span class="label">Project scaffolding &amp; CI</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.2</span><span class="label">Configurable body: sensors &amp; actuators</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.3</span><span class="label">WiFi hotspot &amp; live dashboard</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.4</span><span class="label">Homeostatic drives</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.5</span><span class="label">Contingency memory</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.6</span><span class="label">Spatial memory &amp; navigation</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.7</span><span class="label">Full core loop on hardware</span></li>
+      <li><span class="box"></span><span class="ver">0.8</span><span class="label">Life-state persistence</span></li>
+      <li><span class="box"></span><span class="ver">0.9</span><span class="label">Emergent charging station</span></li>
+      <li><span class="box"></span><span class="ver">1.0</span><span class="label">First stable release <em>(human-gated)</em></span></li>
+    </ul>
+    <details class="roadmap-detail">
+      <summary>Show full roadmap, with tasks per release</summary>
+      <div id="roadmap-content">
+<!--ROADMAP-CONTENT-START-->
+<p>Rolling versioning: <code>0.MINOR.PATCH</code>, incremented as work lands. A major version bump
+(<code>1.0.0</code>, <code>2.0.0</code>, ...) is a deliberate decision made by a human — never automated.</p>
+<p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
+current one is closed out, unless explicitly reprioritized.</p>
+<h2 id="status">Status</h2>
+<p><strong>Current release: v0.7.0</strong> (in progress)</p>
+<hr>
+<h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Git repo initialized</li>
+<li><input checked="" disabled="" type="checkbox"> <code>docs/</code> site skeleton (<code>index.html</code> frontpage, <code>synth-behavior.md</code>, this roadmap)</li>
+<li><input checked="" disabled="" type="checkbox"> GitHub Actions workflow to rebuild <code>synth-behavior.pdf</code> from the markdown source</li>
+<li><input checked="" disabled="" type="checkbox"> ESP32 PlatformIO project skeleton (<code>src/esp32</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> Board configuration abstraction (per-board pin/IO profiles)</li>
+<li><input checked="" disabled="" type="checkbox"> Push to GitHub, enable Pages (serve from <code>docs/</code> on <code>main</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> CI: PlatformIO build check for at least one board target</li>
+</ul>
+<h2 id="v020--body-layer-sensors--actuators">v0.2.0 — Body layer: sensors &amp; actuators</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Generic <code>Actuator</code> interface (range, rate limit, cost estimate, safety envelope)</li>
+<li><input checked="" disabled="" type="checkbox"> Generic <code>Sensor</code> interface (normalized numeric channel, update rate)</li>
+<li><input checked="" disabled="" type="checkbox"> IO profile format mapping named channels to physical pins/drivers</li>
+<li><input checked="" disabled="" type="checkbox"> Drivers for an initial hardware set: motors (PWM/H-bridge), servo, RGB LED,
+ADC-based sensors (battery voltage/current), digital touch/bump</li>
+<li><input checked="" disabled="" type="checkbox"> Board profiles for at least two boards (e.g. ESP32 DevKit, ESP32-S3)</li>
+<li><input checked="" disabled="" type="checkbox"> Sensor/actuator self-test routine over serial</li>
+</ul>
+<p>Verified: both board targets (<code>esp32dev</code>, <code>esp32-s3-devkitc-1</code>) build clean with
+PlatformIO. Not yet verified against real hardware — pin choices per board are a
+starting point, expect to override them per physical chassis.</p>
+<h2 id="v030--wifi-hotspot--dashboard">v0.3.0 — WiFi hotspot &amp; dashboard</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> SoftAP mode, SSID/password configurable per board profile</li>
+<li><input checked="" disabled="" type="checkbox"> Async web server serving the dashboard UI</li>
+<li><input checked="" disabled="" type="checkbox"> Live telemetry push (WebSocket or SSE): raw sensor values, actuator outputs</li>
+<li><input checked="" disabled="" type="checkbox"> Minimal dashboard front-end served from firmware (LittleFS)</li>
+<li><input checked="" disabled="" type="checkbox"> Config page: change WiFi credentials without reflashing (persisted to NVS)</li>
+</ul>
+<p>Verified: both board targets build the firmware and the LittleFS image clean
+with PlatformIO. Not yet run on real hardware. "Drive targets" config is
+deferred to v0.4.0, once drives exist to configure — for now the dashboard's
+manual actuator sliders stand in for direct output control.</p>
+<h2 id="v040--physiology--drives">v0.4.0 — Physiology &amp; drives</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Internal variable vector (<code>h_energy</code>, <code>h_fatigue</code>, <code>h_safety</code>, <code>h_arousal</code>,
+<code>h_curiosity</code>, <code>h_boredom</code>, <code>h_social</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> Update rules: decay/recovery, sensor coupling, actuator-cost coupling</li>
+<li><input checked="" disabled="" type="checkbox"> Drive computation from deviation against target bands</li>
+<li><input checked="" disabled="" type="checkbox"> Fuzz-scale / exploration modulation from drives</li>
+<li><input checked="" disabled="" type="checkbox"> Dashboard: live physiology &amp; drive readout</li>
+</ul>
+<p>Verified: both board targets build clean with PlatformIO; a 20 Hz behavior
+tick runs <code>Physiology::update()</code> and the dashboard's new Physiology section
+shows live value/drive per variable plus <code>fuzz_scale</code>. Not yet run on real
+hardware, so the tuning constants (decay/recovery/coupling rates) are
+starting points, not calibrated values. <code>h_social</code> has no sensor source yet
+(needs another robot/human present) and sits at rest until a later release.
+<code>h_curiosity</code>'s novelty signal is a placeholder (proportional to raw sensor
+change) — real prediction error arrives with contingency memory in v0.5.0.</p>
+<h2 id="v050--contingency-memory">v0.5.0 — Contingency memory</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Fixed-size action-delta / sensor-delta record structure</li>
+<li><input checked="" disabled="" type="checkbox"> Quantization &amp; hashing of deltas</li>
+<li><input checked="" disabled="" type="checkbox"> Learn/decay/prune update algorithm bounded to <code>MAX_ENTRIES</code></li>
+<li><input checked="" disabled="" type="checkbox"> Contingency-biased action query</li>
+<li><input checked="" disabled="" type="checkbox"> Dashboard: inspect top contingency entries</li>
+</ul>
+<p>Verified: both board targets build clean with PlatformIO (RAM use +7KB for
+the 256-entry table). Not yet run on real hardware. The article's pseudocode
+doesn't specify how a sensor-delta pattern gets linked to "led to improving
+drives" — that's left to whoever queries the memory. This implementation
+makes it concrete: each entry tracks an EMA of drive-pressure change
+(<code>mean_drive_delta</code>) alongside the action/sensor codes, so <code>query_bias()</code> can
+rank matches by whether they historically helped. <code>query_bias()</code> is
+implemented and exposed on the dashboard, but nothing calls it yet — no
+action generator exists until v0.7.0, so today the table only learns from
+whatever a human does via the dashboard sliders or the heartbeat blink.</p>
+<h2 id="v060--spatial-memory--navigation">v0.6.0 — Spatial memory &amp; navigation</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Coarse grid / place-cell representation</li>
+<li><input checked="" disabled="" type="checkbox"> Visit stats + drive-improvement profile per cell</li>
+<li><input checked="" disabled="" type="checkbox"> Spatial bias contribution to action generation</li>
+<li><input checked="" disabled="" type="checkbox"> Dashboard: simple 2D map view of visited cells</li>
+</ul>
+<p>Verified: both board targets build clean with PlatformIO. Not yet run on
+real hardware. A significant, deliberate departure from the article's
+pseudocode: this hardware has no positioning sensor (no encoders/IMU/GPS),
+and the article's <code>spatial_bias(position, drives, spatial_map)</code> assumes
+<code>position</code> already exists without saying where it comes from. Rather than
+fabricate open-loop odometry from commanded motor duty cycle — which would
+drift into meaninglessness within seconds, since duty cycle isn't measured
+displacement — this uses the article's own explicitly offered alternative
+(§8.1): "a coarse 2-D grid OR a set of place cells". A place cell here is a
+coarse signature of current sensor readings; same ambient conditions are
+treated as the same place, which is the same gradient-following idea §10
+already uses for individual channels (light, RF), just made the identity of
+a location instead of a single bias term.</p>
+<p>Consequence: <code>best_cell()</code> (the "spatial bias contribution" task) answers
+<em>which</em> remembered place looks most promising for current drives, but not
+<em>which direction</em> to move — there's no direction without real coordinates.
+Turning that into actual motor output is deferred to v0.7.0's core loop,
+which will need a concrete policy for it (most likely: bias exploration
+persistence/exploitation balance rather than literal steering, given the
+hardware). Currently, with only 2 sensor channels on both board profiles,
+signature entropy is low (few distinguishable "places") — richer
+differentiation needs richer sensor profiles, which is a board-config
+change, not an engine change.</p>
+<h2 id="v070--core-loop-integration">v0.7.0 — Core loop integration</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Full tick loop wired end-to-end (sense → physiology → drives → memory query →
+action → actuate → learn)</li>
+<li><input checked="" disabled="" type="checkbox"> Task split: high-frequency (PWM/ADC/audio), behavior task (15–30 Hz),
+slow tasks (~1 Hz logging/checkpoints)</li>
+<li><input checked="" disabled="" type="checkbox"> Fixed-point/integer arithmetic pass for the hot loop — evaluated, not done (see note)</li>
+<li><input checked="" disabled="" type="checkbox"> On-device logging to flash for later analysis</li>
+</ul>
+<p><code>ActionGenerator</code> is the piece every prior release was missing: physiology,
+contingency memory, and spatial memory now actually drive the actuators each
+tick (<code>baseline + drive-scaled noise + contingency bias + spatial nudge</code>,
+clamped) instead of only observing whatever the dashboard did. A channel
+recently touched from the dashboard (<code>Actuator::manual_override_active</code>,
+3s window) is left alone rather than fought over — the heartbeat blink uses
+the same mechanism (<code>write_manual</code>) so it stays system-owned without a
+hardcoded channel-name exception in the engine.</p>
+<p>Task split: high-frequency work (PWM via hardware LEDC, ADC via on-demand
+cached <code>Sensor::read()</code>) needs no separate task — the hardware and existing
+on-demand reads already satisfy it. Behavior task is the existing 20 Hz
+tick. Slow task is the new <code>StateLogger</code>, ~1 Hz, appending physiology +
+total actuator cost to a 64KB-capped <code>/log.csv</code> on the same LittleFS
+partition the dashboard serves from — downloadable at <code>/log.csv</code> with zero
+extra server code, and exposed as a button on the dashboard's Config tab.</p>
+<p>Fixed-point arithmetic: evaluated and deliberately not done. The article's
+advice (§14.2) targets microcontrollers generically; both ESP32 and ESP32-S3
+have a hardware single-precision FPU, so float ops in a tick this small
+(a few hundred multiply-adds across four modules, worst case) cost
+microseconds — replacing them with fixed-point would trade real readability
+for no measurable benefit on this specific hardware. Revisit only if a
+future board target lacks an FPU.</p>
+<p>Honest limitation carried over from v0.6.0: <code>SpatialMemory::best_cell()</code>
+still can't say <em>which direction</em> to move, only <em>which remembered place</em>
+looks best. <code>ActionGenerator</code> resolves that the way flagged there — as an
+explore/exploit nudge (wider noise if a better place than "here" is known,
+narrower if "here" already looks best), not fabricated steering.</p>
+<p>Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO. Dashboard changes (manual-override badge,
+log download link) verified against a mocked API in a real browser. Not yet
+run on real hardware — the gains/constants above (noise, bias, and nudge
+scaling) are starting points, not tuned values.</p>
+<h2 id="v080--life-state-persistence">v0.8.0 — Life-state persistence</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Organism state serialization (physiology, drives, contingencies, spatial memory, stats)</li>
+<li><input disabled="" type="checkbox"> Download/upload state via the dashboard</li>
+<li><input disabled="" type="checkbox"> Channel-fingerprint + remapping layer for transferring state across bodies</li>
+</ul>
+<h2 id="v090--charging-station-integration">v0.9.0 — Charging station integration</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
+audio cue, power module states: IDLE/CHARGING/FULL)</li>
+<li><input disabled="" type="checkbox"> Robot-side: <code>battery_voltage</code>/<code>current</code> as ordinary sensor channels feeding <code>h_energy</code></li>
+<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions</li>
+</ul>
+<h2 id="v100--first-stable-alive-release-human-gated">v1.0.0 — First stable "alive" release (human-gated)</h2>
+<ul>
+<li><input disabled="" type="checkbox"> All of the above validated on real hardware</li>
+<li><input disabled="" type="checkbox"> Experimental program from the paper (§15) run at least once: homeostasis quality,
+exploration structure, history dependence, perceived aliveness</li>
+<li><input disabled="" type="checkbox"> Ablation switches implemented (disable stochasticity, freeze contingency memory,
+clear spatial memory, flatten drives, decouple battery from <code>h_energy</code>)</li>
+<li><input disabled="" type="checkbox"> Human sign-off to cut 1.0.0</li>
+</ul>
+<h2 id="backlog--later">Backlog / later</h2>
+<ul>
+<li>Multi-agent / multi-robot stigmergic experiments (scent, RF, light tags)</li>
+<li>Mechanical voice / prosody experiments</li>
+<li>Additional board support as hardware becomes available</li>
+<li>Formal comparison against HRL baselines</li>
+</ul>
+<!--ROADMAP-CONTENT-END-->
+      </div>
+    </details>
+  </section>
+
   <section id="article">
     <div class="section-label"><span class="num">04</span><h2>Article</h2></div>
+    <p class="article-pdf"><a href="synth-behavior.pdf" download>&#8681; Download as PDF</a></p>
     <div id="article-content">
 <!--ARTICLE-CONTENT-START-->
 <h2 id="table-of-contents">Table of Contents</h2>
@@ -1580,5 +1821,18 @@ MAX_ENTRIES = <span class="hljs-number">1024</span>
   </section>
 
 </div>
+
+<a class="to-top-btn" href="#top" id="to-top" aria-label="Back to top">&#8593;</a>
+<script>
+  (function () {
+    var header = document.querySelector('header');
+    var toTop = document.getElementById('to-top');
+    if (!header || !toTop || !('IntersectionObserver' in window)) return;
+    var observer = new IntersectionObserver(function (entries) {
+      toTop.classList.toggle('visible', !entries[0].isIntersecting);
+    });
+    observer.observe(header);
+  })();
+</script>
 </body>
 </html>
