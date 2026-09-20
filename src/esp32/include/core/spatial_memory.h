@@ -64,6 +64,17 @@ public:
     // occupied or not, so the grid layout is stable across calls.
     const SpatialCell& cell_at(size_t i) const { return table_[i]; }
 
+    // Signature encoding helpers (2 bits/channel, quantized into 4 levels),
+    // exposed for life-state serialize/restore (docs/synth-behavior.md §13)
+    // where signatures are saved by sensor *name* and re-packed into this
+    // body's bit positions on load.
+    static uint32_t decode_level(uint32_t signature, size_t channel_index);
+    static uint32_t encode_level(uint32_t signature, size_t channel_index, uint32_t level);
+
+    void clear();
+    void restore_raw(uint32_t signature, uint32_t visit_count, uint16_t age,
+                      const float* drive_improvement);
+
 private:
     uint32_t insert_or_update(uint32_t signature, const float* drive_delta);
 

@@ -210,4 +210,42 @@
         status.textContent = "Error saving config.";
       });
   });
+
+  document.getElementById("state-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const status = document.getElementById("state-status");
+    const fileInput = document.getElementById("state-file");
+    const file = fileInput.files[0];
+    if (!file) {
+      status.textContent = "Choose a file first.";
+      return;
+    }
+    status.textContent = "Uploading…";
+    file
+      .text()
+      .then((text) =>
+        fetch("/api/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: text,
+        })
+      )
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) {
+          status.textContent = "Error: " + (data.error || "restore failed");
+          return;
+        }
+        status.textContent =
+          "Restored " +
+          data.contingency_restored +
+          " contingency + " +
+          data.spatial_restored +
+          " spatial entries" +
+          (data.fingerprint_matched ? " (same board layout)." : " (different board layout — channels matched by name).");
+      })
+      .catch(() => {
+        status.textContent = "Error uploading state.";
+      });
+  });
 })();

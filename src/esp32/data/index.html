@@ -73,6 +73,21 @@
       rather than growing without bound.
     </p>
     <p><a href="/log.csv" download>Download state log (log.csv)</a></p>
+
+    <h2>Life State</h2>
+    <p class="hint">
+      The organism's physiology, contingency memory, and spatial memory as
+      one file (docs/synth-behavior.md §13) — download it, and it can be
+      restored later, even onto a different board. Channels are matched by
+      name: anything that doesn't exist on the board you restore onto is
+      quietly dropped rather than causing an error.
+    </p>
+    <p><a href="/api/state" download="emergent-state.json">Download life state</a></p>
+    <form id="state-form">
+      <label>Restore from file<input type="file" id="state-file" accept="application/json"></label>
+      <button type="submit">Upload &amp; restore</button>
+    </form>
+    <p id="state-status"></p>
   </section>
 
   <script src="app.js"></script>

@@ -59,6 +59,56 @@ int8_t ContingencyMemory::decode_channel(uint32_t code, size_t channel_index) {
     return 0;
 }
 
+uint32_t ContingencyMemory::encode_channel(uint32_t code, size_t channel_index, int8_t delta) {
+    if (channel_index >= 16) return code;
+    uint32_t sym = delta > 0 ? 1u : (delta < 0 ? 2u : 0u);
+    uint32_t shift = 2 * channel_index;
+    code &= ~(0x3u << shift);
+    return code | (sym << shift);
+}
+
+void ContingencyMemory::clear() {
+    memset(table_, 0, sizeof(table_));
+    count_ = 0;
+}
+
+void ContingencyMemory::restore_raw(uint32_t action_code, uint32_t sensor_code, uint8_t ctx_hash,
+                                     float strength, float mean_drive_delta, uint16_t age) {
+    if (action_code == 0 && sensor_code == 0) return;  // nothing survived remapping
+
+    uint32_t h = mix(action_code, sensor_code, ctx_hash);
+    size_t start = h % kCapacity;
+
+    size_t weakest_slot = start;
+    float weakest_strength = 2.0f;
+
+    for (size_t probe = 0; probe < kMaxProbe; probe++) {
+        size_t slot = (start + probe) % kCapacity;
+        ContingencyEntry& e = table_[slot];
+
+        if (!e.occupied) {
+            e = ContingencyEntry{action_code, sensor_code, ctx_hash, strength, mean_drive_delta, age, true};
+            count_++;
+            return;
+        }
+        if (e.action_code == action_code && e.sensor_code == sensor_code && e.ctx_hash == ctx_hash) {
+            // Two saved entries remapped onto the same code (channels that
+            // didn't exist on this body were dropped from both) — keep
+            // whichever was stronger rather than silently overwriting.
+            if (strength > e.strength) e = ContingencyEntry{action_code, sensor_code, ctx_hash, strength,
+                                                             mean_drive_delta, age, true};
+            return;
+        }
+        if (e.strength < weakest_strength) {
+            weakest_strength = e.strength;
+            weakest_slot = slot;
+        }
+    }
+
+    table_[weakest_slot] = ContingencyEntry{action_code, sensor_code, ctx_hash, strength, mean_drive_delta,
+                                             age, true};
+}
+
 void ContingencyMemory::begin(Body& body) {
     memset(table_, 0, sizeof(table_));
     count_ = 0;

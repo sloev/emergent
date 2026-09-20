@@ -42,6 +42,11 @@ public:
     float value(PhysVar v) const { return value_[static_cast<size_t>(v)]; }
     float drive(PhysVar v) const { return drive_[static_cast<size_t>(v)]; }
 
+    // For life-state restore (docs/synth-behavior.md §13) — sets a
+    // variable's raw value directly, clamped to [0,1] like everything else
+    // here. Drives are left to the next update() to recompute from it.
+    void set_value(PhysVar v, float val);
+
     // Exploration scale in [0.03, 0.8] — how much noise the action generator
     // should inject. Rises with curiosity/boredom, falls under energy and
     // safety pressure.

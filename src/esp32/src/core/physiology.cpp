@@ -172,3 +172,7 @@ void Physiology::update(Body& body, float dt_s) {
     float fuzz = 0.6f * drive_[iC] + 0.4f * drive_[iB] - 0.4f * drive_[iE] - 0.3f * drive_[iS];
     fuzz_ = clampf(fuzz, 0.03f, 0.8f);
 }
+
+void Physiology::set_value(PhysVar v, float val) {
+    value_[static_cast<size_t>(v)] = clampf(val, 0.0f, 1.0f);
+}

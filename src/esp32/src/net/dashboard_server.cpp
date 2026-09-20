@@ -5,6 +5,9 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
+#include <cstdio>
+#include <cstring>
+
 #include "net/wifi_ap.h"
 
 namespace {
@@ -99,6 +102,175 @@ void build_spatial_json(SpatialMemory& spatial, Physiology& phys, JsonDocument& 
         o["score"] = score;
     }
 }
+
+// Identifies a body's channel *layout* (names + counts), not its physical
+// identity — two boards with the same channel names hash the same. Purely
+// informational in the life-state envelope; restore is name-based regardless
+// of whether this matches, so an "organism" can move to a different body
+// (docs/synth-behavior.md §13) and keep whatever channels still exist there.
+String compute_fingerprint(Body& body) {
+    uint32_t h = 2166136261u;  // FNV-1a
+    auto mix_str = [&](const char* s) {
+        for (const char* p = s; *p; p++) {
+            h ^= static_cast<uint8_t>(*p);
+            h *= 16777619u;
+        }
+    };
+    for (size_t i = 0; i < body.actuator_count(); i++) mix_str(body.actuator_at(i).name());
+    for (size_t i = 0; i < body.sensor_count(); i++) mix_str(body.sensor_at(i).name());
+
+    char buf[9];
+    snprintf(buf, sizeof(buf), "%08x", static_cast<unsigned>(h));
+    return String(buf);
+}
+
+// Life-state envelope (docs/synth-behavior.md §13). Contingency/spatial
+// entries are keyed by channel *name*, not bit position, specifically so a
+// state captured on one board restores sensibly on another: matching
+// channels carry over, channels that don't exist on the new body are simply
+// absent from the map and their contribution to that entry is dropped ("the
+// remapping layer... gradually forgets mismatched contingencies").
+constexpr uint32_t kStateVersion = 1;
+constexpr size_t kMaxStateUploadBytes = 262144;  // 256KB guard against a runaway/bad upload
+
+void build_state_json(Body& body, Physiology& phys, ContingencyMemory& contingency, SpatialMemory& spatial,
+                       uint32_t age_ms, JsonDocument& doc) {
+    doc["version"] = kStateVersion;
+    doc["age_ms"] = age_ms;
+    doc["channel_fingerprint"] = compute_fingerprint(body);
+
+    JsonObject physObj = doc["physiology"].to<JsonObject>();
+    for (size_t v = 0; v < kPhysVarCount; v++) {
+        physObj[Physiology::var_name(static_cast<PhysVar>(v))] = phys.value(static_cast<PhysVar>(v));
+    }
+
+    static ContingencyEntry all_entries[ContingencyMemory::kCapacity];
+    size_t n = contingency.top_entries(all_entries, ContingencyMemory::kCapacity);
+    JsonArray contArr = doc["contingency"].to<JsonArray>();
+    for (size_t i = 0; i < n; i++) {
+        JsonObject o = contArr.add<JsonObject>();
+        JsonObject act = o["actuators"].to<JsonObject>();
+        for (size_t c = 0; c < body.actuator_count(); c++) {
+            int8_t d = ContingencyMemory::decode_channel(all_entries[i].action_code, c);
+            if (d != 0) act[body.actuator_at(c).name()] = d;
+        }
+        JsonObject sen = o["sensors"].to<JsonObject>();
+        for (size_t c = 0; c < body.sensor_count(); c++) {
+            int8_t d = ContingencyMemory::decode_channel(all_entries[i].sensor_code, c);
+            if (d != 0) sen[body.sensor_at(c).name()] = d;
+        }
+        o["ctx_hash"] = all_entries[i].ctx_hash;
+        o["strength"] = all_entries[i].strength;
+        o["mean_drive_delta"] = all_entries[i].mean_drive_delta;
+        o["age"] = all_entries[i].age;
+    }
+
+    JsonArray spatArr = doc["spatial"].to<JsonArray>();
+    for (size_t i = 0; i < SpatialMemory::capacity(); i++) {
+        const SpatialCell& c = spatial.cell_at(i);
+        if (!c.occupied) continue;
+        JsonObject o = spatArr.add<JsonObject>();
+        JsonObject sen = o["sensors"].to<JsonObject>();
+        for (size_t ch = 0; ch < body.sensor_count(); ch++) {
+            sen[body.sensor_at(ch).name()] = SpatialMemory::decode_level(c.signature, ch);
+        }
+        o["visit_count"] = c.visit_count;
+        o["age"] = c.age;
+        JsonObject di = o["drive_improvement"].to<JsonObject>();
+        for (size_t v = 0; v < kPhysVarCount; v++) {
+            di[Physiology::var_name(static_cast<PhysVar>(v))] = c.drive_improvement[v];
+        }
+    }
+}
+
+// Returns {contingency_restored, spatial_restored, fingerprint_matched}.
+struct RestoreResult {
+    size_t contingency_restored = 0;
+    size_t spatial_restored = 0;
+    bool fingerprint_matched = false;
+};
+
+RestoreResult restore_state_json(Body& body, Physiology& phys, ContingencyMemory& contingency,
+                                  SpatialMemory& spatial, JsonDocument& doc, uint32_t& out_age_ms) {
+    RestoreResult result;
+
+    out_age_ms = doc["age_ms"] | 0;
+    const char* fp = doc["channel_fingerprint"] | "";
+    result.fingerprint_matched = compute_fingerprint(body) == fp;
+
+    JsonObject physObj = doc["physiology"];
+    for (size_t v = 0; v < kPhysVarCount; v++) {
+        PhysVar pv = static_cast<PhysVar>(v);
+        JsonVariant val = physObj[Physiology::var_name(pv)];
+        if (!val.isNull()) phys.set_value(pv, val.as<float>());
+    }
+
+    contingency.clear();
+    for (JsonVariant item : doc["contingency"].as<JsonArray>()) {
+        JsonObject o = item.as<JsonObject>();
+        uint32_t action_code = 0, sensor_code = 0;
+
+        for (JsonPair kv : o["actuators"].as<JsonObject>()) {
+            for (size_t c = 0; c < body.actuator_count(); c++) {
+                if (strcmp(body.actuator_at(c).name(), kv.key().c_str()) == 0) {
+                    action_code = ContingencyMemory::encode_channel(action_code, c, kv.value().as<int>());
+                    break;
+                }
+            }
+        }
+        for (JsonPair kv : o["sensors"].as<JsonObject>()) {
+            for (size_t c = 0; c < body.sensor_count(); c++) {
+                if (strcmp(body.sensor_at(c).name(), kv.key().c_str()) == 0) {
+                    sensor_code = ContingencyMemory::encode_channel(sensor_code, c, kv.value().as<int>());
+                    break;
+                }
+            }
+        }
+
+        contingency.restore_raw(action_code, sensor_code, o["ctx_hash"] | 0, o["strength"] | 0.0f,
+                                 o["mean_drive_delta"] | 0.0f, o["age"] | 0);
+        result.contingency_restored++;
+    }
+
+    spatial.clear();
+    for (JsonVariant item : doc["spatial"].as<JsonArray>()) {
+        JsonObject o = item.as<JsonObject>();
+        uint32_t signature = 0;
+
+        for (JsonPair kv : o["sensors"].as<JsonObject>()) {
+            for (size_t c = 0; c < body.sensor_count(); c++) {
+                if (strcmp(body.sensor_at(c).name(), kv.key().c_str()) == 0) {
+                    signature = SpatialMemory::encode_level(signature, c, kv.value().as<uint32_t>());
+                    break;
+                }
+            }
+        }
+
+        float drive_improvement[kPhysVarCount] = {};
+        JsonObject di = o["drive_improvement"];
+        for (size_t v = 0; v < kPhysVarCount; v++) {
+            JsonVariant val = di[Physiology::var_name(static_cast<PhysVar>(v))];
+            if (!val.isNull()) drive_improvement[v] = val.as<float>();
+        }
+
+        spatial.restore_raw(signature, o["visit_count"] | 1, o["age"] | 0, drive_improvement);
+        result.spatial_restored++;
+    }
+
+    return result;
+}
+
+// Age since first boot, surviving restores: total_age = millis() + offset,
+// where offset gets set to (restored_age - millis()) on a successful
+// restore so the reported age keeps accumulating instead of resetting.
+uint32_t g_age_offset_ms = 0;
+uint32_t current_age_ms() { return millis() + g_age_offset_ms; }
+
+// POST /api/state can be tens of KB — larger than a single TCP segment — so
+// ESPAsyncWebServer's body callback fires multiple times per request. This
+// accumulates chunks until the full body has arrived. One upload at a time;
+// fine for a single-operator dashboard.
+String g_upload_buffer;
 }  // namespace
 
 namespace dashboard {
@@ -154,6 +326,53 @@ void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, Spatial
         serializeJson(doc, out);
         request->send(200, "application/json", out);
     });
+
+    server.on("/api/state", HTTP_GET,
+              [&body, &phys, &contingency, &spatial](AsyncWebServerRequest* request) {
+                  JsonDocument doc;
+                  build_state_json(body, phys, contingency, spatial, current_age_ms(), doc);
+                  String out;
+                  serializeJson(doc, out);
+                  AsyncWebServerResponse* response = request->beginResponse(200, "application/json", out);
+                  response->addHeader("Content-Disposition", "attachment; filename=\"emergent-state.json\"");
+                  request->send(response);
+              });
+
+    server.on(
+        "/api/state", HTTP_POST, [](AsyncWebServerRequest* request) {},
+        nullptr,
+        [&body, &phys, &contingency, &spatial](AsyncWebServerRequest* request, uint8_t* data, size_t len,
+                                                size_t index, size_t total) {
+            if (total > kMaxStateUploadBytes) {
+                request->send(413, "application/json", R"({"error":"state too large"})");
+                g_upload_buffer = String();
+                return;
+            }
+            if (index == 0) g_upload_buffer = String();
+            g_upload_buffer.concat(reinterpret_cast<const char*>(data), len);
+            if (index + len < total) return;  // wait for the rest
+
+            JsonDocument doc;
+            if (deserializeJson(doc, g_upload_buffer)) {
+                request->send(400, "application/json", R"({"error":"bad json"})");
+                g_upload_buffer = String();
+                return;
+            }
+            g_upload_buffer = String();
+
+            uint32_t restored_age_ms = 0;
+            RestoreResult r = restore_state_json(body, phys, contingency, spatial, doc, restored_age_ms);
+            g_age_offset_ms = restored_age_ms - millis();
+
+            JsonDocument resp;
+            resp["ok"] = true;
+            resp["fingerprint_matched"] = r.fingerprint_matched;
+            resp["contingency_restored"] = r.contingency_restored;
+            resp["spatial_restored"] = r.spatial_restored;
+            String out;
+            serializeJson(resp, out);
+            request->send(200, "application/json", out);
+        });
 
     server.on(
         "/api/config/wifi", HTTP_POST, [](AsyncWebServerRequest* request) {},

@@ -33,6 +33,69 @@ uint32_t mix(uint32_t a) {
 
 uint32_t SpatialMemory::compute_signature(Body& body) { return quantize_levels(body); }
 
+uint32_t SpatialMemory::decode_level(uint32_t signature, size_t channel_index) {
+    if (channel_index >= 16) return 0;
+    return (signature >> (2 * channel_index)) & 0x3u;
+}
+
+uint32_t SpatialMemory::encode_level(uint32_t signature, size_t channel_index, uint32_t level) {
+    if (channel_index >= 16) return signature;
+    uint32_t shift = 2 * channel_index;
+    signature &= ~(0x3u << shift);
+    return signature | ((level & 0x3u) << shift);
+}
+
+void SpatialMemory::clear() {
+    memset(table_, 0, sizeof(table_));
+    count_ = 0;
+}
+
+void SpatialMemory::restore_raw(uint32_t signature, uint32_t visit_count, uint16_t age,
+                                 const float* drive_improvement) {
+    uint32_t h = mix(signature);
+    size_t start = h % kCapacity;
+
+    size_t weakest_slot = start;
+    uint32_t weakest_visits = UINT32_MAX;
+
+    for (size_t probe = 0; probe < kMaxProbe; probe++) {
+        size_t slot = (start + probe) % kCapacity;
+        SpatialCell& c = table_[slot];
+
+        if (!c.occupied) {
+            c.occupied = true;
+            c.signature = signature;
+            c.visit_count = visit_count;
+            c.age = age;
+            memcpy(c.drive_improvement, drive_improvement, sizeof(c.drive_improvement));
+            count_++;
+            return;
+        }
+        if (c.signature == signature) {
+            // Two saved cells collapsed onto the same remapped signature
+            // (channels missing on this body were dropped from both) —
+            // keep whichever was visited more.
+            if (visit_count > c.visit_count) {
+                c.visit_count = visit_count;
+                c.age = age;
+                memcpy(c.drive_improvement, drive_improvement, sizeof(c.drive_improvement));
+            }
+            return;
+        }
+        if (c.visit_count < weakest_visits) {
+            weakest_visits = c.visit_count;
+            weakest_slot = slot;
+        }
+    }
+
+    SpatialCell& c = table_[weakest_slot];
+    c.occupied = true;
+    c.signature = signature;
+    c.visit_count = visit_count;
+    c.age = age;
+    memcpy(c.drive_improvement, drive_improvement, sizeof(c.drive_improvement));
+}
+
 void SpatialMemory::begin(Body& body) {
     memset(table_, 0, sizeof(table_));
     count_ = 0;

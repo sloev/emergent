@@ -63,9 +63,25 @@ public:
     // For diagnostics/dashboard use only — not on any hot path.
     size_t top_entries(ContingencyEntry* out, size_t max_out) const;
 
-    // Encoding helpers, exposed so the dashboard can decode codes for
-    // display without duplicating the bit layout.
+    // Encoding helpers, exposed so the dashboard can decode/encode codes
+    // without duplicating the bit layout — decode for display, encode for
+    // life-state restore (docs/synth-behavior.md §13), where entries are
+    // serialized by channel *name* (portable across boards) and have to be
+    // re-packed into this body's bit positions on load.
     static int8_t decode_channel(uint32_t code, size_t channel_index);
+    static uint32_t encode_channel(uint32_t code, size_t channel_index, int8_t delta);
+
+    // Empties the table. Life-state restore starts from a clean slate
+    // rather than merging with whatever the board already learned this
+    // session.
+    void clear();
+
+    // Inserts a fully-formed entry (probe-and-evict, same placement policy
+    // as the tick-time path) without going through the EMA blending
+    // insert_or_reinforce() does — restore wants to set these fields
+    // exactly as saved, not treat them as a fresh single observation.
+    void restore_raw(uint32_t action_code, uint32_t sensor_code, uint8_t ctx_hash, float strength,
+                      float mean_drive_delta, uint16_t age);
 
 private:
     uint32_t insert_or_reinforce(uint32_t action_code, uint32_t sensor_code, uint8_t ctx_hash,

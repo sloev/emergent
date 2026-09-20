@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.7.0** (in progress)
+**Current release: v0.8.0** (in progress)
 
 ---
 
@@ -166,9 +166,42 @@ scaling) are starting points, not tuned values.
 
 ## v0.8.0 — Life-state persistence
 
-- [ ] Organism state serialization (physiology, drives, contingencies, spatial memory, stats)
-- [ ] Download/upload state via the dashboard
-- [ ] Channel-fingerprint + remapping layer for transferring state across bodies
+- [x] Organism state serialization (physiology, drives, contingencies, spatial memory, stats)
+- [x] Download/upload state via the dashboard
+- [x] Channel-fingerprint + remapping layer for transferring state across bodies
+
+The article's schema (§13) is JSON with an opaque `"contingencies": [/*
+compressed entries */]` blob — it doesn't say how those entries stay
+meaningful if you move them to a body with different channels. Resolved
+that concretely: contingency/spatial entries are serialized by channel
+*name* (`{"actuators": {"motor_left": 1}, "sensors": {"battery_voltage": 1},
+...}`), not bit position. On restore, each name is looked up in the
+*current* body; matches get re-packed into whatever index that channel
+happens to be at now, and anything that doesn't exist on the new body is
+simply absent from the map — its contribution to that entry is dropped,
+which is what "gradually forgets mismatched contingencies" cashes out to
+concretely here. An entry that loses every channel it referenced is
+discarded outright rather than kept as a meaningless all-zero record.
+`channel_fingerprint` (hash of the current channel name list) rides along
+for information/debugging, but restore doesn't require it to match —
+name-based lookup handles cross-body transfer either way.
+
+One accepted ambiguity, worth knowing about: spatial memory's signature
+quantizes each sensor into 4 levels (0-3), and 0 is both "lowest quartile"
+and "this channel wasn't in the saved map" (e.g. restoring onto a body with
+extra sensors the old one didn't have). No way to distinguish those from
+the encoding alone; unmapped sensor channels default to level 0 on restore.
+
+Dashboard's Config tab gained a Life State section: download button (`GET
+/api/state`, same LittleFS-adjacent pattern as the log) and a file-upload
+form that POSTs the JSON back for restore, reporting how many entries
+carried over and whether the fingerprint matched.
+
+Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO. Upload/download UI flow verified against a
+mocked API in a real browser (Puppeteer) — the actual encode/decode/remap
+logic is reasoned through carefully but not yet exercised on real hardware
+or with a genuine cross-board transfer.
 
 ## v0.9.0 — Charging station integration
 

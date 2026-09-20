@@ -5,22 +5,19 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
-v0.7.0 core loop integration: the full loop from `docs/synth-behavior.md`
-§9 is wired end-to-end for the first time — sense → physiology/drives →
-memory query → action → actuate → learn. `ActionGenerator` is the piece
-every earlier release was missing: physiology, contingency memory, and
-spatial memory now actually drive the actuators each tick
-(`baseline + drive-scaled noise + contingency bias + spatial nudge`,
-clamped), instead of only observing whatever the dashboard did. A channel
-recently touched from the dashboard is left alone for a few seconds rather
-than fought over (`Actuator::manual_override_active`) — the heartbeat blink
-uses the same mechanism, so it stays system-owned without a hardcoded
-exception in the engine. A new `StateLogger` slow task (~1 Hz) appends
-physiology + actuator cost to a bounded `/log.csv` on the dashboard's
-LittleFS partition for later analysis. See
-[`docs/roadmap.md`](../../docs/roadmap.md) for what's next, and for why a
-fixed-point arithmetic pass was evaluated and deliberately skipped on this
-FPU-equipped hardware.
+v0.8.0 life-state persistence: the organism's physiology, contingency
+memory, and spatial memory can be downloaded as one JSON file and restored
+later — including onto a *different* board (`docs/synth-behavior.md` §13).
+Contingency/spatial entries are serialized by channel *name*, not bit
+position, specifically so restore works when the new body's channels don't
+match the old one's: matching names get re-packed into whatever index they
+sit at now, names that don't exist on the new body are simply dropped from
+that entry, and an entry that loses every channel it referenced is
+discarded rather than kept as noise. See
+[`docs/roadmap.md`](../../docs/roadmap.md) for the one accepted ambiguity
+in that scheme (spatial memory's level-0 quantization bin isn't
+distinguishable from "this channel wasn't in the saved map") and what's
+next.
 
 ## Layout
 
@@ -55,7 +52,7 @@ include/net/wifi_ap.h/.cpp    Brings up the SoftAP; credentials default to the
 include/net/dashboard_server.h/.cpp
                                ESPAsyncWebServer + WebSocket: serves data/,
                                /api/channels, /api/contingency, /api/spatial,
-                               /api/config/wifi
+                               /api/state, /api/config/wifi
 data/                          Dashboard front-end (served from LittleFS)
 src/board_config.cpp          Picks the active BoardConfig from the -DBOARD_PROFILE_*
                                macro set by the PlatformIO environment
@@ -96,7 +93,8 @@ overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
   drive pressure, plus a fixed 8x4 grid of remembered "places" (sensor
   signatures) shaded by how promising each looks right now. Polled every 2s.
 - **Config tab** — change the AP's SSID/password (saved to NVS, applied on
-  restart, no reflash needed), and download the state log.
+  restart, no reflash needed), download the state log, and download/
+  upload the full life state.
 
 API, for anything that wants to talk to the board directly instead of using
 the bundled UI:
@@ -108,6 +106,12 @@ the bundled UI:
   visit count, age, and current drive-weighted score.
 - `GET /log.csv` — the state log (physiology + total actuator cost, ~1
   row/sec, capped at 64KB).
+- `GET /api/state` — the full life-state envelope (physiology, every
+  contingency/spatial entry keyed by channel name, age, a channel-layout
+  fingerprint) as a downloadable JSON file.
+- `POST /api/state` — restores from a previously downloaded life-state
+  file (works across boards — see Status above); responds with how many
+  entries carried over and whether the fingerprint matched.
 - WebSocket `/ws` — server pushes the same `/api/channels` shape at 5 Hz;
   send `{"actuator": "<name>", "value": <float>}` to manually drive a
   channel (autonomous control backs off for ~3s).

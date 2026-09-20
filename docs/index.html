@@ -492,7 +492,7 @@
       <li class="done"><span class="box done"></span><span class="ver">0.5</span><span class="label">Contingency memory</span></li>
       <li class="done"><span class="box done"></span><span class="ver">0.6</span><span class="label">Spatial memory &amp; navigation</span></li>
       <li class="done"><span class="box done"></span><span class="ver">0.7</span><span class="label">Full core loop on hardware</span></li>
-      <li><span class="box"></span><span class="ver">0.8</span><span class="label">Life-state persistence</span></li>
+      <li class="done"><span class="box done"></span><span class="ver">0.8</span><span class="label">Life-state persistence</span></li>
       <li><span class="box"></span><span class="ver">0.9</span><span class="label">Emergent charging station</span></li>
       <li><span class="box"></span><span class="ver">1.0</span><span class="label">First stable release <em>(human-gated)</em></span></li>
     </ul>
@@ -505,7 +505,7 @@
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.7.0</strong> (in progress)</p>
+<p><strong>Current release: v0.8.0</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -650,10 +650,36 @@ run on real hardware — the gains/constants above (noise, bias, and nudge
 scaling) are starting points, not tuned values.</p>
 <h2 id="v080--life-state-persistence">v0.8.0 — Life-state persistence</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Organism state serialization (physiology, drives, contingencies, spatial memory, stats)</li>
-<li><input disabled="" type="checkbox"> Download/upload state via the dashboard</li>
-<li><input disabled="" type="checkbox"> Channel-fingerprint + remapping layer for transferring state across bodies</li>
+<li><input checked="" disabled="" type="checkbox"> Organism state serialization (physiology, drives, contingencies, spatial memory, stats)</li>
+<li><input checked="" disabled="" type="checkbox"> Download/upload state via the dashboard</li>
+<li><input checked="" disabled="" type="checkbox"> Channel-fingerprint + remapping layer for transferring state across bodies</li>
 </ul>
+<p>The article's schema (§13) is JSON with an opaque <code>"contingencies": [/* compressed entries */]</code> blob — it doesn't say how those entries stay
+meaningful if you move them to a body with different channels. Resolved
+that concretely: contingency/spatial entries are serialized by channel
+<em>name</em> (<code>{"actuators": {"motor_left": 1}, "sensors": {"battery_voltage": 1}, ...}</code>), not bit position. On restore, each name is looked up in the
+<em>current</em> body; matches get re-packed into whatever index that channel
+happens to be at now, and anything that doesn't exist on the new body is
+simply absent from the map — its contribution to that entry is dropped,
+which is what "gradually forgets mismatched contingencies" cashes out to
+concretely here. An entry that loses every channel it referenced is
+discarded outright rather than kept as a meaningless all-zero record.
+<code>channel_fingerprint</code> (hash of the current channel name list) rides along
+for information/debugging, but restore doesn't require it to match —
+name-based lookup handles cross-body transfer either way.</p>
+<p>One accepted ambiguity, worth knowing about: spatial memory's signature
+quantizes each sensor into 4 levels (0-3), and 0 is both "lowest quartile"
+and "this channel wasn't in the saved map" (e.g. restoring onto a body with
+extra sensors the old one didn't have). No way to distinguish those from
+the encoding alone; unmapped sensor channels default to level 0 on restore.</p>
+<p>Dashboard's Config tab gained a Life State section: download button (<code>GET /api/state</code>, same LittleFS-adjacent pattern as the log) and a file-upload
+form that POSTs the JSON back for restore, reporting how many entries
+carried over and whether the fingerprint matched.</p>
+<p>Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO. Upload/download UI flow verified against a
+mocked API in a real browser (Puppeteer) — the actual encode/decode/remap
+logic is reasoned through carefully but not yet exercised on real hardware
+or with a genuine cross-board transfer.</p>
 <h2 id="v090--charging-station-integration">v0.9.0 — Charging station integration</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
