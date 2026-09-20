@@ -4,6 +4,9 @@ src/esp32/.vscode/
 src/esp32/.clang_complete
 src/esp32/.gcc-flags.json
 
+# Node (docs build toolchain)
+node_modules/
+
 # OS
 .DS_Store
 

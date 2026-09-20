@@ -7,6 +7,9 @@ on:
       - "docs/synth-behavior.md"
       - "docs/roadmap.md"
       - "docs/assets/article.css"
+      - "docs/build/**"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch: {}
 
 permissions:
@@ -15,6 +18,7 @@ permissions:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,22 +28,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Render synth-behavior.pdf
-        run: |
-          npx --yes md-to-pdf docs/synth-behavior.md \
-            --launch-options '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
+      - name: Install dependencies (mermaid-cli, md-to-pdf)
+        run: npm install
 
-      - name: Render synth-behavior.html
-        run: |
-          npx --yes md-to-pdf docs/synth-behavior.md --as-html \
-            --stylesheet docs/assets/article.css \
-            --launch-options '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
-
-      - name: Render roadmap.html
-        run: |
-          npx --yes md-to-pdf docs/roadmap.md --as-html \
-            --stylesheet docs/assets/article.css \
-            --launch-options '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
+      - name: Render docs (mermaid diagrams -> SVG, markdown -> HTML/PDF)
+        run: node docs/build/render-docs.mjs
 
       - name: Commit rendered docs
         run: |

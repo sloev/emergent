@@ -99,3 +99,15 @@ hr {
 }
 
 img { max-width: 100%; }
+
+figure.mermaid {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f1f0ec;
+  text-align: center;
+  overflow-x: auto;
+}
+figure.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}

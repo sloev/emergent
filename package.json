@@ -1,0 +1,13 @@
+{
+  "name": "emergent-docs-build",
+  "private": true,
+  "description": "Docs render toolchain: mermaid pre-rendering + md-to-pdf HTML/PDF output.",
+  "scripts": {
+    "render-mermaid": "node docs/build/render-mermaid.mjs",
+    "render-docs": "node docs/build/render-docs.mjs"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.0",
+    "md-to-pdf": "^5.2.4"
+  }
+}
