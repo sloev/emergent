@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <cmath>
 
+#include "body/ledc_allocator.h"
+#include "body/rate_limit.h"
+
 namespace {
 float clampf(float v, float lo, float hi) {
     if (v < lo) return lo;
@@ -18,12 +21,19 @@ constexpr int kServoResolutionBits = 14;
 constexpr float kServoMinPulseUs = 1000.0f;
 constexpr float kServoMaxPulseUs = 2000.0f;
 
-// All PWM-capable actuator kinds manage their own ledc channel rather than
-// going through analogWrite(), so channel allocation never collides with it.
-// ESP32 has 16 ledc channels; each PWM/servo actuator claims one for life.
+constexpr float kMaxElapsedS = 1.0f;  // see rate_limit.h's clamp_elapsed_seconds()
+
+// All PWM-capable actuator kinds manage their own LEDC channel rather than
+// going through analogWrite(), so allocation never collides with it — see
+// body/ledc_allocator.h for why this is bounded instead of a raw counter.
+LedcChannelAllocator g_ledc_channels;
+
 uint8_t allocate_ledc_channel() {
-    static uint8_t next_channel = 0;
-    return next_channel++;
+    uint8_t ch = g_ledc_channels.allocate();
+    if (ch == LedcChannelAllocator::kNone) {
+        Serial.println("[actuator] ERROR: all 16 LEDC channels are in use — this actuator will not drive hardware");
+    }
+    return ch;
 }
 }  // namespace
 
@@ -33,22 +43,31 @@ void Actuator::begin() {
     switch (spec_.kind) {
         case ActuatorKind::kPwmUnipolar:
             channel_ = allocate_ledc_channel();
-            ledcSetup(channel_, kPwmFreqHz, kPwmResolutionBits);
-            ledcAttachPin(spec_.pin, channel_);
+            hardware_failed_ = (channel_ == LedcChannelAllocator::kNone);
+            if (!hardware_failed_) {
+                ledcSetup(channel_, kPwmFreqHz, kPwmResolutionBits);
+                ledcAttachPin(spec_.pin, channel_);
+            }
             break;
         case ActuatorKind::kPwmBidirectional:
             pinMode(spec_.aux_pin, OUTPUT);
             channel_ = allocate_ledc_channel();
-            ledcSetup(channel_, kPwmFreqHz, kPwmResolutionBits);
-            ledcAttachPin(spec_.pin, channel_);
+            hardware_failed_ = (channel_ == LedcChannelAllocator::kNone);
+            if (!hardware_failed_) {
+                ledcSetup(channel_, kPwmFreqHz, kPwmResolutionBits);
+                ledcAttachPin(spec_.pin, channel_);
+            }
             break;
         case ActuatorKind::kDigitalOut:
             pinMode(spec_.pin, OUTPUT);
             break;
         case ActuatorKind::kServo:
             channel_ = allocate_ledc_channel();
-            ledcSetup(channel_, kServoFreqHz, kServoResolutionBits);
-            ledcAttachPin(spec_.pin, channel_);
+            hardware_failed_ = (channel_ == LedcChannelAllocator::kNone);
+            if (!hardware_failed_) {
+                ledcSetup(channel_, kServoFreqHz, kServoResolutionBits);
+                ledcAttachPin(spec_.pin, channel_);
+            }
             break;
     }
 
@@ -65,12 +84,17 @@ float Actuator::write(float value) {
 
     if (initialized_ && spec_.max_rate_per_s > 0.0f) {
         uint32_t now = micros();
-        float elapsed_s = (now - last_write_us_) / 1'000'000.0f;
-        float max_delta = spec_.max_rate_per_s * elapsed_s;
-        float delta = target - current_;
-        if (delta > max_delta) delta = max_delta;
-        if (delta < -max_delta) delta = -max_delta;
-        target = current_ + delta;
+        // Unsigned subtraction wraps modulo 2^32 automatically and is exact
+        // for any true elapsed time under ~71 minutes (2^32 us) — the
+        // standard safe idiom for micros()-based deltas, not a bug by
+        // itself. The real edge case is a channel going unwritten for
+        // *longer* than that: elapsed_s would under-report the true gap
+        // (wrapping back to a small number), which could freeze the
+        // actuator for a tick instead of letting it jump. clamp_elapsed_
+        // seconds() bounds it to a sane ceiling regardless of cause — see
+        // body/rate_limit.h and test/native/test_rate_limit.cpp.
+        float elapsed_s = clamp_elapsed_seconds((now - last_write_us_) / 1'000'000.0f, kMaxElapsedS);
+        target = apply_rate_limit(current_, target, spec_.max_rate_per_s, elapsed_s);
         last_write_us_ = now;
     } else {
         last_write_us_ = micros();
@@ -96,6 +120,8 @@ float Actuator::cost() const {
 }
 
 void Actuator::drive_hardware() {
+    if (hardware_failed_) return;  // current_/cost() still track state; no pin to touch
+
     switch (spec_.kind) {
         case ActuatorKind::kPwmUnipolar: {
             float span = spec_.range_max - spec_.range_min;

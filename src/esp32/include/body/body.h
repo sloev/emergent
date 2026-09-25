@@ -23,8 +23,12 @@ public:
     size_t actuator_count() const { return actuator_count_; }
     size_t sensor_count() const { return sensor_count_; }
 
-    Actuator& actuator_at(size_t i) { return actuators_[i]; }
-    Sensor& sensor_at(size_t i) { return sensors_[i]; }
+    // Bounds-checked against the physical array size (kMaxActuators/
+    // kMaxSensors), not just actuator_count()/sensor_count() — callers are
+    // expected to respect the count, but an out-of-range index here would
+    // otherwise be undefined behavior rather than a loud, recoverable error.
+    Actuator& actuator_at(size_t i);
+    Sensor& sensor_at(size_t i);
 
     // Linear search by name; fine at these sizes. Returns nullptr if absent.
     Actuator* actuator(const char* name);

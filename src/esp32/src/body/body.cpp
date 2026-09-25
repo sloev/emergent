@@ -1,5 +1,6 @@
 #include "body/body.h"
 
+#include <Arduino.h>
 #include <cstring>
 
 void Body::begin() {
@@ -14,6 +15,24 @@ void Body::begin() {
         sensors_[i] = Sensor(board_.sensors[i]);
         sensors_[i].begin();
     }
+}
+
+Actuator& Body::actuator_at(size_t i) {
+    if (i >= kMaxActuators) {
+        Serial.printf("[body] ERROR: actuator_at(%u) out of range (max %u) — returning slot 0\n",
+                      static_cast<unsigned>(i), static_cast<unsigned>(kMaxActuators));
+        i = 0;
+    }
+    return actuators_[i];
+}
+
+Sensor& Body::sensor_at(size_t i) {
+    if (i >= kMaxSensors) {
+        Serial.printf("[body] ERROR: sensor_at(%u) out of range (max %u) — returning slot 0\n",
+                      static_cast<unsigned>(i), static_cast<unsigned>(kMaxSensors));
+        i = 0;
+    }
+    return sensors_[i];
 }
 
 Actuator* Body::actuator(const char* name) {

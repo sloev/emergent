@@ -4,8 +4,17 @@
 #include <cmath>
 #include <cstring>
 
+#include "core/channel_code.h"
+#include "core/decay_math.h"
+
 namespace {
 constexpr float kDeadzone = 0.02f;  // |Δ| below this counts as "no change"
+
+float clampf(float v, float lo, float hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
 
 // 2 bits per channel: 00 none, 01 rose, 10 fell. 11 is unused/reserved.
 uint32_t quantize_deltas(const float* now, const float* prev, size_t count) {
@@ -13,13 +22,13 @@ uint32_t quantize_deltas(const float* now, const float* prev, size_t count) {
     size_t n = count < 16 ? count : 16;  // 2 bits x 16 channels = 32 bits
     for (size_t i = 0; i < n; i++) {
         float d = now[i] - prev[i];
-        uint32_t sym = 0;
+        int8_t sym = 0;
         if (d > kDeadzone) {
             sym = 1;
         } else if (d < -kDeadzone) {
-            sym = 2;
+            sym = -1;
         }
-        code |= sym << (2 * i);
+        code = encode_channel_delta(code, i, sym);
     }
     return code;
 }
@@ -52,19 +61,11 @@ uint32_t mix(uint32_t a, uint32_t b, uint8_t c) {
 }  // namespace
 
 int8_t ContingencyMemory::decode_channel(uint32_t code, size_t channel_index) {
-    if (channel_index >= 16) return 0;
-    uint32_t sym = (code >> (2 * channel_index)) & 0x3u;
-    if (sym == 1) return 1;
-    if (sym == 2) return -1;
-    return 0;
+    return decode_channel_delta(code, channel_index);
 }
 
 uint32_t ContingencyMemory::encode_channel(uint32_t code, size_t channel_index, int8_t delta) {
-    if (channel_index >= 16) return code;
-    uint32_t sym = delta > 0 ? 1u : (delta < 0 ? 2u : 0u);
-    uint32_t shift = 2 * channel_index;
-    code &= ~(0x3u << shift);
-    return code | (sym << shift);
+    return encode_channel_delta(code, channel_index, delta);
 }
 
 void ContingencyMemory::clear() {
@@ -113,6 +114,7 @@ void ContingencyMemory::begin(Body& body) {
     memset(table_, 0, sizeof(table_));
     count_ = 0;
     has_prev_ = false;
+    last_surprise_ = 1.0f;
 
     for (size_t i = 0; i < body.actuator_count() && i < Body::kMaxActuators; i++) {
         prev_actuator_[i] = body.actuator_at(i).value();
@@ -173,6 +175,28 @@ uint32_t ContingencyMemory::insert_or_reinforce(uint32_t action_code, uint32_t s
     return weakest_slot;
 }
 
+bool ContingencyMemory::predict_from_action(uint32_t action_code, uint32_t& out_sensor_code) const {
+    bool found = false;
+    size_t best_distance = kMaxQueryHammingDistance + 1;  // sentinel: worse than any acceptable match
+    float best_strength = -1.0f;
+
+    for (size_t i = 0; i < kCapacity; i++) {
+        const ContingencyEntry& e = table_[i];
+        if (!e.occupied) continue;
+
+        size_t dist = channel_code_distance(e.action_code, action_code);
+        if (dist > kMaxQueryHammingDistance) continue;
+
+        if (dist < best_distance || (dist == best_distance && e.strength > best_strength)) {
+            best_distance = dist;
+            best_strength = e.strength;
+            out_sensor_code = e.sensor_code;
+            found = true;
+        }
+    }
+    return found;
+}
+
 void ContingencyMemory::update(Body& body, Physiology& phys, float dt_s) {
     if (dt_s <= 0.0f) return;
 
@@ -188,11 +212,20 @@ void ContingencyMemory::update(Body& body, Physiology& phys, float dt_s) {
 
     if (has_prev_) {
         // Decay every occupied entry — O(capacity), trivially cheap at this
-        // table size even at a 20 Hz tick.
+        // table size even at a 20 Hz tick — and reclaim any that decayed
+        // into denormal-noise territory so they stop occupying a slot and
+        // skewing count(). age saturates instead of wrapping: a uint16_t
+        // that just increments would silently reset to 0 (looking "fresh")
+        // after ~55 minutes at this tick rate.
         for (size_t i = 0; i < kCapacity; i++) {
-            if (table_[i].occupied) {
-                table_[i].strength *= (1.0f - kDecayRate);
-                table_[i].age++;
+            if (!table_[i].occupied) continue;
+
+            table_[i].strength = decay_strength(table_[i].strength, kDecayRate);
+            table_[i].age = bump_age_saturating(table_[i].age);
+
+            if (should_prune(table_[i].strength, kPruneThreshold)) {
+                table_[i] = ContingencyEntry{};
+                count_--;
             }
         }
 
@@ -200,6 +233,20 @@ void ContingencyMemory::update(Body& body, Physiology& phys, float dt_s) {
         uint32_t sensor_code = quantize_deltas(now_sensor, prev_sensor_, ns);
         uint8_t ctx = context_hash(phys);
         float drive_delta = prev_total_drive_ - total_drive;  // positive = things got better
+
+        // Prediction check *before* this tick's observation gets folded
+        // into memory below — otherwise every tick would trivially predict
+        // itself perfectly. This is real prediction error: how much what
+        // just happened differs from what memory already expected given
+        // this tick's action, not a proxy like raw sensor activity.
+        uint32_t predicted_sensor_code = 0;
+        bool have_prediction = predict_from_action(action_code, predicted_sensor_code);
+        if (have_prediction) {
+            size_t dist = channel_code_distance(predicted_sensor_code, sensor_code);
+            last_surprise_ = ns > 0 ? clampf(static_cast<float>(dist) / static_cast<float>(ns), 0.0f, 1.0f) : 0.0f;
+        } else {
+            last_surprise_ = 1.0f;  // never seen this action before: maximally novel
+        }
 
         last_sensor_code_ = sensor_code;
         insert_or_reinforce(action_code, sensor_code, ctx, drive_delta);
@@ -219,13 +266,20 @@ bool ContingencyMemory::query_bias(uint32_t sensor_code, uint32_t& out_action_co
     for (size_t i = 0; i < kCapacity; i++) {
         const ContingencyEntry& e = table_[i];
         if (!e.occupied) continue;
-        if (e.sensor_code != sensor_code) continue;
 
-        float score = e.mean_drive_delta * e.strength;
+        size_t dist = channel_code_distance(e.sensor_code, sensor_code);
+        if (dist > kMaxQueryHammingDistance) continue;
+
+        // Soft matching: tolerate a channel or two differing (kMaxQuery
+        // HammingDistance), but discount confidence the further the match
+        // is from exact — otherwise a handful of sensors makes the exact
+        // signature space sparse enough that this almost never fires.
+        float discount = 1.0f / static_cast<float>(1 + dist);
+        float score = e.mean_drive_delta * e.strength * discount;
         if (score > best_score) {
             best_score = score;
             out_action_code = e.action_code;
-            out_confidence = e.strength;
+            out_confidence = e.strength * discount;
             found = true;
         }
     }

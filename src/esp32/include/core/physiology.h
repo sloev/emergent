@@ -36,8 +36,11 @@ public:
 
     // Advance one behavior tick. Reads every sensor channel, folds change
     // magnitude and actuator cost into the internal variables, then
-    // recomputes drives and the exploration scale.
-    void update(Body& body, float dt_s);
+    // recomputes drives and the exploration scale. `surprise` (in [0,1],
+    // typically ContingencyMemory::last_surprise() from the *previous*
+    // tick — see main.cpp) drives curiosity: real prediction error against
+    // memory, not a proxy like raw sensor activity.
+    void update(Body& body, float dt_s, float surprise);
 
     float value(PhysVar v) const { return value_[static_cast<size_t>(v)]; }
     float drive(PhysVar v) const { return drive_[static_cast<size_t>(v)]; }

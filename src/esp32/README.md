@@ -5,6 +5,23 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
+v0.8.1 hardening: a response to [GH issue #1](https://github.com/sloev/emergent/issues/1)'s
+review of everything through v0.8.0 — LEDC channel exhaustion now fails
+loudly instead of silently colliding, contingency-memory age saturates
+instead of wrapping every ~55 minutes, decayed entries below a strength
+floor are reclaimed instead of occupying a slot forever, contingency
+queries tolerate near-misses instead of requiring a bit-exact signature,
+curiosity is driven by real prediction error against memory instead of raw
+sensor activity, the action generator pulls toward the zero-cost rest state
+under fatigue/energy pressure, and a `SafetyMonitor` enforces a battery/
+thermal cutoff independent of drives or manual overrides. Pure logic
+(channel encode/decode, decay/aging, rate-limit math, LEDC allocation
+bounds) is factored into small header-only functions with zero hardware
+dependency and covered by host-native tests — see Testing below. Full
+details and what was deliberately *not* changed (a couple of the issue's
+claims didn't hold up under unsigned-arithmetic scrutiny) are in
+[`docs/roadmap.md`](../../docs/roadmap.md).
+
 v0.8.0 life-state persistence: the organism's physiology, contingency
 memory, and spatial memory can be downloaded as one JSON file and restored
 later — including onto a *different* board (`docs/synth-behavior.md` §13).
@@ -47,6 +64,14 @@ include/core/action_generator.h/.cpp
                               from physiology + both memories (docs/synth-behavior.md §9)
 include/core/state_logger.h/.cpp
                               ~1 Hz slow task: bounded state log on LittleFS
+include/core/safety_monitor.h/.cpp
+                              Battery/thermal hard cutoff, independent of
+                              drives/action generator/manual overrides
+include/core/channel_code.h   Pure channel encode/decode/distance bit-packing,
+                               shared by contingency + spatial memory
+include/core/decay_math.h     Pure strength-decay/age-saturation/prune math
+include/body/rate_limit.h     Pure rate-limit math behind Actuator::write()
+include/body/ledc_allocator.h Pure bounded-counter behind LEDC channel allocation
 include/net/wifi_ap.h/.cpp    Brings up the SoftAP; credentials default to the
                                board profile, overridable at runtime (NVS)
 include/net/dashboard_server.h/.cpp
@@ -86,8 +111,9 @@ overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
 
 - **Dashboard tab** — physiology (value + drive per internal variable,
   overall `fuzz_scale`), every sensor's live value, and a slider per
-  actuator for manual control (tagged `M` while your override is active).
-  Updated over WebSocket (`/ws`) at 5 Hz.
+  actuator for manual control (tagged `M` while your override is active,
+  `SAFE` while `SafetyMonitor` has force-cut it — see below). A banner
+  appears if the battery is critical. Updated over WebSocket (`/ws`) at 5 Hz.
 - **Memory tab** — top contingency-memory entries by strength, decoded into
   which channels moved which way and whether it coincided with falling
   drive pressure, plus a fixed 8x4 grid of remembered "places" (sensor
@@ -98,8 +124,9 @@ overridable — see below) and serves a dashboard at `http://192.168.4.1/`:
 
 API, for anything that wants to talk to the board directly instead of using
 the bundled UI:
-- `GET /api/channels` — JSON snapshot of all actuators (value + whether a
-  manual override is active)/sensors/physiology.
+- `GET /api/channels` — JSON snapshot of all actuators (value, whether a
+  manual override is active, whether `SafetyMonitor` has force-cut it)/
+  sensors/physiology, plus a top-level `battery_critical` flag.
 - `GET /api/contingency` — top contingency-memory entries (strength, age,
   mean drive delta, decoded channel deltas).
 - `GET /api/spatial` — all 32 place-cell slots (occupied or not), each with
@@ -142,3 +169,23 @@ pio run -e esp32dev -t uploadfs     # flash it
 pio run -e esp32dev -t upload       # flash the firmware
 pio device monitor
 ```
+
+## Testing
+
+```sh
+pio test -e native
+```
+
+Runs the host-native unit tests under `test/` against the pure logic in
+`include/{core,body}/*.h` (channel encode/decode/remapping, decay/age
+saturation, rate-limit math, LEDC allocation bounds) — no board, no
+hardware simulation, just plain functions on plain numbers. This is
+deliberately a small, honest subset: the rest of the engine (`Physiology`,
+`ContingencyMemory::update()`, `ActionGenerator`, ...) takes a live `Body&`
+and calls real `Sensor`/`Actuator` methods that touch hardware
+(`analogRead`, `ledcWrite`, ...), so exercising it end-to-end needs either a
+real board or a proper hardware mock layer — neither exists yet. When you
+add a new piece of genuinely hardware-independent logic to this codebase,
+consider whether it belongs in a small header like the ones above instead
+of inline in a hardware-coupled class, specifically so it stays testable
+this way.

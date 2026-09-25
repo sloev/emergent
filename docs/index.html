@@ -505,7 +505,7 @@
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.8.0</strong> (in progress)</p>
+<p><strong>Current release: v0.8.1</strong> (in progress)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -680,6 +680,123 @@ LittleFS image) with PlatformIO. Upload/download UI flow verified against a
 mocked API in a real browser (Puppeteer) — the actual encode/decode/remap
 logic is reasoned through carefully but not yet exercised on real hardware
 or with a genuine cross-board transfer.</p>
+<h2 id="v081--hardening-gh-issue-1">v0.8.1 — Hardening (GH issue #1)</h2>
+<p>A code review filed as <a href="https://github.com/sloev/emergent/issues/1">GH issue #1</a>
+went through everything up to v0.8.0 and found real problems. This release
+works through it point by point rather than a themed feature — a patch, not
+a minor, per the versioning rule at the top of this file.</p>
+<p><strong>Fixed:</strong></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>LEDC channel exhaustion.</strong> <code>allocate_ledc_channel()</code> was an
+unbounded static counter — a board profile with more than 16
+PWM/servo actuators would silently hand out an invalid channel number
+or alias two actuators onto the same one. Extracted into
+<code>LedcChannelAllocator</code> (<code>include/body/ledc_allocator.h</code>), which
+refuses past 16 and marks the actuator <code>hardware_failed()</code> instead —
+it keeps tracking <code>value()</code>/<code>cost()</code> for the rest of the system, it
+just never touches a pin.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Rate-limit timing.</strong> The reported failure mode ("32-bit overflow
+makes the delta huge") doesn't actually happen — <code>now - last_write_us_</code>
+in unsigned 32-bit arithmetic is exact for any true elapsed time under
+~71 minutes regardless of a micros() wraparound in between; that's the
+standard safe idiom, not a bug. The real edge case is a channel
+unwritten for <em>longer</em> than that (elapsed_s would <em>under</em>-report,
+freezing the actuator for a tick, not jumping it) — and separately,
+nothing bounded elapsed_s against unrelated timing anomalies (a
+blocked loop(), scheduling jitter). <code>clamp_elapsed_seconds()</code>
+(<code>include/body/rate_limit.h</code>) bounds it to a 1-second ceiling either
+way.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Contingency memory age/decay.</strong> <code>age</code> was a <code>uint16_t</code> doing plain
+<code>age++</code> — silently wraps to 0 (looking freshly-reinforced) after
+65536 ticks, ~55 minutes at the 20 Hz behavior tick. Now saturates
+(<code>bump_age_saturating()</code>, same fix applied to spatial memory's <code>age</code>
+too). Separately, strength decays asymptotically and never hits
+exactly 0, so a decayed entry occupied a table slot forever as
+denormal noise; entries below <code>kPruneThreshold</code> are now reclaimed
+during the same decay pass.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Exact-match-only recall.</strong> <code>query_bias()</code> required a bit-exact
+<code>sensor_code</code> match; with only 2 sensors on the reference board the
+signature space is small enough that this mostly worked by accident,
+but it thins out fast as more sensors are added — meaning contingency
+memory could easily learn plenty and still never influence behavior.
+Now tolerates up to <code>kMaxQueryHammingDistance</code> (1) differing channel
+symbols, discounting confidence by match distance. Also applied to
+the new prediction lookup that drives curiosity (below) — <code>best_cell()</code>
+was not actually affected despite the issue's phrasing (it scores
+every cell unconditionally; there was no match-against-current
+requirement to begin with).</li>
+</ul>
+<p><strong>Also fixed, medium severity:</strong></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>Curiosity was still the v0.4.0 placeholder</strong> (raw sensor activity)
+despite the roadmap saying it would become real prediction error once
+contingency memory existed — it never did, until now.
+<code>ContingencyMemory</code> now predicts this tick's sensor_code from its
+action_code <em>before</em> folding the observation into memory, and
+<code>last_surprise()</code> (distance between predicted and actual, normalized)
+feeds <code>Physiology::update()</code>'s curiosity term directly. One tick of
+lag (contingency's prediction for tick N is checked at the start of
+tick N, fed to physiology at tick N+1) — harmless at 20 Hz, and the
+standard shape for this kind of loop.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Action generator baseline was pure persistence.</strong> A channel that
+drifted to a high-cost value under low drive pressure had no reason
+to move back — noise alone doesn't reliably find its way to 0. Added
+a <code>rest_pull</code> term, scaled by fatigue + low-energy drive pressure,
+toward 0 — the zero-cost state for every <code>ActuatorKind</code> here.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>No safety envelope independent of the behavioral system.</strong> Added
+<code>SafetyMonitor</code>: a battery-critical cutoff (raw <code>energy_sensor</code>
+reading, not the decayed/coupled <code>h_energy</code> the rest of the system can
+influence) and a per-actuator leaky-bucket thermal budget, both
+enforced <em>after</em> the action generator and overriding even a manual
+dashboard write. It knows nothing about drives — that's the point.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>State-restore age arithmetic.</strong> Reviewed and confirmed <em>not</em> a bug:
+<code>restored_age_ms - millis()</code> can wrap in uint32_t if restoring an
+"older" state, but <code>current_age_ms()</code>'s later addition wraps back by
+the same amount and the two cancel exactly under modular arithmetic —
+the same idiom used correctly everywhere else in this codebase.
+Documented in place rather than "fixed" into something worse.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong><code>LittleFS.begin(true)</code>.</strong> Reformatted the partition on any mount
+failure, silently destroying a saved life-state/log on a field device
+that hit filesystem corruption. Now tries a safe mount first; only
+falls back to formatting (loudly logged) if that also fails.</li>
+</ul>
+<p><strong>Low/hygiene:</strong></p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Documented the not-reentrant tradeoff on the dashboard's static
+response buffers (fine for a single-operator dashboard; noted for
+when that assumption changes).</li>
+<li><input checked="" disabled="" type="checkbox"> Exploration noise moved off <code>random()</code> — on ESP32 it draws from the
+hardware TRNG unconditionally and can't be seeded, so no specific run
+was ever reproducible. <code>ActionGenerator</code> now owns a seedable
+xorshift32 PRNG, seeded from the hardware RNG by default (still varied
+every boot) and logged via Serial so a run can be pinned with
+<code>set_seed()</code> for a controlled experiment.</li>
+<li><input checked="" disabled="" type="checkbox"> <code>Body::actuator_at()</code>/<code>sensor_at()</code> had no bounds check against the
+physical array size (only callers respecting <code>actuator_count()</code> kept
+it safe). Now bounds-checked, logs and falls back to slot 0 rather
+than undefined behavior.</li>
+<li><input checked="" disabled="" type="checkbox"> Documented the "permanent manual override" pattern (heartbeat/
+led_status) at its actual source — <code>Actuator::write_manual()</code>'s doc
+comment — not just at the one call site that happens to use it, so
+the next "system" actuator that needs the same trick finds it.</li>
+</ul>
+<p><strong>Immediate actions, done properly rather than skipped:</strong> the pure,
+hardware-independent logic behind all four "write unit tests for" asks
+(rate-limit wrap, memory decay, restore remapping, LEDC allocation) is
+factored into small header-only functions with zero Body/Actuator/Sensor/
+Arduino dependency — <code>include/core/channel_code.h</code>, <code>include/core/decay_math.h</code>,
+<code>include/body/rate_limit.h</code>, <code>include/body/ledc_allocator.h</code> — and covered
+by 27 host-native test cases (<code>pio test -e native</code>, wired into CI). This was
+the honest scope: the rest of the engine takes a live <code>Body&amp;</code> and calls real
+hardware methods, so testing it end-to-end needs a real board or a proper
+hardware mock layer, neither of which exists yet — extracting pure logic
+into testable units where it already existed was achievable now without
+that larger undertaking.</p>
+<p>Verified: both esp32dev and esp32-s3-devkitc-1 build clean (firmware +
+LittleFS image) with PlatformIO; all 27 native unit tests pass. Dashboard
+safety UI (banner, <code>SAFE</code> badge) verified against a mocked API in a real
+browser. Not yet run on real hardware — none of this changes that standing
+caveat.</p>
 <h2 id="v090--charging-station-integration">v0.9.0 — Charging station integration</h2>
 <ul>
 <li><input disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,

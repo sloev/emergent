@@ -18,7 +18,7 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 uint32_t last_broadcast_ms = 0;
 
-void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
+void build_channels_json(Body& body, Physiology& phys, SafetyMonitor& safety, JsonDocument& doc) {
     JsonArray actuators = doc["actuators"].to<JsonArray>();
     for (size_t i = 0; i < body.actuator_count(); i++) {
         Actuator& a = body.actuator_at(i);
@@ -28,6 +28,7 @@ void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
         o["max"] = a.spec().range_max;
         o["value"] = a.value();
         o["manual"] = a.manual_override_active(millis());
+        o["safety_tripped"] = safety.actuator_tripped(i);
     }
 
     JsonArray sensors = doc["sensors"].to<JsonArray>();
@@ -47,6 +48,7 @@ void build_channels_json(Body& body, Physiology& phys, JsonDocument& doc) {
         o["drive"] = phys.drive(v);
     }
     doc["fuzz_scale"] = phys.fuzz_scale();
+    doc["battery_critical"] = safety.battery_critical();
 }
 
 // Decodes a packed delta code back into {name, delta} pairs for display —
@@ -66,6 +68,13 @@ void build_contingency_json(Body& body, ContingencyMemory& contingency, JsonDocu
     doc["count"] = contingency.count();
     doc["capacity"] = ContingencyMemory::capacity();
 
+    // `static` to avoid a stack allocation for what's a small fixed buffer,
+    // not for persistence between calls — each call fully overwrites what
+    // it uses. Fine at these sizes (BSS, not stack), but note it's not
+    // reentrant: two concurrent requests to this handler would stomp on
+    // each other's buffer. Acceptable for a single-operator dashboard;
+    // revisit if that ever changes, or if kContingencyTopN/kCapacity grow
+    // enough to matter for RAM budget.
     static ContingencyEntry top[kContingencyTopN];
     size_t n = contingency.top_entries(top, kContingencyTopN);
 
@@ -144,6 +153,9 @@ void build_state_json(Body& body, Physiology& phys, ContingencyMemory& contingen
         physObj[Physiology::var_name(static_cast<PhysVar>(v))] = phys.value(static_cast<PhysVar>(v));
     }
 
+    // Same not-reentrant tradeoff as build_contingency_json's buffer above —
+    // fine for a single-operator dashboard, sized directly off kCapacity so
+    // it can't silently fall out of sync if that changes.
     static ContingencyEntry all_entries[ContingencyMemory::kCapacity];
     size_t n = contingency.top_entries(all_entries, ContingencyMemory::kCapacity);
     JsonArray contArr = doc["contingency"].to<JsonArray>();
@@ -263,6 +275,17 @@ RestoreResult restore_state_json(Body& body, Physiology& phys, ContingencyMemory
 // Age since first boot, surviving restores: total_age = millis() + offset,
 // where offset gets set to (restored_age - millis()) on a successful
 // restore so the reported age keeps accumulating instead of resetting.
+//
+// If restored_age_ms < millis() (restoring an "older" state onto a board
+// that's already been running longer than that), this subtraction wraps in
+// uint32_t — that's fine, not a bug: current_age_ms()'s addition wraps back
+// by the same amount, and modular arithmetic makes the two cancel exactly,
+// leaving restored_age_ms + (elapsed time since restore). Same safe idiom
+// used for every millis()-delta in this codebase (Actuator's rate limiter,
+// manual-override window, main.cpp's tick scheduling); it only breaks if
+// the elapsed *real* time itself exceeds ~49.7 days (2^32 ms), which is a
+// millis() wraparound concern shared by all of them equally, not specific
+// to this offset.
 uint32_t g_age_offset_ms = 0;
 uint32_t current_age_ms() { return millis() + g_age_offset_ms; }
 
@@ -275,9 +298,19 @@ String g_upload_buffer;
 
 namespace dashboard {
 
-void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, SpatialMemory& spatial) {
-    if (!LittleFS.begin(true)) {
-        Serial.println("[dashboard] LittleFS mount failed");
+void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, SpatialMemory& spatial,
+           SafetyMonitor& safety) {
+    // Mount without formatting first — LittleFS.begin(true) reformats on
+    // any mount failure, which would silently wipe a saved life-state and
+    // the flight log on a field device that hit a corrupted filesystem
+    // (power loss mid-write, etc.) instead of surfacing the problem.
+    // Formatting is a last resort, tried only if the safe mount fails too,
+    // and logged loudly either way.
+    if (!LittleFS.begin(false)) {
+        Serial.println("[dashboard] LittleFS mount failed; retrying with format (any saved state/log will be lost)");
+        if (!LittleFS.begin(true)) {
+            Serial.println("[dashboard] LittleFS mount failed even after formatting — dashboard/log/state unavailable");
+        }
     }
 
     ws.onEvent([&body](AsyncWebSocket* server_, AsyncWebSocketClient* client, AwsEventType type,
@@ -303,9 +336,9 @@ void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, Spatial
     });
     server.addHandler(&ws);
 
-    server.on("/api/channels", HTTP_GET, [&body, &phys](AsyncWebServerRequest* request) {
+    server.on("/api/channels", HTTP_GET, [&body, &phys, &safety](AsyncWebServerRequest* request) {
         JsonDocument doc;
-        build_channels_json(body, phys, doc);
+        build_channels_json(body, phys, safety, doc);
         String out;
         serializeJson(doc, out);
         request->send(200, "application/json", out);
@@ -401,7 +434,7 @@ void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, Spatial
     Serial.println("[dashboard] server started on port 80");
 }
 
-void loop_tick(Body& body, Physiology& phys) {
+void loop_tick(Body& body, Physiology& phys, SafetyMonitor& safety) {
     ws.cleanupClients();
 
     uint32_t now = millis();
@@ -411,7 +444,7 @@ void loop_tick(Body& body, Physiology& phys) {
     if (ws.count() == 0) return;
 
     JsonDocument doc;
-    build_channels_json(body, phys, doc);
+    build_channels_json(body, phys, safety, doc);
     String out;
     serializeJson(doc, out);
     ws.textAll(out);

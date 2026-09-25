@@ -1,6 +1,8 @@
 #include "core/action_generator.h"
 
 #include <Arduino.h>
+#include <esp_system.h>
+
 #include <cmath>
 
 namespace {
@@ -10,17 +12,32 @@ float clampf(float v, float lo, float hi) {
     return v;
 }
 
-// Uniform noise in [-1, 1]. Arduino's random() is good enough here — this
-// is exploration noise, not anything security- or fairness-sensitive.
-float uniform_noise() { return (random(0, 10001) / 10000.0f) * 2.0f - 1.0f; }
-
 constexpr float kNoiseGain = 0.5f;         // fraction of channel span, at fuzz=1
 constexpr float kContingencyGain = 0.3f;   // fraction of span, at confidence=1
 constexpr float kSpatialGain = 0.5f;       // scales best_cell() score into an explore/exploit nudge
 constexpr float kSpatialNudgeMax = 0.3f;   // clamp so it can widen/narrow noise, never dominate it
+constexpr float kRestPullGain = 0.3f;      // fraction of the way toward 0 per tick, at max pressure
 }  // namespace
 
-void ActionGenerator::begin(Body& body) { (void)body; }
+void ActionGenerator::begin(Body& body) {
+    (void)body;
+    rng_state_ = esp_random();
+    if (rng_state_ == 0) rng_state_ = 1;  // xorshift is fixed at 0 forever; never let it land there
+    Serial.print("[action_gen] rng seed: ");
+    Serial.println(rng_state_);
+}
+
+void ActionGenerator::set_seed(uint32_t seed) { rng_state_ = seed == 0 ? 1 : seed; }
+
+float ActionGenerator::noise() {
+    // xorshift32 — small, fast, and (unlike ESP32's random()) fully
+    // determined by its state, so a captured seed reproduces the exact same
+    // exploration sequence.
+    rng_state_ ^= rng_state_ << 13;
+    rng_state_ ^= rng_state_ >> 17;
+    rng_state_ ^= rng_state_ << 5;
+    return (static_cast<float>(rng_state_) / 4294967295.0f) * 2.0f - 1.0f;
+}
 
 void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& contingency,
                             SpatialMemory& spatial) {
@@ -46,6 +63,12 @@ void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& cont
 
     float fuzz = phys.fuzz_scale();
 
+    // Independent of any single channel: how much pressure there is to stop
+    // spending and settle toward the zero-cost state. Every ActuatorKind's
+    // cost() is |value| * cost_per_unit, so 0 is the rest state for all of
+    // them regardless of what they physically are.
+    float rest_pressure = clampf(phys.drive(PhysVar::kFatigue) + phys.drive(PhysVar::kEnergy), 0.0f, 1.0f);
+
     for (size_t i = 0; i < body.actuator_count(); i++) {
         Actuator& a = body.actuator_at(i);
         if (a.manual_override_active(now)) continue;
@@ -53,7 +76,8 @@ void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& cont
         float span = a.spec().range_max - a.spec().range_min;
 
         float baseline = a.value();
-        float noise = uniform_noise() * fuzz * span * kNoiseGain * (1.0f + spatial_nudge);
+        float rest_pull = -baseline * rest_pressure * kRestPullGain;
+        float noise_term = noise() * fuzz * span * kNoiseGain * (1.0f + spatial_nudge);
 
         float bias = 0.0f;
         if (have_bias) {
@@ -61,7 +85,7 @@ void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& cont
             bias = static_cast<float>(dir) * confidence * span * kContingencyGain;
         }
 
-        float target = clampf(baseline + noise + bias, a.spec().range_min, a.spec().range_max);
+        float target = clampf(baseline + rest_pull + noise_term + bias, a.spec().range_min, a.spec().range_max);
         a.write(target);
     }
 }

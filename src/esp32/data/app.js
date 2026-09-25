@@ -99,7 +99,13 @@
       .catch(() => {});
   }
 
+  function applySafetyBanner(data) {
+    const banner = document.getElementById("safety-banner");
+    if (banner) banner.style.display = data.battery_critical ? "block" : "none";
+  }
+
   function renderChannels(data) {
+    applySafetyBanner(data);
     physiologyEl.innerHTML = "";
     (data.physiology || []).forEach((p) => {
       const row = document.createElement("div");
@@ -132,7 +138,9 @@
       row.innerHTML =
         '<span class="name">' + a.name +
         ' <span class="tag manual" data-actuator-manual="' + a.name + '" style="display:' +
-        (a.manual ? "inline-block" : "none") + '">M</span></span>' +
+        (a.manual ? "inline-block" : "none") + '">M</span>' +
+        ' <span class="tag safety" data-actuator-safety="' + a.name + '" style="display:' +
+        (a.safety_tripped ? "inline-block" : "none") + '">SAFE</span></span>' +
         '<input type="range" min="' + a.min + '" max="' + a.max +
         '" step="0.01" value="' + a.value + '" data-actuator="' + a.name + '">' +
         '<span class="value" data-actuator-value="' + a.name + '">' + a.value.toFixed(2) + "</span>";
@@ -152,6 +160,7 @@
   }
 
   function applyTelemetry(data) {
+    applySafetyBanner(data);
     (data.physiology || []).forEach((p) => {
       const valueEl = physiologyEl.querySelector('[data-phys="' + p.name + '"]');
       const driveEl = physiologyEl.querySelector('[data-phys-drive="' + p.name + '"]');
@@ -173,6 +182,8 @@
       const valueEl = actuatorsEl.querySelector('[data-actuator-value="' + a.name + '"]');
       const manualEl = actuatorsEl.querySelector('[data-actuator-manual="' + a.name + '"]');
       if (manualEl) manualEl.style.display = a.manual ? "inline-block" : "none";
+      const safetyEl = actuatorsEl.querySelector('[data-actuator-safety="' + a.name + '"]');
+      if (safetyEl) safetyEl.style.display = a.safety_tripped ? "inline-block" : "none";
       // Don't fight the user while they're dragging a slider.
       if (document.activeElement === input) return;
       if (input) input.value = a.value;

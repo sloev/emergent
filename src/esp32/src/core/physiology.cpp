@@ -91,7 +91,7 @@ void Physiology::begin(Body& body) {
     has_prev_ = false;
 }
 
-void Physiology::update(Body& body, float dt_s) {
+void Physiology::update(Body& body, float dt_s, float surprise) {
     if (dt_s <= 0.0f) return;
 
     // --- sense: aggregate change across every channel -----------------
@@ -140,10 +140,10 @@ void Physiology::update(Body& body, float dt_s) {
     value_[iAr] += (kArousalGain * activity_ - kArousalDecay * value_[iAr]) * dt_s;
     value_[iAr] = clampf(value_[iAr], 0.0f, 1.0f);
 
-    // Placeholder novelty signal: proportional to raw sensor change. Once
-    // contingency memory (v0.5.0) exists, this should become real prediction
-    // error instead of a stand-in for it.
-    value_[iC] += (kCuriosityGain * activity_ - kCuriosityDecay * value_[iC]) * dt_s;
+    // Real prediction error (docs/synth-behavior.md §7): `surprise` is how
+    // much the last tick's outcome differed from what contingency memory
+    // already expected, not a proxy like raw sensor activity.
+    value_[iC] += (kCuriosityGain * surprise - kCuriosityDecay * value_[iC]) * dt_s;
     value_[iC] = clampf(value_[iC], 0.0f, 1.0f);
 
     value_[iB] += (kBoredomGain * (1.0f - activity_) - kBoredomResetGain * activity_ * value_[iB]) * dt_s;

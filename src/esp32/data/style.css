@@ -181,6 +181,22 @@ p.hint code {
   letter-spacing: 0.04em;
   vertical-align: middle;
 }
+.tag.safety {
+  background: var(--line);
+  color: #fff;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+.safety-banner {
+  background: var(--line);
+  color: #fff;
+  padding: 0.6rem 0.8rem;
+  margin: 0 0 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 .empty-hint { color: var(--fg-muted); font-size: 0.85rem; }
 
 .spatial-grid {

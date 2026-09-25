@@ -25,6 +25,7 @@
 #include "core/action_generator.h"
 #include "core/contingency_memory.h"
 #include "core/physiology.h"
+#include "core/safety_monitor.h"
 #include "core/spatial_memory.h"
 #include "core/state_logger.h"
 #include "net/dashboard_server.h"
@@ -40,6 +41,7 @@ static Physiology phys;
 static ContingencyMemory contingency;
 static SpatialMemory spatial;
 static ActionGenerator action_gen;
+static SafetyMonitor safety;
 static StateLogger logger;
 
 static void self_test() {
@@ -85,9 +87,10 @@ void setup() {
     contingency.begin(body);
     spatial.begin(body);
     action_gen.begin(body);
+    safety.begin(body);
 
     wifi_ap::begin(active_board());
-    dashboard::begin(body, phys, contingency, spatial);  // mounts LittleFS
+    dashboard::begin(body, phys, contingency, spatial, safety);  // mounts LittleFS
     logger.begin();
 }
 
@@ -112,12 +115,20 @@ void loop() {
     }
 
     // Behavior tick: sense -> physiology/drives -> memory update -> act.
+    // Physiology's curiosity term consumes contingency's last_surprise()
+    // from the *previous* tick, since this tick's contingency.update()
+    // (which recomputes it) hasn't run yet — a harmless one-tick lag at
+    // 20 Hz, standard for this kind of feedback loop.
     if (now - last_tick_ms >= kBehaviorTickMs) {
         float dt_s = (now - last_tick_ms) / 1000.0f;
-        phys.update(body, dt_s);
+        phys.update(body, dt_s, contingency.last_surprise());
         contingency.update(body, phys, dt_s);
         spatial.update(body, phys, dt_s);
         action_gen.tick(body, phys, contingency, spatial);
+        // Independent hard floor, enforced last so nothing upstream — drives,
+        // memory bias, even a manual dashboard override — gets a vote once a
+        // limit is crossed (docs/roadmap.md, GH issue #1).
+        safety.enforce(body, dt_s);
         last_tick_ms = now;
     }
 
@@ -127,5 +138,5 @@ void loop() {
         last_slow_ms = now;
     }
 
-    dashboard::loop_tick(body, phys);
+    dashboard::loop_tick(body, phys, safety);
 }

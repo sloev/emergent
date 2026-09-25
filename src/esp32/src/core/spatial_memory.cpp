@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <cstring>
 
+#include "core/channel_code.h"
+#include "core/decay_math.h"
+
 namespace {
 // 2 bits/channel: which quartile of [0,1] the reading falls in. This bins
 // absolute sensor level (not change, unlike contingency memory's deltas) —
@@ -15,7 +18,7 @@ uint32_t quantize_levels(Body& body) {
         float v = body.sensor_at(i).read();
         uint32_t level = static_cast<uint32_t>(v * 4.0f);
         if (level > 3) level = 3;
-        code |= level << (2 * i);
+        code = encode_channel_level(code, i, level);
     }
     return code;
 }
@@ -34,15 +37,11 @@ uint32_t mix(uint32_t a) {
 uint32_t SpatialMemory::compute_signature(Body& body) { return quantize_levels(body); }
 
 uint32_t SpatialMemory::decode_level(uint32_t signature, size_t channel_index) {
-    if (channel_index >= 16) return 0;
-    return (signature >> (2 * channel_index)) & 0x3u;
+    return decode_channel_level(signature, channel_index);
 }
 
 uint32_t SpatialMemory::encode_level(uint32_t signature, size_t channel_index, uint32_t level) {
-    if (channel_index >= 16) return signature;
-    uint32_t shift = 2 * channel_index;
-    signature &= ~(0x3u << shift);
-    return signature | ((level & 0x3u) << shift);
+    return encode_channel_level(signature, channel_index, level);
 }
 
 void SpatialMemory::clear() {
@@ -159,8 +158,10 @@ void SpatialMemory::update(Body& body, Physiology& phys, float dt_s) {
     for (size_t v = 0; v < kPhysVarCount; v++) drive_now[v] = phys.drive(static_cast<PhysVar>(v));
 
     if (has_prev_) {
+        // Saturate rather than let a uint16_t silently wrap to 0 (looking
+        // "just visited") after ~55 minutes at this tick rate.
         for (size_t i = 0; i < kCapacity; i++) {
-            if (table_[i].occupied) table_[i].age++;
+            if (table_[i].occupied) table_[i].age = bump_age_saturating(table_[i].age);
         }
 
         float drive_delta[kPhysVarCount];
