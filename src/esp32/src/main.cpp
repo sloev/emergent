@@ -82,6 +82,10 @@ void setup() {
     delay(200);
 
     body.begin();
+    // WiFi mode has to be set before anything reads a sensor — self_test()
+    // below reads every sensor including a possible SensorKind::kWifiRssi,
+    // which needs AP_STA (not the plain AP default) to scan at all.
+    wifi_ap::begin(active_board());
     self_test();
     phys.begin(body);
     contingency.begin(body);
@@ -89,7 +93,6 @@ void setup() {
     action_gen.begin(body);
     safety.begin(body);
 
-    wifi_ap::begin(active_board());
     dashboard::begin(body, phys, contingency, spatial, safety);  // mounts LittleFS
     logger.begin();
 }

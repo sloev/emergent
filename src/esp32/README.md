@@ -5,6 +5,17 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
+v0.9.0 charging station integration: a `SensorKind::kWifiRssi` channel now
+lets the robot perceive a station's RF beacon as an ordinary long-range
+gradient (`docs/synth-behavior.md` §11.3's "RF Lure"), the same way it
+already perceives `battery_voltage` up close — no station-specific code
+anywhere in the engine, just another named sensor. See
+[`src/station`](../station) for reference charging-station firmware (its
+own, much simpler PlatformIO project — a state machine, not an organism)
+and [`docs/roadmap.md`](../../docs/roadmap.md) for why the actual
+approach-and-dock behavior can't be verified without physical hardware and
+repeated real trials, which this environment can't run.
+
 v0.8.1 hardening: a response to [GH issue #1](https://github.com/sloev/emergent/issues/1)'s
 review of everything through v0.8.0 — LEDC channel exhaustion now fails
 loudly instead of silently colliding, contingency-memory age saturates
@@ -103,6 +114,13 @@ Actuators (`ActuatorKind`):
 Sensors (`SensorKind`):
 - `kAdcNormalized` — `analogRead(pin) / 4095.0`.
 - `kDigitalIn` — `digitalRead(pin)` as 0.0/1.0.
+- `kWifiRssi` — signal strength of `target_ssid`, normalized from -90..-30 dBm
+  to 0..1 (not found = 0). Needs `WIFI_AP_STA` mode, which `wifi_ap.cpp`
+  enables automatically whenever a board profile has one of these. Backed by
+  an async `WiFi.scanNetworks()` cycle (a synchronous scan blocks for
+  seconds — long enough to stall the 20 Hz tick and the dashboard's web
+  server), so this channel's value only actually changes every few seconds
+  regardless of how often it's read — a disclosed limitation, not a bug.
 
 ## Dashboard
 

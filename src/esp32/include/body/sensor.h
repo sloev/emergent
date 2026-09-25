@@ -13,7 +13,7 @@ public:
 
     // Returns a normalized reading. If update_rate_hz > 0 and called again
     // before the next scheduled sample, returns the cached value instead of
-    // touching hardware.
+    // touching hardware. kWifiRssi is the exception — see read_wifi_rssi().
     float read();
 
     float last_value() const { return last_value_; }
@@ -22,9 +22,14 @@ public:
 
 private:
     float read_hardware();
+    float read_wifi_rssi();
 
     SensorSpec spec_{};
     float last_value_ = 0.0f;
     uint32_t last_read_us_ = 0;
     bool has_reading_ = false;
+
+    // kWifiRssi only.
+    uint32_t last_scan_start_us_ = 0;
+    bool wifi_scan_pending_ = false;
 };

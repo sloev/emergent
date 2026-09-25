@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.8.1** (in progress)
+**Current release: v0.9.0** (in progress — one task blocked, see below)
 
 ---
 
@@ -326,10 +326,62 @@ caveat.
 
 ## v0.9.0 — Charging station integration
 
-- [ ] Reference charging station firmware/circuit notes (RF beacon, LED pattern,
+- [x] Reference charging station firmware/circuit notes (RF beacon, LED pattern,
       audio cue, power module states: IDLE/CHARGING/FULL)
-- [ ] Robot-side: `battery_voltage`/`current` as ordinary sensor channels feeding `h_energy`
+- [x] Robot-side: `battery_voltage`/`current` as ordinary sensor channels feeding `h_energy`
 - [ ] End-to-end test: emergent approach-and-dock behavior over repeated sessions
+      — **blocked**, see below
+
+[`src/station`](https://github.com/sloev/emergent/tree/main/src/station) is
+a new, separate PlatformIO project — a reference implementation of §11.6's
+IDLE/CHARGING/FULL state machine, translated to real code: watches contact
+voltage/current, drives an LED waveform and an audio click that both change
+with state, and broadcasts a fixed SoftAP as the RF beacon (§11.3's "RF
+Lure"). It's deliberately much simpler than the robot firmware — a state
+machine, not an organism, so it skips the board-profile/body abstraction
+entirely. It does **not** deliver charge current; that's a real battery
+charger IC/module wired in parallel, sized for your pack — mixing
+safety-critical current delivery into this firmware would make the
+sensing/signaling part harder to get right for no benefit.
+
+`battery_voltage → h_energy` has been true since v0.4.0 (`BoardConfig::
+energy_sensor`) — nothing new was needed there, just confirming it already
+satisfies this task. `current` as a *second*, separate sensor channel isn't
+added to the reference board profiles: it needs hardware (a current-sense
+IC) neither reference board has, and the architecture already treats
+"add a current sensor" as a one-line board-profile change with zero engine
+code required, same as any other channel — there's nothing to build, only
+to document (see `src/station/README.md`'s build notes).
+
+New robot-side capability, beyond what this task strictly asked for:
+`SensorKind::kWifiRssi` (`include/body/sensor_spec.h`) lets the robot
+perceive a station's beacon as an ordinary long-range gradient, matching
+§11.3 — normalized RSSI of a named target SSID, 0..1. `WiFi.scanNetworks()`
+blocks for seconds if called synchronously, long enough to stall the 20 Hz
+tick and the dashboard's web server, so this is backed by an async scan
+cycle: `Sensor::read()` kicks off a scan and returns the last known value
+immediately, harvesting the real result whenever a later call finds the
+scan complete. Consequence, disclosed rather than hidden: this channel's
+value only actually changes every few seconds (one scan cycle), not on
+every tick. `wifi_ap.cpp` switches to `WIFI_AP_STA` automatically whenever a
+board profile has one of these (scanning needs the station role; boards
+without it stay on plain `WIFI_AP`, no reason to pay for concurrent
+AP+STA otherwise). Both reference board profiles now include an example
+`rf_rssi_station` channel targeting `src/station`'s default SSID.
+
+**Blocked, honestly:** "emergent approach-and-dock behavior over repeated
+sessions" needs a real robot, a real station, and repeated physical trials
+— there is no way to verify this from firmware code review or PlatformIO
+builds, and this environment has no hardware to run it on. Every prior
+release has carried a "not yet run on real hardware" caveat; this is the
+first task that can't even be partially exercised without hardware, since
+it's fundamentally about physical behavior over time, not firmware
+correctness. Left unchecked rather than claimed done. This is also, not
+coincidentally, exactly the kind of validation v1.0.0 is gated on below.
+
+Verified: both esp32dev and esp32-s3-devkitc-1 (robot) and the station
+firmware all build clean with PlatformIO; all 27 native unit tests still
+pass (unaffected by this release — no new pure logic was extracted).
 
 ## v1.0.0 — First stable "alive" release (human-gated)
 

@@ -18,7 +18,18 @@ void begin(const BoardConfig& board) {
     g_password = prefs.getString("ap_pass", board.ap_password);
     prefs.end();
 
-    WiFi.mode(WIFI_AP);
+    // AP_STA only if something actually needs the station role — WiFi.
+    // scanNetworks() (SensorKind::kWifiRssi) requires it, but there's no
+    // reason to pay for concurrent AP+STA on boards that never scan.
+    bool needs_sta = false;
+    for (size_t i = 0; i < board.sensor_count; i++) {
+        if (board.sensors[i].kind == SensorKind::kWifiRssi) {
+            needs_sta = true;
+            break;
+        }
+    }
+    WiFi.mode(needs_sta ? WIFI_AP_STA : WIFI_AP);
+
     if (g_password.length() >= 8) {
         WiFi.softAP(g_ssid.c_str(), g_password.c_str());
     } else {

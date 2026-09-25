@@ -505,7 +505,7 @@
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.8.1</strong> (in progress)</p>
+<p><strong>Current release: v0.9.0</strong> (in progress — one task blocked, see below)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -799,11 +799,57 @@ browser. Not yet run on real hardware — none of this changes that standing
 caveat.</p>
 <h2 id="v090--charging-station-integration">v0.9.0 — Charging station integration</h2>
 <ul>
-<li><input disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
+<li><input checked="" disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
 audio cue, power module states: IDLE/CHARGING/FULL)</li>
-<li><input disabled="" type="checkbox"> Robot-side: <code>battery_voltage</code>/<code>current</code> as ordinary sensor channels feeding <code>h_energy</code></li>
-<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions</li>
+<li><input checked="" disabled="" type="checkbox"> Robot-side: <code>battery_voltage</code>/<code>current</code> as ordinary sensor channels feeding <code>h_energy</code></li>
+<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions
+— <strong>blocked</strong>, see below</li>
 </ul>
+<p><a href="https://github.com/sloev/emergent/tree/main/src/station"><code>src/station</code></a> is
+a new, separate PlatformIO project — a reference implementation of §11.6's
+IDLE/CHARGING/FULL state machine, translated to real code: watches contact
+voltage/current, drives an LED waveform and an audio click that both change
+with state, and broadcasts a fixed SoftAP as the RF beacon (§11.3's "RF
+Lure"). It's deliberately much simpler than the robot firmware — a state
+machine, not an organism, so it skips the board-profile/body abstraction
+entirely. It does <strong>not</strong> deliver charge current; that's a real battery
+charger IC/module wired in parallel, sized for your pack — mixing
+safety-critical current delivery into this firmware would make the
+sensing/signaling part harder to get right for no benefit.</p>
+<p><code>battery_voltage → h_energy</code> has been true since v0.4.0 (<code>BoardConfig:: energy_sensor</code>) — nothing new was needed there, just confirming it already
+satisfies this task. <code>current</code> as a <em>second</em>, separate sensor channel isn't
+added to the reference board profiles: it needs hardware (a current-sense
+IC) neither reference board has, and the architecture already treats
+"add a current sensor" as a one-line board-profile change with zero engine
+code required, same as any other channel — there's nothing to build, only
+to document (see <code>src/station/README.md</code>'s build notes).</p>
+<p>New robot-side capability, beyond what this task strictly asked for:
+<code>SensorKind::kWifiRssi</code> (<code>include/body/sensor_spec.h</code>) lets the robot
+perceive a station's beacon as an ordinary long-range gradient, matching
+§11.3 — normalized RSSI of a named target SSID, 0..1. <code>WiFi.scanNetworks()</code>
+blocks for seconds if called synchronously, long enough to stall the 20 Hz
+tick and the dashboard's web server, so this is backed by an async scan
+cycle: <code>Sensor::read()</code> kicks off a scan and returns the last known value
+immediately, harvesting the real result whenever a later call finds the
+scan complete. Consequence, disclosed rather than hidden: this channel's
+value only actually changes every few seconds (one scan cycle), not on
+every tick. <code>wifi_ap.cpp</code> switches to <code>WIFI_AP_STA</code> automatically whenever a
+board profile has one of these (scanning needs the station role; boards
+without it stay on plain <code>WIFI_AP</code>, no reason to pay for concurrent
+AP+STA otherwise). Both reference board profiles now include an example
+<code>rf_rssi_station</code> channel targeting <code>src/station</code>'s default SSID.</p>
+<p><strong>Blocked, honestly:</strong> "emergent approach-and-dock behavior over repeated
+sessions" needs a real robot, a real station, and repeated physical trials
+— there is no way to verify this from firmware code review or PlatformIO
+builds, and this environment has no hardware to run it on. Every prior
+release has carried a "not yet run on real hardware" caveat; this is the
+first task that can't even be partially exercised without hardware, since
+it's fundamentally about physical behavior over time, not firmware
+correctness. Left unchecked rather than claimed done. This is also, not
+coincidentally, exactly the kind of validation v1.0.0 is gated on below.</p>
+<p>Verified: both esp32dev and esp32-s3-devkitc-1 (robot) and the station
+firmware all build clean with PlatformIO; all 27 native unit tests still
+pass (unaffected by this release — no new pure logic was extracted).</p>
 <h2 id="v100--first-stable-alive-release-human-gated">v1.0.0 — First stable "alive" release (human-gated)</h2>
 <ul>
 <li><input disabled="" type="checkbox"> All of the above validated on real hardware</li>
