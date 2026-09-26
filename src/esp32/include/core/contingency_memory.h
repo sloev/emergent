@@ -33,16 +33,7 @@ struct ContingencyEntry {
 class ContingencyMemory {
 public:
     static constexpr size_t kCapacity = 256;  // power of 2
-    static constexpr float kLearnRate = 0.1f;
-    static constexpr float kDecayRate = 0.005f;
-    static constexpr size_t kMaxProbe = 8;  // bound worst-case insert work
-
-    // Below this strength a decayed entry is reclaimed during the tick-time
-    // decay pass rather than left occupying a slot forever as denormal
-    // noise. Set comfortably below kLearnRate so a freshly inserted entry
-    // is never at risk of being pruned before it gets a chance to be
-    // reinforced.
-    static constexpr float kPruneThreshold = 0.02f;
+    static constexpr size_t kMaxProbe = 8;    // bound worst-case insert work
 
     // query_bias() tolerates entries whose sensor_code differs from the
     // query by up to this many channel symbols (out of up to 16), so recall

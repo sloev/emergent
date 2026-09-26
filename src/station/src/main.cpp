@@ -18,6 +18,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+#include "tuning.h"
+
 namespace {
 // --- pins — adjust for your build ------------------------------------------
 constexpr uint8_t kVoltageSensePin = 34;  // ADC: contact/pack voltage, scaled into 0..3.3V
@@ -28,11 +30,6 @@ constexpr uint8_t kBuzzerPin = 25;        // passive buzzer or piezo disc
 constexpr uint8_t kLedChannel = 0;        // LEDC channel for the status LED
 constexpr int kLedFreqHz = 5000;
 constexpr int kLedResolutionBits = 8;
-
-// --- thresholds — tune for your battery chemistry/pack/sense resistor -----
-constexpr float kCurrentActiveThreshold = 0.05f;  // normalized current above which charging reads "active"
-constexpr float kVoltageFullThreshold = 0.95f;    // normalized voltage above which the pack reads "full"
-constexpr float kCurrentTaperThreshold = 0.02f;   // normalized current below which charge current has tapered
 
 // RF beacon: a plain, fixed SoftAP. The robot side tracks this SSID's
 // signal strength as a long-range gradient (see src/esp32's SensorKind::
@@ -112,9 +109,10 @@ void loop() {
     float voltage = read_normalized(kVoltageSensePin);
     float current = read_normalized(kCurrentSensePin);
 
-    bool charging_active = current > kCurrentActiveThreshold;
+    bool charging_active = current > kTuning.current_active_threshold;
     if (charging_active) {
-        bool tapered_and_full = voltage > kVoltageFullThreshold && current < kCurrentTaperThreshold;
+        bool tapered_and_full =
+            voltage > kTuning.voltage_full_threshold && current < kTuning.current_taper_threshold;
         g_state = tapered_and_full ? StationState::kFull : StationState::kCharging;
     } else {
         g_state = StationState::kIdle;

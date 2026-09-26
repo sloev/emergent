@@ -38,7 +38,6 @@ struct SpatialCell {
 class SpatialMemory {
 public:
     static constexpr size_t kCapacity = 32;
-    static constexpr float kLearnRate = 0.15f;
     static constexpr size_t kMaxProbe = 8;
 
     void begin(Body& body);

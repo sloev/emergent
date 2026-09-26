@@ -25,7 +25,7 @@ static const SensorSpec kSensorsEsp32Dev[] = {
     {"rf_rssi_station", SensorKind::kWifiRssi, 0, 0.2f, "emergent-station"},
 };
 
-static const BoardConfig kBoardEsp32Dev = {
+static const BoardConfig kActiveBoard = {
     .name = "esp32dev",
     .ap_ssid = "emergent-esp32dev",
     .ap_password = "emergent1",

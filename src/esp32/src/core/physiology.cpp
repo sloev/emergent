@@ -4,35 +4,14 @@
 #include <cmath>
 #include <cstring>
 
+#include "core/tuning.h"
+
 namespace {
 float clampf(float v, float lo, float hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
-
-// Tuning constants. All rates are "per second" so behavior is independent of
-// tick rate. None of this is claimed to be biologically accurate — it is the
-// smallest set of decay/recovery/coupling rules that makes each variable in
-// docs/synth-behavior.md §6.1 drift the way that section describes.
-constexpr float kEnergyIdleRegenRate = 0.01f;   // slow trickle, "idle metabolism"
-constexpr float kEnergyDrainRate = 0.08f;       // scaled by summed actuator cost
-constexpr float kEnergyBatteryGain = 0.4f;      // pull rate toward energy_sensor reading
-
-constexpr float kFatigueGain = 0.12f;           // scaled by summed actuator cost
-constexpr float kFatigueRecoveryRate = 0.03f;
-
-constexpr float kSafetyDropGain = 1.2f;         // scaled by single-tick sensor spike
-constexpr float kSafetyRecoveryRate = 0.05f;
-
-constexpr float kArousalGain = 1.5f;
-constexpr float kArousalDecay = 0.3f;
-
-constexpr float kCuriosityGain = 1.0f;
-constexpr float kCuriosityDecay = 0.25f;
-
-constexpr float kBoredomGain = 0.15f;
-constexpr float kBoredomResetGain = 2.0f;
 
 struct Band {
     float lo, hi;
@@ -124,29 +103,29 @@ void Physiology::update(Body& body, float dt_s, float surprise) {
     size_t iB = static_cast<size_t>(PhysVar::kBoredom);
 
     // --- update: decay / recover / couple ------------------------------
-    value_[iE] += (kEnergyIdleRegenRate - kEnergyDrainRate * total_cost) * dt_s;
+    value_[iE] += (kTuning.energy.idle_regen_rate - kTuning.energy.drain_rate * total_cost) * dt_s;
     if (energy_sensor_index_ >= 0) {
         float battery = body.sensor_at(static_cast<size_t>(energy_sensor_index_)).last_value();
-        value_[iE] += (battery - value_[iE]) * kEnergyBatteryGain * dt_s;
+        value_[iE] += (battery - value_[iE]) * kTuning.energy.battery_gain * dt_s;
     }
     value_[iE] = clampf(value_[iE], 0.0f, 1.0f);
 
-    value_[iF] += (kFatigueGain * total_cost - kFatigueRecoveryRate) * dt_s;
+    value_[iF] += (kTuning.fatigue.gain * total_cost - kTuning.fatigue.recovery_rate) * dt_s;
     value_[iF] = clampf(value_[iF], 0.0f, 1.0f);
 
-    value_[iS] += (kSafetyRecoveryRate * (1.0f - value_[iS]) - kSafetyDropGain * spike_) * dt_s;
+    value_[iS] += (kTuning.safety.recovery_rate * (1.0f - value_[iS]) - kTuning.safety.drop_gain * spike_) * dt_s;
     value_[iS] = clampf(value_[iS], 0.0f, 1.0f);
 
-    value_[iAr] += (kArousalGain * activity_ - kArousalDecay * value_[iAr]) * dt_s;
+    value_[iAr] += (kTuning.arousal.gain * activity_ - kTuning.arousal.decay * value_[iAr]) * dt_s;
     value_[iAr] = clampf(value_[iAr], 0.0f, 1.0f);
 
-    // Real prediction error (docs/synth-behavior.md §7): `surprise` is how
-    // much the last tick's outcome differed from what contingency memory
-    // already expected, not a proxy like raw sensor activity.
-    value_[iC] += (kCuriosityGain * surprise - kCuriosityDecay * value_[iC]) * dt_s;
+    // Real prediction error: `surprise` is how much the last tick's outcome
+    // differed from what contingency memory already expected, not a proxy
+    // like raw sensor activity.
+    value_[iC] += (kTuning.curiosity.gain * surprise - kTuning.curiosity.decay * value_[iC]) * dt_s;
     value_[iC] = clampf(value_[iC], 0.0f, 1.0f);
 
-    value_[iB] += (kBoredomGain * (1.0f - activity_) - kBoredomResetGain * activity_ * value_[iB]) * dt_s;
+    value_[iB] += (kTuning.boredom.gain * (1.0f - activity_) - kTuning.boredom.reset_gain * activity_ * value_[iB]) * dt_s;
     value_[iB] = clampf(value_[iB], 0.0f, 1.0f);
 
     // h_social has no sensor source yet (needs another robot/human present

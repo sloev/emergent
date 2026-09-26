@@ -6,10 +6,9 @@
 
 #include "core/channel_code.h"
 #include "core/decay_math.h"
+#include "core/tuning.h"
 
 namespace {
-constexpr float kDeadzone = 0.02f;  // |Δ| below this counts as "no change"
-
 float clampf(float v, float lo, float hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
@@ -23,9 +22,9 @@ uint32_t quantize_deltas(const float* now, const float* prev, size_t count) {
     for (size_t i = 0; i < n; i++) {
         float d = now[i] - prev[i];
         int8_t sym = 0;
-        if (d > kDeadzone) {
+        if (d > kTuning.contingency.deadzone) {
             sym = 1;
-        } else if (d < -kDeadzone) {
+        } else if (d < -kTuning.contingency.deadzone) {
             sym = -1;
         }
         code = encode_channel_delta(code, i, sym);
@@ -141,7 +140,7 @@ uint32_t ContingencyMemory::insert_or_reinforce(uint32_t action_code, uint32_t s
             e.action_code = action_code;
             e.sensor_code = sensor_code;
             e.ctx_hash = ctx_hash;
-            e.strength = kLearnRate;
+            e.strength = kTuning.contingency.learn_rate;
             e.mean_drive_delta = drive_delta;
             e.age = 0;
             count_++;
@@ -149,8 +148,8 @@ uint32_t ContingencyMemory::insert_or_reinforce(uint32_t action_code, uint32_t s
         }
 
         if (e.action_code == action_code && e.sensor_code == sensor_code && e.ctx_hash == ctx_hash) {
-            e.strength += kLearnRate * (1.0f - e.strength);
-            e.mean_drive_delta += kLearnRate * (drive_delta - e.mean_drive_delta);
+            e.strength += kTuning.contingency.learn_rate * (1.0f - e.strength);
+            e.mean_drive_delta += kTuning.contingency.learn_rate * (drive_delta - e.mean_drive_delta);
             e.age = 0;
             return slot;
         }
@@ -169,7 +168,7 @@ uint32_t ContingencyMemory::insert_or_reinforce(uint32_t action_code, uint32_t s
     e.action_code = action_code;
     e.sensor_code = sensor_code;
     e.ctx_hash = ctx_hash;
-    e.strength = kLearnRate;
+    e.strength = kTuning.contingency.learn_rate;
     e.mean_drive_delta = drive_delta;
     e.age = 0;
     return weakest_slot;
@@ -220,10 +219,10 @@ void ContingencyMemory::update(Body& body, Physiology& phys, float dt_s) {
         for (size_t i = 0; i < kCapacity; i++) {
             if (!table_[i].occupied) continue;
 
-            table_[i].strength = decay_strength(table_[i].strength, kDecayRate);
+            table_[i].strength = decay_strength(table_[i].strength, kTuning.contingency.decay_rate);
             table_[i].age = bump_age_saturating(table_[i].age);
 
-            if (should_prune(table_[i].strength, kPruneThreshold)) {
+            if (should_prune(table_[i].strength, kTuning.contingency.prune_threshold)) {
                 table_[i] = ContingencyEntry{};
                 count_--;
             }

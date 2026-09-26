@@ -78,6 +78,8 @@ include/core/state_logger.h/.cpp
 include/core/safety_monitor.h/.cpp
                               Battery/thermal hard cutoff, independent of
                               drives/action generator/manual overrides
+include/core/tuning.h         Every tunable rate/gain/threshold (physiology,
+                               action generator, memory, safety), one struct
 include/core/channel_code.h   Pure channel encode/decode/distance bit-packing,
                                shared by contingency + spatial memory
 include/core/decay_math.h     Pure strength-decay/age-saturation/prune math
@@ -165,12 +167,14 @@ the bundled UI:
 
 ## Adding a board
 
-1. Define `ActuatorSpec[]` / `SensorSpec[]` arrays and a `BoardConfig`
-   (WiFi defaults + optional `energy_sensor` channel name) in
+1. Define `ActuatorSpec[]` / `SensorSpec[]` arrays and a `BoardConfig` named
+   `kActiveBoard` (WiFi defaults + optional `energy_sensor` channel name) in
    `include/boards/board_<name>.h`.
-2. Add a case for it in `src/board_config.cpp` (`#if defined(BOARD_PROFILE_<NAME>)`).
-3. Add a `[env:<name>]` section in `platformio.ini` with
-   `-DBOARD_PROFILE_<NAME>` in `build_flags`.
+2. Add a `[env:<name>]` section in `platformio.ini` with
+   `-DACTIVE_BOARD_HEADER='"boards/board_<name>.h"'` in `build_flags`.
+
+`src/board_config.cpp` just includes whatever `ACTIVE_BOARD_HEADER` names —
+no per-board case to add there.
 
 ## Adding a channel to an existing board
 

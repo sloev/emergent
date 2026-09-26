@@ -5,6 +5,7 @@
 
 #include "core/channel_code.h"
 #include "core/decay_math.h"
+#include "core/tuning.h"
 
 namespace {
 // 2 bits/channel: which quartile of [0,1] the reading falls in. This bins
@@ -127,7 +128,7 @@ uint32_t SpatialMemory::insert_or_update(uint32_t signature, const float* drive_
             c.visit_count++;
             c.age = 0;
             for (size_t v = 0; v < kPhysVarCount; v++) {
-                c.drive_improvement[v] += kLearnRate * (drive_delta[v] - c.drive_improvement[v]);
+                c.drive_improvement[v] += kTuning.spatial.learn_rate * (drive_delta[v] - c.drive_improvement[v]);
             }
             return slot;
         }

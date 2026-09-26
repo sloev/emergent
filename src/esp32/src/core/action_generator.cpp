@@ -5,18 +5,14 @@
 
 #include <cmath>
 
+#include "core/tuning.h"
+
 namespace {
 float clampf(float v, float lo, float hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
-
-constexpr float kNoiseGain = 0.5f;         // fraction of channel span, at fuzz=1
-constexpr float kContingencyGain = 0.3f;   // fraction of span, at confidence=1
-constexpr float kSpatialGain = 0.5f;       // scales best_cell() score into an explore/exploit nudge
-constexpr float kSpatialNudgeMax = 0.3f;   // clamp so it can widen/narrow noise, never dominate it
-constexpr float kRestPullGain = 0.3f;      // fraction of the way toward 0 per tick, at max pressure
 }  // namespace
 
 void ActionGenerator::begin(Body& body) {
@@ -57,7 +53,7 @@ void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& cont
     // if "here" already looks like the best one known.
     float spatial_nudge = 0.0f;
     if (have_place && best_score > 0.0f) {
-        float magnitude = clampf(best_score * kSpatialGain, 0.0f, kSpatialNudgeMax);
+        float magnitude = clampf(best_score * kTuning.action.spatial_gain, 0.0f, kTuning.action.spatial_nudge_max);
         spatial_nudge = (best_sig == current_sig) ? -magnitude : magnitude;
     }
 
@@ -76,13 +72,13 @@ void ActionGenerator::tick(Body& body, Physiology& phys, ContingencyMemory& cont
         float span = a.spec().range_max - a.spec().range_min;
 
         float baseline = a.value();
-        float rest_pull = -baseline * rest_pressure * kRestPullGain;
-        float noise_term = noise() * fuzz * span * kNoiseGain * (1.0f + spatial_nudge);
+        float rest_pull = -baseline * rest_pressure * kTuning.action.rest_pull_gain;
+        float noise_term = noise() * fuzz * span * kTuning.action.noise_gain * (1.0f + spatial_nudge);
 
         float bias = 0.0f;
         if (have_bias) {
             int8_t dir = ContingencyMemory::decode_channel(action_code, i);
-            bias = static_cast<float>(dir) * confidence * span * kContingencyGain;
+            bias = static_cast<float>(dir) * confidence * span * kTuning.action.contingency_gain;
         }
 
         float target = clampf(baseline + rest_pull + noise_term + bias, a.spec().range_min, a.spec().range_max);

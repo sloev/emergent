@@ -23,19 +23,6 @@
 
 class SafetyMonitor {
 public:
-    // Cost-seconds an actuator can accumulate before being force-cut. A
-    // cost of 1.0 (a channel pinned at its full range with cost_per_unit=1)
-    // trips this after kThermalLimit seconds of continuous full drive.
-    static constexpr float kThermalLimit = 20.0f;
-    static constexpr float kThermalCooldownRate = 2.0f;  // cost-seconds recovered per second
-
-    // Raw (unfiltered) energy_sensor reading below which every actuator is
-    // force-zeroed. Deliberately a raw sensor threshold, not h_energy —
-    // h_energy is a decayed/coupled internal variable the rest of the
-    // system can influence; this reads the sensor directly so nothing
-    // upstream can mask a genuinely empty battery.
-    static constexpr float kCriticalBatteryLevel = 0.05f;
-
     void begin(Body& body);
 
     // Call every behavior tick, after the action generator has written its
