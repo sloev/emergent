@@ -20,6 +20,5 @@ struct SensorSpec {
                              // new scan more often than this" — a real scan
                              // cycle takes a few seconds regardless.
     const char* target_ssid = nullptr;  // kWifiRssi only: SSID to track (e.g. a
-                                         // charging station's beacon, docs/
-                                         // synth-behavior.md §11.3's "RF Lure")
+                                         // charging station's beacon)
 };

@@ -20,8 +20,8 @@ static const SensorSpec kSensorsEsp32S3[] = {
     {"battery_voltage", SensorKind::kAdcNormalized,    4, 1.0f},
     {"touch_bump",       SensorKind::kDigitalIn,        5, 0.0f},
     // rf_rssi_station: signal strength of a charging station's beacon
-    // (docs/synth-behavior.md §11.3, src/station/). update_rate_hz here
-    // means "no more than one scan per 5s" — see body/sensor.cpp.
+    // (see src/station/). update_rate_hz here means "no more than one scan
+    // per 5s" — see body/sensor.cpp.
     {"rf_rssi_station", SensorKind::kWifiRssi, 0, 0.2f, "emergent-station"},
 };
 

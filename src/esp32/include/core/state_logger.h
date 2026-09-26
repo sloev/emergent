@@ -1,10 +1,10 @@
 #pragma once
 //
-// Slow task (~1 Hz), per the article's three-tier task split
-// (docs/synth-behavior.md §14.1: high-frequency / 15-30 Hz behavior /
-// ~1 Hz logging+checkpoints). Appends a compact CSV snapshot to LittleFS for
-// later offline analysis. Bounded size — once the log exceeds kMaxLogBytes
-// it starts over rather than growing unbounded on a small flash partition.
+// Slow task, called from main.cpp's loop() at ~1 Hz — decoupled from the
+// 20 Hz behavior tick since flash writes are far slower than sensing/acting.
+// Appends a compact CSV snapshot to LittleFS for later offline analysis.
+// Bounded size — once the log exceeds kMaxLogBytes it starts over rather
+// than growing unbounded on a small flash partition.
 //
 // The log file lives in the same LittleFS root the dashboard serves static
 // files from, so it's downloadable at /log.csv with no extra server code.

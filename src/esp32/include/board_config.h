@@ -28,9 +28,9 @@ struct BoardConfig {
     const SensorSpec* sensors;
     size_t sensor_count;
 
-    // Sensor channel name numerically coupled into physiology's h_energy
-    // (docs/synth-behavior.md §10.6) — the one privileged wiring the design
-    // allows, expressed as a fact about the chassis, not the engine.
+    // Sensor channel name numerically coupled into physiology's h_energy —
+    // the one privileged wiring this engine allows, expressed as a fact
+    // about the chassis rather than a semantic baked into the engine.
     // nullptr if this body has no such sensor.
     const char* energy_sensor;
 };

@@ -12,8 +12,7 @@ void test_bump_age_increments_normally(void) {
     TEST_ASSERT_EQUAL_UINT16(101, bump_age_saturating(100));
 }
 
-// This is the exact bug from GH issue #1: age is a uint16_t incremented
-// every tick with plain age++, which silently wraps to 0 (looking "just
+// A plain age++ on a uint16_t would silently wrap to 0 (looking "just
 // reinforced") after 65536 ticks — about 55 minutes at this project's 20 Hz
 // behavior tick. bump_age_saturating() must never produce that wraparound.
 void test_bump_age_saturates_instead_of_wrapping(void) {
@@ -37,10 +36,9 @@ void test_decay_strength_approaches_zero_over_repeated_calls(void) {
     TEST_ASSERT_TRUE(s >= 0.0f);
 }
 
-// This is the other half of GH issue #1's decay complaint: strength decays
-// asymptotically and never reaches exactly 0, so without an explicit prune
-// threshold a decayed entry would occupy a table slot forever as denormal
-// noise.
+// Strength decays asymptotically and never reaches exactly 0, so without an
+// explicit prune threshold a decayed entry would occupy a table slot
+// forever as denormal noise.
 void test_should_prune_threshold_boundary(void) {
     TEST_ASSERT_TRUE(should_prune(0.01f, 0.02f));
     TEST_ASSERT_FALSE(should_prune(0.02f, 0.02f));

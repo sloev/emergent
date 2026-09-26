@@ -12,11 +12,9 @@ void test_allocates_sequential_channels(void) {
     }
 }
 
-// GH issue #1: "allocate_ledc_channel() is a static counter that never
-// wraps or frees. ESP32 has 16 channels... adding more actuators... will
-// silently fail or collide." This is the fix under test: the 17th
-// allocation must fail loudly (kNone), never silently return a
-// reused/invalid channel number.
+// ESP32 has 16 LEDC channels; a board profile with more PWM/servo
+// actuators than that must fail loudly (kNone) rather than silently
+// wrapping into a reused/invalid channel number.
 void test_exhaustion_returns_none_instead_of_wrapping_or_colliding(void) {
     LedcChannelAllocator alloc;
     for (uint8_t i = 0; i < LedcChannelAllocator::kChannelCount; i++) {

@@ -115,8 +115,8 @@ void build_spatial_json(SpatialMemory& spatial, Physiology& phys, JsonDocument& 
 // Identifies a body's channel *layout* (names + counts), not its physical
 // identity — two boards with the same channel names hash the same. Purely
 // informational in the life-state envelope; restore is name-based regardless
-// of whether this matches, so an "organism" can move to a different body
-// (docs/synth-behavior.md §13) and keep whatever channels still exist there.
+// of whether this matches, so a saved state can move to a different body and
+// keep whatever channels still exist there.
 String compute_fingerprint(Body& body) {
     uint32_t h = 2166136261u;  // FNV-1a
     auto mix_str = [&](const char* s) {
@@ -133,12 +133,12 @@ String compute_fingerprint(Body& body) {
     return String(buf);
 }
 
-// Life-state envelope (docs/synth-behavior.md §13). Contingency/spatial
-// entries are keyed by channel *name*, not bit position, specifically so a
-// state captured on one board restores sensibly on another: matching
-// channels carry over, channels that don't exist on the new body are simply
-// absent from the map and their contribution to that entry is dropped ("the
-// remapping layer... gradually forgets mismatched contingencies").
+// Life-state envelope: physiology + contingency/spatial memory as one
+// downloadable/restorable JSON file. Contingency/spatial entries are keyed
+// by channel *name*, not bit position, specifically so a state captured on
+// one board restores sensibly on another: matching channels carry over,
+// channels that don't exist on the new body are simply absent from the map
+// and their contribution to that entry is dropped.
 constexpr uint32_t kStateVersion = 1;
 constexpr size_t kMaxStateUploadBytes = 262144;  // 256KB guard against a runaway/bad upload
 

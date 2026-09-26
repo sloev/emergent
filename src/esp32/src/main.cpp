@@ -1,22 +1,13 @@
-// Emergent firmware — v0.7.0: core loop integration.
+// Emergent firmware entry point.
 //
-// The full loop from docs/synth-behavior.md §9 is wired end-to-end for the
-// first time: sense -> physiology/drives -> memory query -> action ->
-// actuate -> learn. ActionGenerator is the piece every earlier release was
-// missing — until now, physiology/contingency/spatial memory only observed
-// whatever moved the actuators (dashboard sliders, the heartbeat blink).
-// They now drive the body themselves, unless a human is actively overriding
-// a channel from the dashboard (Actuator::manual_override_active).
-//
-// Three-tier task split per §14.1:
-//   - high-frequency: PWM (hardware LEDC, runs continuously once
-//     configured) and ADC (on-demand via Sensor::read(), cached per
-//     update_rate_hz) — no separate task needed, hardware + existing
-//     on-demand reads already satisfy this.
-//   - behavior task: this file's 20 Hz tick.
-//   - slow task: StateLogger below, ~1 Hz.
-//
-// See docs/roadmap.md for the fixed-point-arithmetic note and what's next.
+// One loop(): sense -> physiology/drives -> memory query -> action ->
+// actuate -> learn, gated to ~20 Hz by elapsed millis() (kBehaviorTickMs)
+// below, plus a ~1 Hz slow tick (kSlowTickMs) for logging. No FreeRTOS
+// tasks, no interrupts — PWM output is hardware LEDC (runs continuously
+// once configured) and ADC reads are on-demand via Sensor::read() (cached
+// per update_rate_hz), so a single loop() is enough. Actuators drive
+// themselves each tick unless a human is actively overriding a channel from
+// the dashboard (Actuator::manual_override_active).
 
 #include <Arduino.h>
 
@@ -130,7 +121,7 @@ void loop() {
         action_gen.tick(body, phys, contingency, spatial, now);
         // Independent hard floor, enforced last so nothing upstream — drives,
         // memory bias, even a manual dashboard override — gets a vote once a
-        // limit is crossed (docs/roadmap.md, GH issue #1).
+        // limit is crossed.
         safety.enforce(body, dt_s);
         last_tick_ms = now;
     }

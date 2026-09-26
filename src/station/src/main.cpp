@@ -1,10 +1,9 @@
-// Charging station reference firmware (docs/synth-behavior.md §11).
+// Charging station reference firmware.
 //
 // Deliberately simple: this is a state machine, not an organism — no
 // physiology, no drives, no memory, no dashboard. It measures contact
-// voltage/current, derives IDLE/CHARGING/FULL (§11.6's pseudocode,
-// translated to real code below), and emits the sensory signature §11.5
-// describes: a fixed RF beacon, an LED pattern, and an audio click, each
+// voltage/current, derives IDLE/CHARGING/FULL, and emits a sensory
+// signature: a fixed RF beacon, an LED pattern, and an audio click, each
 // changing with state. Nothing here ever sends a robot the string
 // "CHARGING" or "FULL" — the robot only ever sees the raw sensor shifts,
 // same as every other channel in this project.
@@ -34,9 +33,9 @@ constexpr int kLedResolutionBits = 8;
 // RF beacon: a plain, fixed SoftAP. The robot side tracks this SSID's
 // signal strength as a long-range gradient (see src/esp32's SensorKind::
 // kWifiRssi and set a board profile's target_ssid to this same string).
-// State (IDLE/CHARGING/FULL) is deliberately NOT encoded in the SSID —
-// per §11, the near-field LED/audio pattern carries that, RF only says
-// "the station is over here".
+// State (IDLE/CHARGING/FULL) is deliberately NOT encoded in the SSID — the
+// near-field LED/audio pattern carries that, RF only says "the station is
+// over here".
 constexpr const char* kApSsid = "emergent-station";
 
 enum class StationState { kIdle, kCharging, kFull };

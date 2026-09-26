@@ -87,8 +87,8 @@ void test_distance_maxes_out_when_every_channel_differs(void) {
 // --- remapping (life-state restore onto a body with different channel order) -
 
 void test_remap_moves_a_channel_to_a_new_index(void) {
-    // Simulates docs/synth-behavior.md §13 restore: a saved entry had
-    // "motor_left" at index 0; the board it's restored onto has
+    // Simulates a life-state restore onto a different board: a saved entry
+    // had "motor_left" at index 0; the board it's restored onto has
     // "motor_left" at index 2 instead. Decoding by the *old* index and
     // re-encoding at the *new* one is exactly the remap operation.
     uint32_t saved_code = encode_channel_delta(0, 0, 1);

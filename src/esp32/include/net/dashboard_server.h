@@ -8,7 +8,7 @@
 
 // Serves the dashboard UI (from LittleFS) plus a JSON/WebSocket API for
 // telemetry and manual actuator control. See src/esp32/data/ for the
-// front-end and docs/synth-behavior.md §4 for the layer this sits in.
+// front-end.
 namespace dashboard {
 
 void begin(Body& body, Physiology& phys, ContingencyMemory& contingency, SpatialMemory& spatial,

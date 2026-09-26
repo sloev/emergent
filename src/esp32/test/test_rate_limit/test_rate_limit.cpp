@@ -33,12 +33,10 @@ void test_zero_elapsed_time_means_no_movement(void) {
     TEST_ASSERT_FLOAT_WITHIN(1e-6f, 0.3f, result);
 }
 
-// GH issue #1: micros() overflow (~71 min) makes a raw `now - last_write_us`
-// computation under-report elapsed time for a channel that's gone unwritten
-// longer than that, or a blocked loop() can produce an anomalously large
-// elapsed-time reading. clamp_elapsed_seconds() is the fix: it bounds
-// whatever elapsed_s the caller computed to a sane ceiling before it's ever
-// used as a rate-limit multiplier.
+// A channel that's gone unwritten a long time, or a blocked loop(), can
+// produce an anomalously large elapsed_s reading. clamp_elapsed_seconds()
+// bounds it to a sane ceiling before it's ever used as a rate-limit
+// multiplier.
 void test_clamp_elapsed_seconds_bounds_oversized_readings(void) {
     TEST_ASSERT_FLOAT_WITHIN(1e-6f, 1.0f, clamp_elapsed_seconds(4200.0f, 1.0f));
     TEST_ASSERT_FLOAT_WITHIN(1e-6f, 1.0f, clamp_elapsed_seconds(1.0f, 1.0f));
