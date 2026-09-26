@@ -4,7 +4,7 @@
 // client-side JavaScript. Single entry point used by CI and local runs so
 // the two never drift.
 
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,50 +51,15 @@ async function render({ src, out_html, out_pdf }) {
   }
 }
 
-// Splices a rendered page's body into index.html between two named marker
-// comments, so the frontpage always carries the same content as the
-// standalone page — one source (synth-behavior.md / roadmap.md), two
-// presentations. Strips the page's own <h1> masthead and, optionally, a
-// "back to project overview" link — both meaningless/circular once embedded
-// in that same page; index.html supplies its own header/section-label
-// instead.
-async function embedFragmentIntoIndex(srcHtmlPath, indexHtmlPath, markerName, { stripBackLink = false } = {}) {
-  const srcHtml = await readFile(srcHtmlPath, "utf8");
-  const bodyMatch = srcHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  if (!bodyMatch) throw new Error(`could not find <body> in ${srcHtmlPath}`);
-
-  let fragment = bodyMatch[1];
-  fragment = fragment.replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>\s*/i, "");
-  if (stripBackLink) {
-    fragment = fragment.replace(/^\s*<p><a href="index\.html">[\s\S]*?<\/a><\/p>\s*/i, "");
-  }
-  fragment = fragment.trim();
-
-  const indexHtml = await readFile(indexHtmlPath, "utf8");
-  const markerRe = new RegExp(`<!--${markerName}-START-->[\\s\\S]*?<!--${markerName}-END-->`);
-  if (!markerRe.test(indexHtml)) {
-    throw new Error(`${markerName} markers not found in ${indexHtmlPath}`);
-  }
-  const updated = indexHtml.replace(
-    markerRe,
-    `<!--${markerName}-START-->\n${fragment}\n<!--${markerName}-END-->`
-  );
-  await writeFile(indexHtmlPath, updated);
-  console.log(`embedded ${srcHtmlPath} -> ${indexHtmlPath}`);
-}
-
-const synthBehaviorHtml = resolve(REPO, "docs/synth-behavior.html");
-const roadmapHtml = resolve(REPO, "docs/roadmap.html");
-const indexHtml = resolve(REPO, "docs/index.html");
-
+// index.html is a hand-written landing page (status table, build commands,
+// links) — it no longer embeds these pages' content. Both still get
+// rendered as standalone pages for anyone who follows a link to them.
 await render({
   src: resolve(REPO, "docs/synth-behavior.md"),
-  out_html: synthBehaviorHtml,
+  out_html: resolve(REPO, "docs/synth-behavior.html"),
   out_pdf: resolve(REPO, "docs/synth-behavior.pdf"),
 });
 await render({
   src: resolve(REPO, "docs/roadmap.md"),
-  out_html: roadmapHtml,
+  out_html: resolve(REPO, "docs/roadmap.html"),
 });
-await embedFragmentIntoIndex(synthBehaviorHtml, indexHtml, "ARTICLE-CONTENT", { stripBackLink: true });
-await embedFragmentIntoIndex(roadmapHtml, indexHtml, "ROADMAP-CONTENT");

@@ -5,47 +5,16 @@ PlatformIO project for the synthetic-ethology organism described in
 
 ## Status
 
-v0.9.0 charging station integration: a `SensorKind::kWifiRssi` channel now
-lets the robot perceive a station's RF beacon as an ordinary long-range
-gradient (`docs/synth-behavior.md` §11.3's "RF Lure"), the same way it
-already perceives `battery_voltage` up close — no station-specific code
-anywhere in the engine, just another named sensor. See
-[`src/station`](../station) for reference charging-station firmware (its
-own, much simpler PlatformIO project — a state machine, not an organism)
-and [`docs/roadmap.md`](../../docs/roadmap.md) for why the actual
-approach-and-dock behavior can't be verified without physical hardware and
-repeated real trials, which this environment can't run.
+| Layer | Fact |
+|---|---|
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Hardware tested | Nothing. No board has run this. |
+| Designed / planned | Approach-and-dock, ablations, extra boards. |
+| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
 
-v0.8.1 hardening: a response to [GH issue #1](https://github.com/sloev/emergent/issues/1)'s
-review of everything through v0.8.0 — LEDC channel exhaustion now fails
-loudly instead of silently colliding, contingency-memory age saturates
-instead of wrapping every ~55 minutes, decayed entries below a strength
-floor are reclaimed instead of occupying a slot forever, contingency
-queries tolerate near-misses instead of requiring a bit-exact signature,
-curiosity is driven by real prediction error against memory instead of raw
-sensor activity, the action generator pulls toward the zero-cost rest state
-under fatigue/energy pressure, and a `SafetyMonitor` enforces a battery/
-thermal cutoff independent of drives or manual overrides. Pure logic
-(channel encode/decode, decay/aging, rate-limit math, LEDC allocation
-bounds) is factored into small header-only functions with zero hardware
-dependency and covered by host-native tests — see Testing below. Full
-details and what was deliberately *not* changed (a couple of the issue's
-claims didn't hold up under unsigned-arithmetic scrutiny) are in
-[`docs/roadmap.md`](../../docs/roadmap.md).
-
-v0.8.0 life-state persistence: the organism's physiology, contingency
-memory, and spatial memory can be downloaded as one JSON file and restored
-later — including onto a *different* board (`docs/synth-behavior.md` §13).
-Contingency/spatial entries are serialized by channel *name*, not bit
-position, specifically so restore works when the new body's channels don't
-match the old one's: matching names get re-packed into whatever index they
-sit at now, names that don't exist on the new body are simply dropped from
-that entry, and an entry that loses every channel it referenced is
-discarded rather than kept as noise. See
-[`docs/roadmap.md`](../../docs/roadmap.md) for the one accepted ambiguity
-in that scheme (spatial memory's level-0 quantization bin isn't
-distinguishable from "this channel wasn't in the saved map") and what's
-next.
+See [`CHANGELOG.md`](../../CHANGELOG.md) for what shipped in each release and
+[`docs/roadmap.md`](../../docs/roadmap.md) for open work.
 
 ## Layout
 
