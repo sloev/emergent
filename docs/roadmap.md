@@ -8,7 +8,7 @@ current one is closed out, unless explicitly reprioritized.
 
 ## Status
 
-**Current release: v0.9.0** (in progress — one task blocked, see below)
+**Current release: v0.9.1** (blocked — needs real hardware, see below)
 
 ---
 
@@ -329,8 +329,6 @@ caveat.
 - [x] Reference charging station firmware/circuit notes (RF beacon, LED pattern,
       audio cue, power module states: IDLE/CHARGING/FULL)
 - [x] Robot-side: `battery_voltage`/`current` as ordinary sensor channels feeding `h_energy`
-- [ ] End-to-end test: emergent approach-and-dock behavior over repeated sessions
-      — **blocked**, see below
 
 [`src/station`](https://github.com/sloev/emergent/tree/main/src/station) is
 a new, separate PlatformIO project — a reference implementation of §11.6's
@@ -369,19 +367,28 @@ without it stay on plain `WIFI_AP`, no reason to pay for concurrent
 AP+STA otherwise). Both reference board profiles now include an example
 `rf_rssi_station` channel targeting `src/station`'s default SSID.
 
-**Blocked, honestly:** "emergent approach-and-dock behavior over repeated
-sessions" needs a real robot, a real station, and repeated physical trials
-— there is no way to verify this from firmware code review or PlatformIO
-builds, and this environment has no hardware to run it on. Every prior
-release has carried a "not yet run on real hardware" caveat; this is the
-first task that can't even be partially exercised without hardware, since
-it's fundamentally about physical behavior over time, not firmware
-correctness. Left unchecked rather than claimed done. This is also, not
-coincidentally, exactly the kind of validation v1.0.0 is gated on below.
-
 Verified: both esp32dev and esp32-s3-devkitc-1 (robot) and the station
 firmware all build clean with PlatformIO; all 27 native unit tests still
 pass (unaffected by this release — no new pure logic was extracted).
+
+## v0.9.1 — Hardware validation (blocked, no hardware in this environment)
+
+- [ ] End-to-end test: emergent approach-and-dock behavior over repeated sessions
+
+Split out of v0.9.0 rather than left blocking it, since everything else in
+that release was done and independently verifiable, and this one task
+isn't a firmware task at all — it's "build the physical robot and station,
+run them together, and watch what happens over repeated sessions."
+
+**Blocked, honestly:** needs a real robot, a real station, and repeated
+physical trials — there is no way to verify this from firmware code review
+or PlatformIO builds, and this environment has no hardware to run it on.
+Every prior release has carried a "not yet run on real hardware" caveat;
+this is the first task that can't even be partially exercised without
+hardware, since it's fundamentally about physical behavior over time, not
+firmware correctness. Left unchecked rather than claimed done. This is
+also, not coincidentally, exactly the kind of validation v1.0.0 is gated
+on below — this milestone stays open until that hardware exists.
 
 ## v1.0.0 — First stable "alive" release (human-gated)
 

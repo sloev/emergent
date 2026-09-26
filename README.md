@@ -30,11 +30,12 @@ src/station/        Charging station reference firmware (PlatformIO)
 
 ## Status
 
-v0.9.0. See [`docs/roadmap.md`](docs/roadmap.md) for the current release and full task
-list per version — we work one release at a time, versioned as `0.x.y` with rolling
-minor/patch bumps; a `1.0.0` (or any major bump) is a deliberate, human-approved decision.
-Nothing in this repo has been run on real hardware yet; every release's verification is
-PlatformIO builds, native unit tests, and browser-based UI checks against a mocked API.
+v0.9.0 released; v0.9.1 (hardware validation) is open and blocked pending real hardware.
+See [`docs/roadmap.md`](docs/roadmap.md) for the current release and full task list per
+version — we work one release at a time, versioned as `0.x.y` with rolling minor/patch
+bumps; a `1.0.0` (or any major bump) is a deliberate, human-approved decision. Nothing in
+this repo has been run on real hardware yet; every release's verification is PlatformIO
+builds, native unit tests, and browser-based UI checks against a mocked API.
 
 ## License
 
