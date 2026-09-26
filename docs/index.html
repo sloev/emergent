@@ -505,7 +505,7 @@
 <p>We work <strong>one release at a time</strong>. Don't start tasks from a later release until the
 current one is closed out, unless explicitly reprioritized.</p>
 <h2 id="status">Status</h2>
-<p><strong>Current release: v0.9.0</strong> (in progress — one task blocked, see below)</p>
+<p><strong>Current release: v0.9.1</strong> (blocked — needs real hardware, see below)</p>
 <hr>
 <h2 id="v010--scaffolding">v0.1.0 — Scaffolding</h2>
 <ul>
@@ -802,8 +802,6 @@ caveat.</p>
 <li><input checked="" disabled="" type="checkbox"> Reference charging station firmware/circuit notes (RF beacon, LED pattern,
 audio cue, power module states: IDLE/CHARGING/FULL)</li>
 <li><input checked="" disabled="" type="checkbox"> Robot-side: <code>battery_voltage</code>/<code>current</code> as ordinary sensor channels feeding <code>h_energy</code></li>
-<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions
-— <strong>blocked</strong>, see below</li>
 </ul>
 <p><a href="https://github.com/sloev/emergent/tree/main/src/station"><code>src/station</code></a> is
 a new, separate PlatformIO project — a reference implementation of §11.6's
@@ -838,18 +836,26 @@ board profile has one of these (scanning needs the station role; boards
 without it stay on plain <code>WIFI_AP</code>, no reason to pay for concurrent
 AP+STA otherwise). Both reference board profiles now include an example
 <code>rf_rssi_station</code> channel targeting <code>src/station</code>'s default SSID.</p>
-<p><strong>Blocked, honestly:</strong> "emergent approach-and-dock behavior over repeated
-sessions" needs a real robot, a real station, and repeated physical trials
-— there is no way to verify this from firmware code review or PlatformIO
-builds, and this environment has no hardware to run it on. Every prior
-release has carried a "not yet run on real hardware" caveat; this is the
-first task that can't even be partially exercised without hardware, since
-it's fundamentally about physical behavior over time, not firmware
-correctness. Left unchecked rather than claimed done. This is also, not
-coincidentally, exactly the kind of validation v1.0.0 is gated on below.</p>
 <p>Verified: both esp32dev and esp32-s3-devkitc-1 (robot) and the station
 firmware all build clean with PlatformIO; all 27 native unit tests still
 pass (unaffected by this release — no new pure logic was extracted).</p>
+<h2 id="v091--hardware-validation-blocked-no-hardware-in-this-environment">v0.9.1 — Hardware validation (blocked, no hardware in this environment)</h2>
+<ul>
+<li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions</li>
+</ul>
+<p>Split out of v0.9.0 rather than left blocking it, since everything else in
+that release was done and independently verifiable, and this one task
+isn't a firmware task at all — it's "build the physical robot and station,
+run them together, and watch what happens over repeated sessions."</p>
+<p><strong>Blocked, honestly:</strong> needs a real robot, a real station, and repeated
+physical trials — there is no way to verify this from firmware code review
+or PlatformIO builds, and this environment has no hardware to run it on.
+Every prior release has carried a "not yet run on real hardware" caveat;
+this is the first task that can't even be partially exercised without
+hardware, since it's fundamentally about physical behavior over time, not
+firmware correctness. Left unchecked rather than claimed done. This is
+also, not coincidentally, exactly the kind of validation v1.0.0 is gated
+on below — this milestone stays open until that hardware exists.</p>
 <h2 id="v100--first-stable-alive-release-human-gated">v1.0.0 — First stable "alive" release (human-gated)</h2>
 <ul>
 <li><input disabled="" type="checkbox"> All of the above validated on real hardware</li>
