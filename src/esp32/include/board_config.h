@@ -6,7 +6,7 @@
 // references a pin number directly. It talks to named channels; a BoardConfig
 // is what maps those channels onto a specific chassis's wiring, as a flat
 // list of actuator/sensor specs. Adding a new board means adding a profile
-// under boards/ and a case in board_config.cpp — nothing else in the
+// under boards/ and a matching PlatformIO environment — nothing else in the
 // codebase should need to change.
 
 #include <cstddef>

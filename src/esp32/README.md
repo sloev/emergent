@@ -61,18 +61,19 @@ include/body/actuator.h/.cpp  Actuator: clamps, rate-limits, drives hardware
 include/body/sensor.h/.cpp    Sensor: reads and normalizes, caches per sample rate
 include/body/body.h/.cpp      Body: owns the live Actuator/Sensor instances for
                                a board, looked up by name
-include/core/physiology.h/.cpp
-                              Internal variables + drives + exploration scale
-                              (docs/synth-behavior.md §6)
-include/core/contingency_memory.h/.cpp
-                              Bounded, decaying action/sensor-delta memory
-                              (docs/synth-behavior.md §7)
-include/core/spatial_memory.h/.cpp
-                              Sensor-signature place cells + best_cell() query
-                              (docs/synth-behavior.md §8)
+include/core/physiology.h     Internal variables + drives + exploration scale.
+                               Header-only: no hardware dependency, so it can
+                               run against a fake body under native tests.
+include/core/contingency_memory.h
+                               Bounded, decaying action/sensor-delta memory.
+                               Header-only, same reason as physiology.h.
+include/core/spatial_memory.h Sensor-signature place cells + best_cell() query.
+                               Header-only, same reason as physiology.h.
 include/core/action_generator.h/.cpp
                               Proposes and writes each tick's actuator values
-                              from physiology + both memories (docs/synth-behavior.md §9)
+                              from physiology + both memories. tick() itself
+                              is header-only (same reason as physiology.h);
+                              the .cpp only holds begin()'s hardware RNG seed
 include/core/state_logger.h/.cpp
                               ~1 Hz slow task: bounded state log on LittleFS
 include/core/safety_monitor.h/.cpp
@@ -92,8 +93,8 @@ include/net/dashboard_server.h/.cpp
                                /api/channels, /api/contingency, /api/spatial,
                                /api/state, /api/config/wifi
 data/                          Dashboard front-end (served from LittleFS)
-src/board_config.cpp          Picks the active BoardConfig from the -DBOARD_PROFILE_*
-                               macro set by the PlatformIO environment
+src/board_config.cpp          Includes whichever board header ACTIVE_BOARD_HEADER
+                               names, set by the PlatformIO environment
 src/main.cpp                  Entry point: self-test, WiFi/dashboard bring-up,
                                heartbeat, 20 Hz behavior tick, ~1 Hz slow tick
 ```
@@ -198,16 +199,20 @@ pio device monitor
 pio test -e native
 ```
 
-Runs the host-native unit tests under `test/` against the pure logic in
-`include/{core,body}/*.h` (channel encode/decode/remapping, decay/age
-saturation, rate-limit math, LEDC allocation bounds) — no board, no
-hardware simulation, just plain functions on plain numbers. This is
-deliberately a small, honest subset: the rest of the engine (`Physiology`,
-`ContingencyMemory::update()`, `ActionGenerator`, ...) takes a live `Body&`
-and calls real `Sensor`/`Actuator` methods that touch hardware
-(`analogRead`, `ledcWrite`, ...), so exercising it end-to-end needs either a
-real board or a proper hardware mock layer — neither exists yet. When you
-add a new piece of genuinely hardware-independent logic to this codebase,
-consider whether it belongs in a small header like the ones above instead
-of inline in a hardware-coupled class, specifically so it stays testable
-this way.
+Runs the host-native unit tests under `test/`: pure bit-packing/decay/
+rate-limit/allocation math, plus three organism-behavior scenarios
+(`test_behavior_scenarios`) run against `FakeBody`/`FakeActuator`/
+`FakeSensor` (`test/test_behavior_scenarios/fake_body.h`) — plain
+float-backed stand-ins for `Body`/`Actuator`/`Sensor`, no hardware, no
+board. `Physiology::update()`, `ContingencyMemory::update()`, and
+`ActionGenerator::tick()` are templated on the body type specifically so
+they run unmodified against either the fake or the real thing. The three
+scenarios: energy falls under sustained actuator cost, energy rises toward
+a high energy-sensor reading, and a repeated (action, sensor-delta,
+drive-drop) pattern measurably biases `ActionGenerator`'s output for that
+actuator. `Sensor`/`Actuator`'s own hardware paths (`analogRead`,
+`ledcWrite`, ...) and the dashboard/WiFi layer still need a real board —
+those aren't covered here. When you add a new piece of hardware-independent
+logic, consider whether it belongs in a header like the ones above (or is
+expressible as a `BodyT`-templated method) instead of inline in a
+hardware-coupled class, specifically so it stays testable this way.

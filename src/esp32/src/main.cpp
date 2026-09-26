@@ -127,7 +127,7 @@ void loop() {
         phys.update(body, dt_s, contingency.last_surprise());
         contingency.update(body, phys, dt_s);
         spatial.update(body, phys, dt_s);
-        action_gen.tick(body, phys, contingency, spatial);
+        action_gen.tick(body, phys, contingency, spatial, now);
         // Independent hard floor, enforced last so nothing upstream — drives,
         // memory bias, even a manual dashboard override — gets a vote once a
         // limit is crossed (docs/roadmap.md, GH issue #1).
