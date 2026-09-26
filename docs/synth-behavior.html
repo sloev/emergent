@@ -280,53 +280,42 @@ code.hljs {
 		<h1 id="emergent-a-synthetic-ethology-platform-for-esp32-class-hardware">Emergent: A Synthetic Ethology Platform for ESP32-Class Hardware</h1>
 <p><a href="index.html">← Back to project overview</a></p>
 <h2 id="table-of-contents">Table of Contents</h2>
-<ol>
-<li><a href="#1-introduction">Introduction</a>  </li>
-<li><a href="#2-historical-and-conceptual-background">Historical and Conceptual Background</a>  <ol>
-<li><a href="#21-cybernetics-and-regulation">Cybernetics and Regulation</a>  </li>
-<li><a href="#22-grey-walters-tortoises">Grey Walter’s Tortoises</a>  </li>
-<li><a href="#23-braitenberg-vehicles-and-synthetic-psychology">Braitenberg Vehicles and Synthetic Psychology</a>  </li>
-<li><a href="#24-behavior-based-robotics-and-subsumption">Behavior-Based Robotics and Subsumption</a>  </li>
-<li><a href="#25-intrinsic-motivation-and-homeostatic-reinforcement-learning">Intrinsic Motivation and Homeostatic Reinforcement Learning</a>  </li>
-<li><a href="#26-embodied-cognition-ethology-and-stigmergy">Embodied Cognition, Ethology, and Stigmergy</a>  </li>
-<li><a href="#27-game-theory-economics-and-foraging">Game Theory, Economics, and Foraging</a>  </li>
-<li><a href="#28-emergent-behavior-in-animal-inspired-robotics">Emergent Behavior in Animal-Inspired Robotics</a></li>
-</ol>
-</li>
-<li><a href="#3-project-overview-and-design-goals">Project Overview and Design Goals</a>  </li>
-<li><a href="#4-system-architecture">System Architecture</a>  <ol>
+<ul>
+<li>1. <a href="#1-introduction">Introduction</a></li>
+<li>3. <a href="#3-project-overview-and-design-goals">Project Overview and Design Goals</a></li>
+<li>4. <a href="#4-system-architecture">System Architecture</a><ol>
 <li><a href="#41-system-overview-diagram">System Overview Diagram</a>  </li>
 <li><a href="#42-layers-and-responsibilities">Layers and Responsibilities</a></li>
 </ol>
 </li>
-<li><a href="#5-the-body-sensors-and-actuators">The Body: Sensors and Actuators</a>  <ol>
+<li>5. <a href="#5-the-body-sensors-and-actuators">The Body: Sensors and Actuators</a><ol>
 <li><a href="#51-actuators">Actuators</a>  </li>
 <li><a href="#52-sensors">Sensors</a>  </li>
 <li><a href="#53-body-schema-as-an-emergent-construct">Body Schema as an Emergent Construct</a></li>
 </ol>
 </li>
-<li><a href="#6-internal-physiology-and-drives">Internal Physiology and Drives</a>  <ol>
+<li>6. <a href="#6-internal-physiology-and-drives">Internal Physiology and Drives</a><ol>
 <li><a href="#61-variables-and-dynamics">Variables and Dynamics</a>  </li>
 <li><a href="#62-drive-modulation-algorithm">Drive Modulation Algorithm</a></li>
 </ol>
 </li>
-<li><a href="#7-contingency-memory">Contingency Memory</a>  <ol>
+<li>7. <a href="#7-contingency-memory">Contingency Memory</a><ol>
 <li><a href="#71-data-structure">Data Structure</a>  </li>
 <li><a href="#72-update-algorithm">Update Algorithm</a>  </li>
 <li><a href="#73-no-privileged-semantics">No Privileged Semantics</a></li>
 </ol>
 </li>
-<li><a href="#8-spatial-memory-and-navigation">Spatial Memory and Navigation</a>  <ol>
+<li>8. <a href="#8-spatial-memory-and-navigation">Spatial Memory and Navigation</a><ol>
 <li><a href="#81-spatial-representation">Spatial Representation</a>  </li>
 <li><a href="#82-action-biasing-from-space">Action Biasing from Space</a></li>
 </ol>
 </li>
-<li><a href="#9-core-loop">Core Loop</a>  <ol>
+<li>9. <a href="#9-core-loop">Core Loop</a><ol>
 <li><a href="#91-behavior-flow-diagram">Behavior Flow Diagram</a>  </li>
 <li><a href="#92-core-loop-pseudocode">Core Loop Pseudocode</a></li>
 </ol>
 </li>
-<li><a href="#10-inputoutput-modalities-and-emergent-uses">Input/Output Modalities and Emergent Uses</a>  <ol>
+<li>10. <a href="#10-inputoutput-modalities-and-emergent-uses">Input/Output Modalities and Emergent Uses</a><ol>
 <li><a href="#101-light-and-phototaxis-like-behavior">Light and Phototaxis-Like Behavior</a>  </li>
 <li><a href="#102-rf-fields-as-digital-gradients">RF Fields as Digital Gradients</a>  </li>
 <li><a href="#103-chemosensation-and-scent-trails">Chemosensation and Scent Trails</a>  </li>
@@ -335,26 +324,52 @@ code.hljs {
 <li><a href="#106-battery-as-just-another-input-coupled-to-energy">Battery as “Just Another Input”, Coupled to Energy</a></li>
 </ol>
 </li>
-<li><a href="#11-charging-station-as-an-emergent-attractor">Charging Station as an Emergent Attractor</a>  </li>
-<li><a href="#12-emergent-phenomena-and-cross-disciplinary-links">Emergent Phenomena and Cross-Disciplinary Links</a>  <ol>
-<li><a href="#121-mechanical-voice-and-prosody">Mechanical Voice and Prosody</a>  </li>
-<li><a href="#122-individual-differences-and-personality">Individual Differences and “Personality”</a>  </li>
-<li><a href="#123-social-and-crowd-level-effects">Social and Crowd-Level Effects</a>  </li>
-<li><a href="#124-game-design-art-and-education">Game Design, Art, and Education</a></li>
-</ol>
-</li>
-<li><a href="#13-life-state-persistence-and-body-transfer">Life-State Persistence and Body Transfer</a>  </li>
-<li><a href="#14-implementation-on-esp32-class-hardware">Implementation on ESP32-Class Hardware</a>  <ol>
+<li>11. <a href="#11-charging-station-as-an-emergent-attractor">Charging Station as an Emergent Attractor</a></li>
+<li>13. <a href="#13-life-state-persistence-and-body-transfer">Life-State Persistence and Body Transfer</a></li>
+<li>14. <a href="#14-implementation-on-esp32-class-hardware">Implementation on ESP32-Class Hardware</a><ol>
 <li><a href="#141-software-structure">Software Structure</a>  </li>
 <li><a href="#142-memory-and-timing-constraints">Memory and Timing Constraints</a></li>
 </ol>
 </li>
-<li><a href="#15-experimental-program-and-ablations">Experimental Program and Ablations</a>  </li>
-<li><a href="#16-what-this-project-illustrates-and-future-directions">What This Project Illustrates and Future Directions</a>  </li>
-<li><a href="#17-related-projects-and-prior-art-in-practice">Related Projects and Prior Art in Practice</a>  </li>
-<li><a href="#18-philosophical-boundaries">Philosophical Boundaries</a>  </li>
-<li><a href="#19-references">References</a></li>
-</ol>
+<li>15. <a href="#15-experimental-program-and-ablations">Experimental Program and Ablations</a></li>
+</ul>
+<p>History, prior art, "personality"/social speculation, and philosophical
+framing that used to live in this document — as sections 2, 12, 16, 17, 18 —
+have moved to <a href="research.md">research.md</a>, a separate, explicitly-not-the-spec
+document, per <a href="https://github.com/sloev/emergent/issues/2">issue #2</a>: this
+document should be a short, falsifiable description of working code, not a
+6,000-word essay in the critical path. Numbering below keeps each remaining
+section's original number rather than renumbering the whole document.</p>
+<hr>
+<h2 id="status">Status</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Fact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Implemented</td>
+<td>20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine.</td>
+</tr>
+<tr>
+<td>Tested</td>
+<td>Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware.</td>
+</tr>
+<tr>
+<td>Hardware tested</td>
+<td>Nothing. No board has run this.</td>
+</tr>
+<tr>
+<td>Designed / planned</td>
+<td>Approach-and-dock, ablations, extra boards.</td>
+</tr>
+<tr>
+<td>Hypothesis</td>
+<td>That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified.</td>
+</tr>
+</tbody></table>
 <hr>
 <h2 id="1-introduction">1. Introduction</h2>
 <p>The problem is simple to state and hard to do well: <strong>make a small, cheap, battery-powered machine look alive</strong>.</p>
@@ -390,79 +405,7 @@ code.hljs {
 <li>a coarse <strong>spatial memory</strong>,  </li>
 <li>an optional <strong>metabolic subsystem</strong> that ties behavior to energy.</li>
 </ul>
-<p>The remainder of the article presents the historical background, theoretical framework, system architecture, algorithms, similarities to existing work, and experimental considerations for this synthetic ethology platform.</p>
-<hr>
-<h2 id="2-historical-and-conceptual-background">2. Historical and Conceptual Background</h2>
-<h3 id="21-cybernetics-and-regulation">2.1 Cybernetics and Regulation</h3>
-<p>Norbert Wiener’s <em><a href="https://en.wikipedia.org/wiki/Cybernetics">Cybernetics: Or Control and Communication in the Animal and the Machine</a></em> framed intelligent behavior as <strong>regulation through feedback</strong> rather than symbolic inference. A thermostat does not “understand” weather; it maintains temperature by sensing deviations and acting to reduce them.</p>
-<p>Key ideas we adopt:</p>
-<ul>
-<li><strong>Homeostasis.</strong> Maintain internal variables within viable bands.  </li>
-<li><strong>Allostasis.</strong> Change parameters in anticipation of future demands, not just reactions to deviations.</li>
-</ul>
-<p>Biology offers countless examples: temperature regulation, blood glucose control, osmotic balance. Homeostatic variables drift; organisms act to restore them. Here, drives emerge from <strong>deviations</strong> of internal variables from preferred ranges and bias actions that historically reduce those deviations.</p>
-<h3 id="22-grey-walters-tortoises">2.2 Grey Walter’s Tortoises</h3>
-<p>In the late 1940s, W. Grey Walter built electro-mechanical “tortoises” (Elmer and Elsie) coupling photocells and touch sensors directly to motors. Without digital computation, they appeared to explore, avoid obstacles, and return to a hutch to “feed” on light and recharge. These robots remain canonical examples that simple analog control loops can yield rich behavior.</p>
-<p>Our architecture inherits Walter’s emphasis on <strong>tight sensorimotor coupling</strong> but extends it with explicit internal physiology, memory, and a programmable microcontroller substrate.</p>
-<h3 id="23-braitenberg-vehicles-and-synthetic-psychology">2.3 Braitenberg Vehicles and Synthetic Psychology</h3>
-<p>Valentino Braitenberg’s <em><a href="https://mitpress.mit.edu/9780262521123/vehicles/">Vehicles: Experiments in Synthetic Psychology</a></em> showed how minimal wiring patterns from sensors to motors produce strikingly interpretable behaviors: approach, avoidance, “aggression”, “fear”, “curiosity”.</p>
-<p>The key methodological lesson is <strong>synthetic psychology</strong>:<br>build simple systems bottom-up and ask which psychological descriptions humans spontaneously apply. Our code never uses notions like “goal” or “emotion”; those remain observer vocabulary.</p>
-<h3 id="24-behavior-based-robotics-and-subsumption">2.4 Behavior-Based Robotics and Subsumption</h3>
-<p>Rodney Brooks’ <a href="https://people.csail.mit.edu/brooks/papers/robust-layers.pdf">subsumption architecture</a> used layers of simple behaviors, where higher layers suppressed lower-level outputs. There was no central world model; behavior emerged from layer interactions and the environment.</p>
-<p>We retain:</p>
-<ul>
-<li>locality and concurrency,  </li>
-<li>incremental layering on real hardware,</li>
-</ul>
-<p>but avoid explicit “behavior modules” (<em>wander</em>, <em>avoid</em>, <em>dock</em>). Instead we keep:</p>
-<ul>
-<li>sensor streams,  </li>
-<li>actuator channels,  </li>
-<li>statistics of their correlations, in context.</li>
-</ul>
-<h3 id="25-intrinsic-motivation-and-homeostatic-reinforcement-learning">2.5 Intrinsic Motivation and Homeostatic Reinforcement Learning</h3>
-<p>In computational neuroscience and RL, <strong>homeostatic reinforcement learning</strong> (HRL) treats the maintenance of internal variables as the underlying objective of behavior. Keramati and Gutkin’s work formalizes how classical RL can be grounded in physiological drives, explaining risk aversion, satiation, and other behavioral regularities.(Keramati &amp; Gutkin, 2014)</p>
-<p>Recent work such as Yoshida &amp; Kuniyoshi’s “Embodied Neural Homeostat” demonstrates that homeostasis-driven RL can yield <strong>integrated behaviors</strong> like walking, foraging, and temperature control in real robots, using internal energy and temperature dynamics as primary signals.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024) </p>
-<p>Our platform is intentionally lighter: we do not run a full value-function-based HRL pipeline. Instead, we:</p>
-<ul>
-<li>maintain a small set of <strong>drives</strong> over internal variables,  </li>
-<li>use <strong>contingency memory</strong> to bias action sampling based on past outcomes,  </li>
-<li>rely on stochastic policy sampling rather than gradient-based RL.</li>
-</ul>
-<p>Conceptually, we sit between hand-crafted behavior trees and fully learned policies.</p>
-<h3 id="26-embodied-cognition-ethology-and-stigmergy">2.6 Embodied Cognition, Ethology, and Stigmergy</h3>
-<p>Embodied cognition argues that cognition is not only “in the brain” but distributed across <strong>body and environment</strong>. Ethology emphasizes that behavior must be understood in the ecological niche. Concepts like <strong>stigmergy</strong> show how indirect traces (pheromone trails, footprints) mediate social coordination.</p>
-<p>Our robots:</p>
-<ul>
-<li>live in physical rooms with light, RF fields, obstacles, and humans,  </li>
-<li>may emit chemical, acoustic, and visual traces,  </li>
-<li>respond to these traces later as if they “meant” something.</li>
-</ul>
-<p>All semantics are imposed post-hoc by observers; the firmware only ever sees correlations and contingencies.</p>
-<h3 id="27-game-theory-economics-and-foraging">2.7 Game Theory, Economics, and Foraging</h3>
-<p>Several concepts from economics and game theory parallel this design:</p>
-<ul>
-<li><strong>Optimal foraging theory</strong> treats animal foraging as a utility-maximization problem under uncertainty and depletion; modern RL work reproduces patch-selection behavior with deep agents in continuous environments.(Yoshida et al., 2024)  </li>
-<li><strong>Utility concavity</strong> and <strong>risk aversion</strong> in economic theory mirror homeostatic drive concavity: as an internal variable approaches its comfortable range, the marginal value of further gains diminishes, encouraging risk-averse choices.(Keramati &amp; Gutkin, 2014)  </li>
-<li><strong>Mixed strategies</strong> in evolutionary game theory correspond to <strong>stochastic policies</strong> in RL and to our use of controlled randomness: never fully deterministic, always exploring.</li>
-</ul>
-<p>Our architecture adopts these indirectly:</p>
-<ul>
-<li>drives are concave around target ranges,  </li>
-<li>stochastic action generation acts like a mixed strategy over embodied moves,  </li>
-<li>spatial and contingency memories coarsely approximate value estimates without ever computing them as such.</li>
-</ul>
-<h3 id="28-emergent-behavior-in-animal-inspired-robotics">2.8 Emergent Behavior in Animal-Inspired Robotics</h3>
-<p>A growing literature puts animal-inspired robots into real environments, using them as <strong>physical models</strong> of behavior. An overview by Gómez-Marín and colleagues summarizes work on social interaction, vocal production, and goal-directed reaching in neurorobotics, arguing that robots and animals share “skin in the game”: friction, noise, wear, and embodiment.(Gomez-Marin &amp; Zhang, 2022)</p>
-<p>Closer to this project, recent systems like the Embodied Neural Homeostat (ENH) show emergence of integrated behavior (locomotion, foraging, thermal regulation) from homeostatic drives in physical robots.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </p>
-<p>Swarm-level studies use evolutionary algorithms (e.g., NEAT) to evolve local controllers in simulation that yield group patterns such as flocking, collective transport, or coordinated patrolling.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  </p>
-<p>Compared with these, the present project:</p>
-<ul>
-<li>emphasizes <strong>resource-constrained microcontrollers</strong>,  </li>
-<li>avoids large neural networks and external training,  </li>
-<li>treats <strong>every signal, including battery</strong>, as uninterpreted at the sensor level,  </li>
-<li>focuses on <strong>single-agent but socially and ecologically situated</strong> behavior, with optional extensions to groups.</li>
-</ul>
+<p>The remainder of this document presents the system architecture, algorithms, and experimental considerations for this synthetic ethology platform. Theory, prior art, and philosophical framing live separately in <a href="research.md">research.md</a>.</p>
 <hr>
 <h2 id="3-project-overview-and-design-goals">3. Project Overview and Design Goals</h2>
 <p>We aim for an architecture that:</p>
@@ -690,9 +633,13 @@ code.hljs {
 <li><code>h_safety</code> — recent history of collisions, extreme temperatures, etc.  </li>
 <li><code>h_arousal</code> — global activity or responsiveness.  </li>
 <li><code>h_curiosity</code> — based on novelty or prediction error.  </li>
-<li><code>h_boredom</code> — time spent in low-change regimes.  </li>
-<li><code>h_social</code> — history of correlated signals from other robots / humans.</li>
+<li><code>h_boredom</code> — time spent in low-change regimes.</li>
 </ul>
+<p>A social variable (history of correlated signals from other robots/humans)
+was considered but isn't implemented: it would need a "presence of another
+agent" sensor no current board has, and an unimplemented drive that never
+moves is worse than no drive at all. See <a href="research.md">research notes</a> for
+the idea.</p>
 <p>Each variable:</p>
 <ul>
 <li>integrates selected sensor channels,  </li>
@@ -1084,189 +1031,102 @@ MAX_ENTRIES = <span class="hljs-number">1024</span>
 <li>leaving more readily when the “full” profile dominates and <code>h_energy</code> drive is low.</li>
 </ul>
 <p>No code ever says <code>if low_battery then go_to_station()</code>.</p>
-<h3 id="116-example-station-logic">11.6 Example Station Logic</h3>
-<pre><code class="hljs python"><span class="hljs-comment"># Pseudocode for station microcontroller</span>
-<span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
-    v = measure_robot_voltage()   <span class="hljs-comment"># or station contact voltage</span>
-    i = measure_current()
-    t = measure_temp()
+<h3 id="116-station-logic-as-implemented">11.6 Station Logic (as implemented)</h3>
+<p><code>src/station</code> is real, running code, not pseudocode. Its state machine
+(<code>src/station/src/main.cpp</code>):</p>
+<pre><code class="hljs python">charging_active = current &gt; CURRENT_ACTIVE_THRESHOLD
+<span class="hljs-keyword">if</span> charging_active:
+    state = <span class="hljs-string">"FULL"</span> <span class="hljs-keyword">if</span> (voltage &gt; VOLTAGE_FULL_THRESHOLD <span class="hljs-keyword">and</span>
+                        current &lt; CURRENT_TAPER_THRESHOLD) <span class="hljs-keyword">else</span> <span class="hljs-string">"CHARGING"</span>
+<span class="hljs-keyword">else</span>:
+    state = <span class="hljs-string">"IDLE"</span>
 
-    charging_active = (i &gt; I_MIN_ACTIVE) <span class="hljs-keyword">and</span> (t &lt; T_MAX)
-
-    <span class="hljs-keyword">if</span> charging_active:
-        <span class="hljs-keyword">if</span> v &gt; V_FULL_THRESHOLD <span class="hljs-keyword">and</span> i &lt; I_TAPER_THRESHOLD:
-            state = <span class="hljs-string">"FULL"</span>
-        <span class="hljs-keyword">else</span>:
-            state = <span class="hljs-string">"CHARGING"</span>
-    <span class="hljs-keyword">else</span>:
-        state = <span class="hljs-string">"IDLE"</span>
-
-    <span class="hljs-keyword">if</span> state == <span class="hljs-string">"IDLE"</span>:
-        set_led_mode(<span class="hljs-string">"attractor_idle"</span>)
-        set_rf_pattern(<span class="hljs-string">"beacon_idle"</span>)
-        set_audio_mode(<span class="hljs-string">"quiet"</span>)
-    <span class="hljs-keyword">elif</span> state == <span class="hljs-string">"CHARGING"</span>:
-        set_led_mode(<span class="hljs-string">"charging_pulse"</span>)
-        set_rf_pattern(<span class="hljs-string">"beacon_active"</span>)
-        set_audio_mode(<span class="hljs-string">"slow_click"</span>)
-    <span class="hljs-keyword">elif</span> state == <span class="hljs-string">"FULL"</span>:
-        set_led_mode(<span class="hljs-string">"full_solid"</span>)
-        set_rf_pattern(<span class="hljs-string">"beacon_full"</span>)
-        set_audio_mode(<span class="hljs-string">"rare_tick"</span>)
-
-    sleep_ms(<span class="hljs-number">100</span>)
+set_led_mode(state)     <span class="hljs-comment"># slow pulse / fast pulse / solid</span>
+set_audio_mode(state)   <span class="hljs-comment"># silent / periodic click / rare tick</span>
+<span class="hljs-comment"># RF beacon is a fixed SoftAP SSID — it does NOT change with state.</span>
+<span class="hljs-comment"># Near-field cues (LED, audio) carry state; RF only says "over here",</span>
+<span class="hljs-comment"># a long-range gradient the robot can climb from a distance it can't</span>
+<span class="hljs-comment"># yet see or hear the near-field cues from.</span>
 </code></pre>
-<p>The robot never sees <code>"CHARGING"</code> or <code>"FULL"</code> as symbols; it only experiences the sensory shifts.</p>
-<h3 id="117-emergent-charging-storyline">11.7 Emergent Charging Storyline</h3>
-<p>A typical emergent narrative:</p>
+<p>The robot never sees <code>"CHARGING"</code> or <code>"FULL"</code> as symbols; it only experiences
+the sensory shifts (LED/audio pattern up close, RF signal strength from a
+distance).</p>
+<h3 id="117-charging-as-an-attractor--hypothesis-not-yet-observed">11.7 Charging as an Attractor — Hypothesis, Not Yet Observed</h3>
+<p>The design intent, unverified on real hardware (tracked as
+<a href="roadmap.md">v0.9.1</a>):</p>
 <ol>
-<li><p><strong>Early life</strong>  </p>
-<ul>
-<li>Robot wanders randomly.  </li>
-<li>Occasionally collides with ramp, is funneled in, accidentally making contact.  </li>
-<li><code>battery_voltage</code> rises; <code>h_energy</code> improves.</li>
-</ul>
-</li>
-<li><p><strong>Memory formation</strong>  </p>
-<ul>
-<li>Contingency memory stores associations between approach actions, station cues, and subsequent <code>h_energy</code> improvements.  </li>
-<li>Spatial memory notes that certain locations precede such episodes.</li>
-</ul>
-</li>
-<li><p><strong>Behavior shaping</strong>  </p>
-<ul>
-<li>When <code>h_energy</code> deviates strongly (simulated “hunger”), drives bias exploration.  </li>
-<li>Patterns that historically improved <code>h_energy</code> (movements toward station cues) become more probable.</li>
-</ul>
-</li>
-<li><p><strong>Charging completion and departure</strong>  </p>
-<ul>
-<li>Once <code>battery_voltage</code> stabilizes and <code>h_energy</code> is high,  </li>
-<li>station cues shift to the “full” profile,  </li>
-<li><code>h_energy</code> drive relaxes,  </li>
-<li>stochastic exploration reasserts itself; gentle biases toward remaining weaken and the robot drifts out.</li>
-</ul>
-</li>
+<li><strong>Early life</strong> — robot wanders; occasionally contacts the station;
+<code>battery_voltage</code> rises; <code>h_energy</code> improves.</li>
+<li><strong>Memory formation</strong> — contingency memory associates approach actions and
+station cues with <code>h_energy</code> improvement; spatial memory notes the
+location.</li>
+<li><strong>Behavior shaping</strong> — when <code>h_energy</code> deviates, drives bias exploration
+toward patterns that historically improved it.</li>
+<li><strong>Completion and departure</strong> — once charged, cues shift to "full",
+<code>h_energy</code> drive relaxes, and exploration reasserts itself.</li>
 </ol>
-<p>To an observer, the robot “seeks the charging station when low on energy and leaves when full”. In code, it never <strong>knows</strong> what a charging station is.</p>
-<hr>
-<h2 id="12-emergent-phenomena-and-cross-disciplinary-links">12. Emergent Phenomena and Cross-Disciplinary Links</h2>
-<h3 id="121-mechanical-voice-and-prosody">12.1 Mechanical Voice and Prosody</h3>
-<p>Repeated action sequences that improve “social” or curiosity-related drives can produce distinct acoustic signatures:</p>
-<ul>
-<li>rising/falling motor tones,  </li>
-<li>rhythmic tapping,  </li>
-<li>broadband “grind” pulses.</li>
-</ul>
-<p>From linguistics and music theory we can borrow:</p>
-<ul>
-<li>prosodic contours (rise–fall, emphasis),  </li>
-<li>rhythmic motifs,  </li>
-<li>call-and-response structures.</li>
-</ul>
-<p>Experiments: expose robots to human rhythmic patterns (clapping, tapping) and observe whether particular action-and-sound sequences become more likely after “successful” interactions.</p>
-<h3 id="122-individual-differences-and-personality">12.2 Individual Differences and “Personality”</h3>
-<p>Because:</p>
-<ul>
-<li>exploration is stochastic,  </li>
-<li>memory is lossy,  </li>
-<li>spatial histories differ,</li>
-</ul>
-<p>nominally identical robots develop distinct <strong>behavioral profiles</strong>. Behavioral ecology calls such persistent individual differences “behavioral syndromes”.</p>
-<p>We can measure:</p>
-<ul>
-<li>risk tolerance (distance to obstacles, collision rate),  </li>
-<li>exploration rate (spatial coverage),  </li>
-<li>sociality (time near conspecifics or humans),  </li>
-<li>persistence (how long patterns are repeated).</li>
-</ul>
-<p>Psychology and psychiatry provide a rich vocabulary to interpret perturbations: altering decay rates or drive gains can yield lethargic, manic, compulsive, or avoidant “personalities”.</p>
-<h3 id="123-social-and-crowd-level-effects">12.3 Social and Crowd-Level Effects</h3>
-<p>With many robots in a shared environment:</p>
-<ul>
-<li>stigmergic cues (scent, RF, light patterns) become shared media,  </li>
-<li>simple local rules yield clustering, segregation, or flocking-like motion,  </li>
-<li>human movement influences robot distributions and vice versa.</li>
-</ul>
-<p>This connects to:</p>
-<ul>
-<li><strong>sociology</strong> (norm formation, crowd dynamics),  </li>
-<li><strong>collective behavior</strong> in animals,  </li>
-<li><strong>economics</strong> of congestion and resource competition.</li>
-</ul>
-<p>Swarm-robotics work using evolutionary methods and NEAT to generate emergent group behavior offers a useful comparison: our system does not optimize a group objective, but similar group-level phenomena may appear as robots individually chase local drive improvements.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)</p>
-<h3 id="124-game-design-art-and-education">12.4 Game Design, Art, and Education</h3>
-<p>From game design:</p>
-<ul>
-<li>crafting legible behavior signatures humans can read and respond to,  </li>
-<li>tuning “reward” landscapes (via environment design) to elicit interesting emergent strategies.</li>
-</ul>
-<p>From art:</p>
-<ul>
-<li>robots as kinetic sculptures,  </li>
-<li>emergent narratives formed by their trajectories and interactions,  </li>
-<li>audio-visual aesthetics using mechanically produced sound and light.</li>
-</ul>
-<p>From education:</p>
-<ul>
-<li>concrete demonstrations of homeostasis, adaptation, dynamical systems, emergence,  </li>
-<li>visualization tools mapping internal variables to colors, shapes, or sounds.</li>
-</ul>
+<p>If this works, an observer would describe the robot as "seeking the charger
+when low, leaving when full" — but that's a claim about what this system is
+<em>supposed</em> to produce, not a measured result. See <a href="research.md">research.md</a>
+for a longer discussion of what this experiment would need to actually show.</p>
 <hr>
 <h2 id="13-life-state-persistence-and-body-transfer">13. Life-State Persistence and Body Transfer</h2>
-<p>The <em>organism</em> is defined as a serializable state blob:</p>
+<p>The organism's state is a downloadable/restorable JSON file (<code>GET</code>/<code>POST /api/state</code>), matching what <code>src/esp32/src/net/dashboard_server.cpp</code>
+actually serializes:</p>
 <pre><code class="hljs json"><span class="hljs-punctuation">{</span>
-  <span class="hljs-attr">"version"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"age_s"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">172800</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"physiology"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_energy"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.73</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"h_safety"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.91</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"drives"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_curiosity"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.82</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"h_boredom"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.12</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"contingencies"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span> <span class="hljs-comment">/* compressed entries */</span> <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"spatial_memory"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span> <span class="hljs-comment">/* grid or place-cell summaries */</span> <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"stats"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"risk_tolerance"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.34</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"mean_speed"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.18</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"channel_fingerprint"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"a1b2c3d4"</span>
+  <span class="hljs-attr">"version"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"age_ms"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">172800000</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"channel_fingerprint"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"a1b2c3d4"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"physiology"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_energy"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.73</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"h_safety"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.91</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"..."</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"one entry per PhysVar"</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"contingency"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">"actuators"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"motor_left"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"sensors"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"light"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">"ctx_hash"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">12</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"strength"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.8</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"mean_drive_delta"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.05</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"age"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">40</span> <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"spatial"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span> <span class="hljs-attr">"sensors"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"light"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"visit_count"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">6</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"age"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">"drive_improvement"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">"h_energy"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.12</span> <span class="hljs-punctuation">}</span> <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
 <p>Mechanism:</p>
 <ul>
-<li>state can be downloaded from one chassis and uploaded into another,  </li>
-<li>a mapping layer remaps channels where possible and gradually forgets mismatched contingencies,  </li>
-<li>observers experience continuity of “character” even as body and environment change.</li>
+<li>state can be downloaded from one board and uploaded into another,  </li>
+<li>contingency/spatial entries are keyed by channel <em>name</em>, not bit position,
+so they remap onto whatever index a channel sits at on the new body;
+channels that don't exist on the new body are dropped from that entry,  </li>
+<li><code>channel_fingerprint</code> is informational only (a hash of the channel layout)
+— restore is name-based regardless of whether it matches.</li>
 </ul>
-<p>This gives an experimental handle on <strong>embodied identity</strong>: what, if anything, remains the same when you change the body but preserve part of the internal history?</p>
 <hr>
 <h2 id="14-implementation-on-esp32-class-hardware">14. Implementation on ESP32-Class Hardware</h2>
-<h3 id="141-software-structure">14.1 Software Structure</h3>
-<figure class="mermaid"><svg id="mermaid-diagram-4" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 234.891px; background-color: transparent;" viewBox="0 0 234.890625 374" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mermaid-diagram-4{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-diagram-4 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-diagram-4 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-diagram-4 .error-icon{fill:#552222;}#mermaid-diagram-4 .error-text{fill:#552222;stroke:#552222;}#mermaid-diagram-4 .edge-thickness-normal{stroke-width:1px;}#mermaid-diagram-4 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-diagram-4 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-diagram-4 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-diagram-4 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-diagram-4 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-diagram-4 .marker{fill:#333333;stroke:#333333;}#mermaid-diagram-4 .marker.cross{stroke:#333333;}#mermaid-diagram-4 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-diagram-4 p{margin:0;}#mermaid-diagram-4 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#mermaid-diagram-4 .cluster-label text{fill:#333;}#mermaid-diagram-4 .cluster-label span{color:#333;}#mermaid-diagram-4 .cluster-label span p{background-color:transparent;}#mermaid-diagram-4 .label text,#mermaid-diagram-4 span{fill:#333;color:#333;}#mermaid-diagram-4 .node rect,#mermaid-diagram-4 .node circle,#mermaid-diagram-4 .node ellipse,#mermaid-diagram-4 .node polygon,#mermaid-diagram-4 .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#mermaid-diagram-4 .rough-node .label text,#mermaid-diagram-4 .node .label text,#mermaid-diagram-4 .image-shape .label,#mermaid-diagram-4 .icon-shape .label{text-anchor:middle;}#mermaid-diagram-4 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mermaid-diagram-4 .rough-node .label,#mermaid-diagram-4 .node .label,#mermaid-diagram-4 .image-shape .label,#mermaid-diagram-4 .icon-shape .label{text-align:center;}#mermaid-diagram-4 .node.clickable{cursor:pointer;}#mermaid-diagram-4 .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#mermaid-diagram-4 .arrowheadPath{fill:#333333;}#mermaid-diagram-4 .edgePaths .path{stroke:#333333;stroke-width:1px;}#mermaid-diagram-4 .flowchart-link{stroke:#333333;fill:none;}#mermaid-diagram-4 .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#mermaid-diagram-4 .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#mermaid-diagram-4 .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#mermaid-diagram-4 .cluster text{fill:#333;}#mermaid-diagram-4 .cluster span{color:#333;}#mermaid-diagram-4 .node .collapsed-indicator{fill:#aaaa33;stroke:none;opacity:0.6;}#mermaid-diagram-4 .node .collapsed-separator{stroke:#aaaa33;stroke-width:0.75px;}#mermaid-diagram-4 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-diagram-4 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#mermaid-diagram-4 rect.text{fill:none;stroke-width:0;}#mermaid-diagram-4 .icon-shape,#mermaid-diagram-4 .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#mermaid-diagram-4 .icon-shape p,#mermaid-diagram-4 .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#mermaid-diagram-4 .icon-shape .label rect,#mermaid-diagram-4 .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mermaid-diagram-4 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mermaid-diagram-4 .node .neo-node{stroke:#9370DB;}#mermaid-diagram-4 [data-look="neo"].node rect,#mermaid-diagram-4 [data-look="neo"].cluster rect,#mermaid-diagram-4 [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].swimlane.cluster rect{filter:none;}#mermaid-diagram-4 [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#mermaid-diagram-4 [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#mermaid-diagram-4 [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-diagram-4 [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="mermaid-diagram-4_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mermaid-diagram-4_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M117.445,86L117.445,90.167C117.445,94.333,117.445,102.667,117.445,110.333C117.445,118,117.445,125,117.445,128.5L117.445,132" id="mermaid-diagram-4-L_hf_beh_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_hf_beh_0" data-points="W3sieCI6MTE3LjQ0NTMxMjUsInkiOjg2fSx7IngiOjExNy40NDUzMTI1LCJ5IjoxMTF9LHsieCI6MTE3LjQ0NTMxMjUsInkiOjEzNn1d" data-look="classic" marker-end="url(#mermaid-diagram-4_flowchart-v2-pointEnd)"></path><path d="M111.352,214L110.701,218.167C110.049,222.333,108.747,230.667,108.558,238.339C108.368,246.011,109.29,253.023,109.752,256.528L110.213,260.034" id="mermaid-diagram-4-L_beh_slow_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_beh_slow_0" data-points="W3sieCI6MTExLjM1MTU2MjUsInkiOjIxNH0seyJ4IjoxMDcuNDQ1MzEyNSwieSI6MjM5fSx7IngiOjExMC43MzQ3ODYxODQyMTA1MiwieSI6MjY0fV0=" data-look="classic" marker-end="url(#mermaid-diagram-4_flowchart-v2-pointEnd)"></path><path d="M124.156,264L124.704,259.833C125.252,255.667,126.349,247.333,126.349,239.659C126.349,231.984,125.253,224.968,124.705,221.46L124.157,217.952" id="mermaid-diagram-4-L_slow_beh_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_slow_beh_0" data-points="W3sieCI6MTI0LjE1NTgzODgxNTc4OTQ4LCJ5IjoyNjR9LHsieCI6MTI3LjQ0NTMxMjUsInkiOjIzOX0seyJ4IjoxMjMuNTM5MDYyNSwieSI6MjE0fV0=" data-look="classic" marker-end="url(#mermaid-diagram-4_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_hf_beh_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_beh_slow_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_slow_beh_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="mermaid-diagram-4-flowchart-hf-0" data-look="classic" transform="translate(117.4453125, 47)"><rect class="basic label-container" style="" x="-109.4453125" y="-39" width="218.890625" height="78"></rect><g class="label" style="" transform="translate(-79.4453125, -24)"><rect></rect><foreignObject width="158.890625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>High-Frequency Tasks<br>(PWM, ADC, audio)</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-diagram-4-flowchart-beh-1" data-look="classic" transform="translate(117.4453125, 175)"><rect class="basic label-container" style="" x="-80.1015625" y="-39" width="160.203125" height="78"></rect><g class="label" style="" transform="translate(-50.1015625, -24)"><rect></rect><foreignObject width="100.203125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Behavior Task<br>(15–30 Hz)</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-diagram-4-flowchart-slow-2" data-look="classic" transform="translate(117.4453125, 315)"><rect class="basic label-container" style="" x="-86.2578125" y="-51" width="172.515625" height="102"></rect><g class="label" style="" transform="translate(-56.2578125, -36)"><rect></rect><foreignObject width="112.515625" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Slow Tasks<br>(~1 Hz: logging,<br>checkpoints)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mermaid-diagram-4-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mermaid-diagram-4-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs></svg></figure>
+<h3 id="141-software-structure-as-implemented">14.1 Software Structure (as implemented)</h3>
+<p>One <code>loop()</code>, no FreeRTOS tasks, no interrupts:</p>
+<figure class="mermaid"><svg id="mermaid-diagram-4" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 276px; background-color: transparent;" viewBox="0 0 276 398" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mermaid-diagram-4{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-diagram-4 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mermaid-diagram-4 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-diagram-4 .error-icon{fill:#552222;}#mermaid-diagram-4 .error-text{fill:#552222;stroke:#552222;}#mermaid-diagram-4 .edge-thickness-normal{stroke-width:1px;}#mermaid-diagram-4 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-diagram-4 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-diagram-4 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-diagram-4 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-diagram-4 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-diagram-4 .marker{fill:#333333;stroke:#333333;}#mermaid-diagram-4 .marker.cross{stroke:#333333;}#mermaid-diagram-4 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-diagram-4 p{margin:0;}#mermaid-diagram-4 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#mermaid-diagram-4 .cluster-label text{fill:#333;}#mermaid-diagram-4 .cluster-label span{color:#333;}#mermaid-diagram-4 .cluster-label span p{background-color:transparent;}#mermaid-diagram-4 .label text,#mermaid-diagram-4 span{fill:#333;color:#333;}#mermaid-diagram-4 .node rect,#mermaid-diagram-4 .node circle,#mermaid-diagram-4 .node ellipse,#mermaid-diagram-4 .node polygon,#mermaid-diagram-4 .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#mermaid-diagram-4 .rough-node .label text,#mermaid-diagram-4 .node .label text,#mermaid-diagram-4 .image-shape .label,#mermaid-diagram-4 .icon-shape .label{text-anchor:middle;}#mermaid-diagram-4 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mermaid-diagram-4 .rough-node .label,#mermaid-diagram-4 .node .label,#mermaid-diagram-4 .image-shape .label,#mermaid-diagram-4 .icon-shape .label{text-align:center;}#mermaid-diagram-4 .node.clickable{cursor:pointer;}#mermaid-diagram-4 .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#mermaid-diagram-4 .arrowheadPath{fill:#333333;}#mermaid-diagram-4 .edgePaths .path{stroke:#333333;stroke-width:1px;}#mermaid-diagram-4 .flowchart-link{stroke:#333333;fill:none;}#mermaid-diagram-4 .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#mermaid-diagram-4 .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#mermaid-diagram-4 .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#mermaid-diagram-4 .cluster text{fill:#333;}#mermaid-diagram-4 .cluster span{color:#333;}#mermaid-diagram-4 .node .collapsed-indicator{fill:#aaaa33;stroke:none;opacity:0.6;}#mermaid-diagram-4 .node .collapsed-separator{stroke:#aaaa33;stroke-width:0.75px;}#mermaid-diagram-4 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-diagram-4 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#mermaid-diagram-4 rect.text{fill:none;stroke-width:0;}#mermaid-diagram-4 .icon-shape,#mermaid-diagram-4 .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#mermaid-diagram-4 .icon-shape p,#mermaid-diagram-4 .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#mermaid-diagram-4 .icon-shape .label rect,#mermaid-diagram-4 .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#mermaid-diagram-4 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mermaid-diagram-4 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mermaid-diagram-4 .node .neo-node{stroke:#9370DB;}#mermaid-diagram-4 [data-look="neo"].node rect,#mermaid-diagram-4 [data-look="neo"].cluster rect,#mermaid-diagram-4 [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].swimlane.cluster rect{filter:none;}#mermaid-diagram-4 [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#mermaid-diagram-4 [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#mermaid-diagram-4 [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].node circle .state-start{fill:#000000;}#mermaid-diagram-4 [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#mermaid-diagram-4 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="mermaid-diagram-4_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mermaid-diagram-4_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mermaid-diagram-4_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mermaid-diagram-4_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M138,110L138,114.167C138,118.333,138,126.667,138,134.333C138,142,138,149,138,152.5L138,156" id="mermaid-diagram-4-L_hf_beh_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_hf_beh_0" data-points="W3sieCI6MTM4LCJ5IjoxMTB9LHsieCI6MTM4LCJ5IjoxMzV9LHsieCI6MTM4LCJ5IjoxNjB9XQ==" data-look="classic" marker-end="url(#mermaid-diagram-4_flowchart-v2-pointEnd)"></path><path d="M138,262L138,266.167C138,270.333,138,278.667,138,286.333C138,294,138,301,138,304.5L138,308" id="mermaid-diagram-4-L_beh_slow_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_beh_slow_0" data-points="W3sieCI6MTM4LCJ5IjoyNjJ9LHsieCI6MTM4LCJ5IjoyODd9LHsieCI6MTM4LCJ5IjozMTJ9XQ==" data-look="classic" marker-end="url(#mermaid-diagram-4_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_hf_beh_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_beh_slow_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="mermaid-diagram-4-flowchart-hf-0" data-look="classic" transform="translate(138, 59)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>PWM (hardware LEDC) +<br>ADC (Sensor::read(), cached)</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-diagram-4-flowchart-beh-1" data-look="classic" transform="translate(138, 211)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Behavior tick<br>(~20 Hz, elapsed-millis gated)</p></span></div></foreignObject></g></g><g class="node default" id="mermaid-diagram-4-flowchart-slow-2" data-look="classic" transform="translate(138, 351)"><rect class="basic label-container" style="" x="-104.484375" y="-39" width="208.96875" height="78"></rect><g class="label" style="" transform="translate(-74.484375, -24)"><rect></rect><foreignObject width="148.96875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Slow tick<br>(~1 Hz: StateLogger)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mermaid-diagram-4-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mermaid-diagram-4-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs></svg></figure>
 
 <ul>
-<li><p><strong>High-frequency tasks</strong>  </p>
-<ul>
-<li>Motor PWM, audio sampling, quick safety checks.  </li>
-<li>Interrupt-driven where needed.</li>
-</ul>
-</li>
-<li><p><strong>Behavior task</strong>  </p>
-<ul>
-<li>Implements the core loop.  </li>
-<li>Runs at 15–30 Hz.</li>
-</ul>
-</li>
-<li><p><strong>Slow tasks</strong>  </p>
-<ul>
-<li>State snapshots to flash or external storage.  </li>
-<li>Telemetry via HTTP/WebSocket.  </li>
-<li>Occasional parameter adaptation.</li>
-</ul>
-</li>
+<li>PWM output runs continuously in hardware once configured (ESP32's LEDC
+peripheral); ADC reads happen on-demand inside the behavior tick via
+<code>Sensor::read()</code>, cached per <code>update_rate_hz</code> — neither needs a separate
+task.</li>
+<li>The behavior tick (sense → physiology → memory → action → actuate →
+learn) runs inside <code>loop()</code>, gated to ~20 Hz by comparing elapsed
+<code>millis()</code> against a threshold, not a fixed-rate scheduler.</li>
+<li>The slow tick (<code>StateLogger</code>, ~1 Hz) is the same pattern at a longer
+interval, inside the same <code>loop()</code>.</li>
 </ul>
 <h3 id="142-memory-and-timing-constraints">14.2 Memory and Timing Constraints</h3>
 <p>To stay microcontroller-friendly:</p>
 <ul>
-<li>use fixed-size arrays for contingency and spatial memory,  </li>
-<li>aggressively quantize and hash to keep entries small,  </li>
-<li>prefer integer or fixed-point arithmetic inside the loop,  </li>
-<li>avoid dynamic allocation,  </li>
-<li>bound per-tick work (e.g., scan only subsets of memory each step).</li>
+<li>fixed-size arrays for contingency (256 entries) and spatial (32 entries)
+memory, no dynamic allocation,  </li>
+<li>aggressively quantize and hash to keep entries small (2 bits/channel),  </li>
+<li>plain <code>float</code> throughout the behavior tick — deliberately, not
+fixed-point: at 20 Hz with these table sizes, float arithmetic isn't the
+bottleneck, and fixed-point would cost real code complexity for no
+measured benefit,  </li>
+<li>bound per-tick work (e.g., contingency/spatial decay and query scan the
+whole table each tick, but the tables are small enough that this is
+trivially cheap even at 20 Hz).</li>
 </ul>
 <hr>
 <h2 id="15-experimental-program-and-ablations">15. Experimental Program and Ablations</h2>
@@ -1276,7 +1136,7 @@ MAX_ENTRIES = <span class="hljs-number">1024</span>
 <li><strong>Homeostasis quality</strong>: variance of internal variables under perturbations.  </li>
 <li><strong>Exploration structure</strong>: spatial coverage, visitation entropy.  </li>
 <li><strong>History dependence</strong>: divergence between individuals with different pasts under matched environments.  </li>
-<li><strong>Perceived aliveness</strong>: blinded human ratings from short video clips (as used in work on believable agents and animal-inspired robotics).(Gomez-Marin &amp; Zhang, 2022)</li>
+<li><strong>Perceived aliveness</strong>: blinded human ratings from short video clips.</li>
 </ul>
 <h3 id="152-ablations">15.2 Ablations</h3>
 <ul>
@@ -1288,126 +1148,6 @@ MAX_ENTRIES = <span class="hljs-number">1024</span>
 <li>decouple battery from <code>h_energy</code> to see how much charging behavior is lost.</li>
 </ul>
 <p>Comparing ablated and full agents isolates which mechanisms contribute most to diverse, legible behavior.</p>
-<hr>
-<h2 id="16-what-this-project-illustrates-and-future-directions">16. What This Project Illustrates and Future Directions</h2>
-<h3 id="161-what-the-project-illustrates">16.1 What the Project Illustrates</h3>
-<p>This architecture demonstrates that:</p>
-<ol>
-<li><p><strong>Believable creature-like behavior does not require big models.</strong><br>Carefully structured local feedback, homeostatic drives, and bounded memory can produce behavior that observers interpret using rich psychological language.</p>
-</li>
-<li><p><strong>Semantics can emerge from statistics.</strong><br>Battery, collision, and RF signals start as untyped numbers. Yet, because they systematically affect internal variables, the system comes to behave <em>as if</em> it understood “danger”, “safety”, or “charging”, without symbolic representation.</p>
-</li>
-<li><p><strong>Energy and ecology can be coupled without scripting goals.</strong><br>The charging station is designed as an attractor in sensor and energy space; “seeking the charger” is an emergent pattern, not a coded routine.</p>
-</li>
-<li><p><strong>Microcontrollers are sufficient for serious synthetic ethology.</strong><br>By trading off explicit value functions and large networks for simpler homeostatic and statistical machinery, we can run interesting experiments entirely on-device.</p>
-</li>
-<li><p><strong>Robots can be used as physical thought experiments about behavior.</strong><br>Like earlier work on animal-inspired robots and homeostatic RL, the platform blurs lines between robotics, neuroscience, and ethology.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)(Gomez-Marin &amp; Zhang, 2022)</p>
-</li>
-</ol>
-<h3 id="162-possible-further-steps">16.2 Possible Further Steps</h3>
-<p>Some natural extensions:</p>
-<ul>
-<li><p><strong>Richer physiology.</strong><br>Add more internal variables (e.g., “temperature comfort”, “social saturation”) and study interactions.</p>
-</li>
-<li><p><strong>Minimal learning rules</strong> closer to biological plasticity.<br>Replace the abstract contingency memory with variants of Hebbian learning or predictive coding.</p>
-</li>
-<li><p><strong>Multi-agent experiments.</strong><br>Introduce several robots with shared or conflicting drives, and simple stigmergic channels (scent, light, RF tags). Explore collective phenomena and analogues of market-like resource allocation.</p>
-</li>
-<li><p><strong>Task-free vs task-biased regimes.</strong><br>Keep architecture unchanged but change environment statistics (e.g., how often particular stimuli correlate with drive improvements). Compare to explicit task-focused RL agents in the same morphology.</p>
-</li>
-<li><p><strong>Bridges to formal RL.</strong><br>Treat the contingency + spatial memories as approximate value structures and compare behavior against HRL models in similar setups.(Keramati &amp; Gutkin, 2014)</p>
-</li>
-<li><p><strong>Open-world benchmarks.</strong><br>Define shared environments, metrics, and logging formats so others can run comparable experiments on their own microcontroller platforms.</p>
-</li>
-</ul>
-<hr>
-<h2 id="17-related-projects-and-prior-art-in-practice">17. Related Projects and Prior Art in Practice</h2>
-<p>While this project stresses <strong>extreme on-device simplicity</strong>, it sits in a broader ecosystem of work on emergent behavior and embodied agents:</p>
-<ul>
-<li><p><strong>Homeostatic RL in robots.</strong>  </p>
-<ul>
-<li>Yoshida &amp; Kuniyoshi’s “Embodied Neural Homeostat” implements deep HRL on a physical quadruped, achieving emergent walking, foraging, and temperature regulation under homeostatic objectives.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </li>
-<li>Several studies model animal-like long-term nutritional behavior using homeostatic RL in simulated agents.(Yoshida et al., 2024)</li>
-</ul>
-</li>
-<li><p><strong>Embodied co-design surveys.</strong>  </p>
-<ul>
-<li>The <em>Embodied Co-Design for Rapidly Evolving Agents</em> survey compiles work on jointly optimizing morphology and control, often with deep RL and evolution, and links to multiple open-source implementations (e.g., DERL, emergent hand morphology).(Wang, 2024/2026)<br>These tend to operate in simulation with heavy compute, but share the emphasis on body-environment loops.</li>
-</ul>
-</li>
-<li><p><strong>Swarm emergent behavior with NEAT.</strong>  </p>
-<ul>
-<li>Work on <em>Learning Emergent Behavior in Robot Swarms with NEAT</em> evolves controllers for agents whose local rules yield collective patterns.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)<br>Many of these controllers are available in public GitHub repositories (e.g., swarm benchmarks in CoppeliaSim), though typically targeting desktops or simulators.</li>
-</ul>
-</li>
-<li><p><strong>Animal-inspired neurorobotics.</strong>  </p>
-<ul>
-<li>A collection of neurorobotics papers shows robots as models for social interaction, vocalization, and goal-directed reaching, with code often accompanying publications via lab GitHub accounts.(Gomez-Marin &amp; Zhang, 2022)</li>
-</ul>
-</li>
-</ul>
-<p>Compared with these, the present project contributes:</p>
-<ul>
-<li>an <strong>explicit, end-to-end specification</strong> of a pure-emergence architecture tuned for ESP32-class boards,  </li>
-<li>an emphasis on <strong>semantic symmetry</strong> of all sensory channels (even battery),  </li>
-<li>a concrete, low-profile <strong>charging station design</strong> that supports emergent self-charging,  </li>
-<li>a blueprint for <strong>life-state transfer</strong> and systematic ablation experiments.</li>
-</ul>
-<hr>
-<h2 id="18-philosophical-boundaries">18. Philosophical Boundaries</h2>
-<p>This project stays at the levels of:</p>
-<ul>
-<li><strong>behavior:</strong> patterns of motion and interaction,  </li>
-<li><strong>organismic organization:</strong> regulation, memory, embodiment.</li>
-</ul>
-<p>It does <em>not</em> claim:</p>
-<ul>
-<li>subjective experience,  </li>
-<li>moral status,  </li>
-<li>or a solution to consciousness.</li>
-</ul>
-<p>It offers a <strong>concrete, tunable dynamical system</strong> where:</p>
-<ul>
-<li>things like “caring” about battery or avoiding collisions arise from low-level statistical structure and feedback,  </li>
-<li>observers can apply concepts from biology, psychology, economics, and sociology without those concepts being present in code.</li>
-</ul>
-<hr>
-<h2 id="19-references">19. References</h2>
-<p>Classics and conceptual background:</p>
-<ul>
-<li>Norbert Wiener, <em>Cybernetics: Or Control and Communication in the Animal and the Machine</em>, 1948.  </li>
-<li>W. Grey Walter, <em>The Living Brain</em>, 1953.  </li>
-<li>Valentino Braitenberg, <em>Vehicles: Experiments in Synthetic Psychology</em>, <a href="https://mitpress.mit.edu/9780262521123/vehicles/">MIT Press</a>, 1984.  </li>
-<li>Rodney A. Brooks, “A robust layered control system for a mobile robot,” <em>IEEE Journal of Robotics and Automation</em>, 1986.  </li>
-<li>Warren S. McCulloch, W. Ross Ashby, and others on early homeostatic machine designs.  </li>
-<li>J. J. Gibson, <em>The Ecological Approach to Visual Perception</em>, 1979.  </li>
-<li>J. O’Keefe &amp; L. Nadel, <em>The Hippocampus as a Cognitive Map</em>, 1978.  </li>
-<li>P.-P. Grassé, “La théorie de la stigmergie,” <em>Insectes Sociaux</em>, 1959.</li>
-</ul>
-<p>Homeostatic RL and animal-like behavior:</p>
-<ul>
-<li>Mehdi Keramati &amp; Boris Gutkin, “A Reinforcement Learning Theory for Homeostatic Regulation,” <em>NeurIPS 2011</em>.  </li>
-<li>Mehdi Keramati &amp; Boris Gutkin, “<a href="https://elifesciences.org/articles/04811">Homeostatic reinforcement learning for integrating reward collection and physiological stability</a>,” <em>eLife</em> 3:e04811, 2014.(Keramati &amp; Gutkin, 2014)  </li>
-<li>S. Yoshida &amp; Y. Kuniyoshi, “Synthesising integrated robot behaviour through reinforcement learning for homeostasis (Embodied Neural Homeostat),” bioRxiv, 2024.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  </li>
-<li>H. Yoshida et al., “Modeling long-term nutritional behaviors using deep homeostatic reinforcement learning,” <em>PNAS Nexus</em> (open-access preprint).(Yoshida et al., 2024)</li>
-</ul>
-<p>Emergent behavior and neurorobotics:</p>
-<ul>
-<li>A. Gómez-Marín, “<a href="https://www.frontiersin.org/articles/10.3389/fnbot.2022.861831/full">Editorial: Emergent Behavior in Animal-Inspired Robotics</a>,” <em>Frontiers in Neurorobotics</em>, 2022.(Gomez-Marin &amp; Zhang, 2022)  </li>
-<li>M. Reséndiz-Benhumea et al., “Testing the social brain hypothesis with minimal models in robotics,” <em>Frontiers in Neurorobotics</em>, 2021.  </li>
-<li>A. Amador &amp; G. B. Mindlin, “Low-dimensional biomechanical model of birdsong production,” <em>Frontiers in Neuroscience</em>, 2021.</li>
-</ul>
-<p>Swarm and emergent control:</p>
-<ul>
-<li>“Learning Emergent Behavior in Robot Swarms with NEAT,” arXiv:2309.14663, 2023.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  </li>
-<li>E. Pagello et al., “Emergent behaviors of a robot team performing cooperative tasks,” <em>Advanced Robotics</em>, 2003.  </li>
-<li>Pranav Rajbhandari, <em>Swarm CoppeliaSim</em> (GitHub).</li>
-</ul>
-<p>Embodied co-design and morphology:</p>
-<ul>
-<li>Y. Wang et al., “<a href="https://github.com/Yuxing-Wang-THU/SurveyBrainBody">Embodied Co-Design for Rapidly Evolving Agents: Taxonomy, Frontiers, and Challenges</a>,” survey with code links, 2023.(Wang, 2024/2026)</li>
-</ul>
-<p>And many more in the overlapping literatures of artificial life, developmental robotics, and believable agents.</p>
 
 	
 
