@@ -5,15 +5,6 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)  
-2. [Historical and Conceptual Background](#2-historical-and-conceptual-background)  
-   1. [Cybernetics and Regulation](#21-cybernetics-and-regulation)  
-   2. [Grey Walter’s Tortoises](#22-grey-walters-tortoises)  
-   3. [Braitenberg Vehicles and Synthetic Psychology](#23-braitenberg-vehicles-and-synthetic-psychology)  
-   4. [Behavior-Based Robotics and Subsumption](#24-behavior-based-robotics-and-subsumption)  
-   5. [Intrinsic Motivation and Homeostatic Reinforcement Learning](#25-intrinsic-motivation-and-homeostatic-reinforcement-learning)  
-   6. [Embodied Cognition, Ethology, and Stigmergy](#26-embodied-cognition-ethology-and-stigmergy)  
-   7. [Game Theory, Economics, and Foraging](#27-game-theory-economics-and-foraging)  
-   8. [Emergent Behavior in Animal-Inspired Robotics](#28-emergent-behavior-in-animal-inspired-robotics)  
 3. [Project Overview and Design Goals](#3-project-overview-and-design-goals)  
 4. [System Architecture](#4-system-architecture)  
    1. [System Overview Diagram](#41-system-overview-diagram)  
@@ -43,20 +34,31 @@
     5. [Acoustic and Vibrational Coupling](#105-acoustic-and-vibrational-coupling)  
     6. [Battery as “Just Another Input”, Coupled to Energy](#106-battery-as-just-another-input-coupled-to-energy)  
 11. [Charging Station as an Emergent Attractor](#11-charging-station-as-an-emergent-attractor)  
-12. [Emergent Phenomena and Cross-Disciplinary Links](#12-emergent-phenomena-and-cross-disciplinary-links)  
-    1. [Mechanical Voice and Prosody](#121-mechanical-voice-and-prosody)  
-    2. [Individual Differences and “Personality”](#122-individual-differences-and-personality)  
-    3. [Social and Crowd-Level Effects](#123-social-and-crowd-level-effects)  
-    4. [Game Design, Art, and Education](#124-game-design-art-and-education)  
 13. [Life-State Persistence and Body Transfer](#13-life-state-persistence-and-body-transfer)  
 14. [Implementation on ESP32-Class Hardware](#14-implementation-on-esp32-class-hardware)  
     1. [Software Structure](#141-software-structure)  
     2. [Memory and Timing Constraints](#142-memory-and-timing-constraints)  
 15. [Experimental Program and Ablations](#15-experimental-program-and-ablations)  
-16. [What This Project Illustrates and Future Directions](#16-what-this-project-illustrates-and-future-directions)  
-17. [Related Projects and Prior Art in Practice](#17-related-projects-and-prior-art-in-practice)  
-18. [Philosophical Boundaries](#18-philosophical-boundaries)  
-19. [References](#19-references)  
+
+History, prior art, "personality"/social speculation, and philosophical
+framing that used to live in this document — as sections 2, 12, 16, 17, 18 —
+have moved to [research.md](research.md), a separate, explicitly-not-the-spec
+document, per [issue #2](https://github.com/sloev/emergent/issues/2): this
+document should be a short, falsifiable description of working code, not a
+6,000-word essay in the critical path. Numbering below keeps each remaining
+section's original number rather than renumbering the whole document.
+
+---
+
+## Status
+
+| Layer | Fact |
+|---|---|
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Hardware tested | Nothing. No board has run this. |
+| Designed / planned | Approach-and-dock, ablations, extra boards. |
+| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
 
 ---
 
@@ -97,105 +99,7 @@ Instead, we rely on:
 - a coarse **spatial memory**,  
 - an optional **metabolic subsystem** that ties behavior to energy.
 
-The remainder of the article presents the historical background, theoretical framework, system architecture, algorithms, similarities to existing work, and experimental considerations for this synthetic ethology platform.
-
----
-
-## 2. Historical and Conceptual Background
-
-### 2.1 Cybernetics and Regulation
-
-Norbert Wiener’s *[Cybernetics: Or Control and Communication in the Animal and the Machine](https://en.wikipedia.org/wiki/Cybernetics)* framed intelligent behavior as **regulation through feedback** rather than symbolic inference. A thermostat does not “understand” weather; it maintains temperature by sensing deviations and acting to reduce them.
-
-Key ideas we adopt:
-
-- **Homeostasis.** Maintain internal variables within viable bands.  
-- **Allostasis.** Change parameters in anticipation of future demands, not just reactions to deviations.
-
-Biology offers countless examples: temperature regulation, blood glucose control, osmotic balance. Homeostatic variables drift; organisms act to restore them. Here, drives emerge from **deviations** of internal variables from preferred ranges and bias actions that historically reduce those deviations.
-
-### 2.2 Grey Walter’s Tortoises
-
-In the late 1940s, W. Grey Walter built electro-mechanical “tortoises” (Elmer and Elsie) coupling photocells and touch sensors directly to motors. Without digital computation, they appeared to explore, avoid obstacles, and return to a hutch to “feed” on light and recharge. These robots remain canonical examples that simple analog control loops can yield rich behavior.
-
-Our architecture inherits Walter’s emphasis on **tight sensorimotor coupling** but extends it with explicit internal physiology, memory, and a programmable microcontroller substrate.
-
-### 2.3 Braitenberg Vehicles and Synthetic Psychology
-
-Valentino Braitenberg’s *[Vehicles: Experiments in Synthetic Psychology](https://mitpress.mit.edu/9780262521123/vehicles/)* showed how minimal wiring patterns from sensors to motors produce strikingly interpretable behaviors: approach, avoidance, “aggression”, “fear”, “curiosity”.
-
-The key methodological lesson is **synthetic psychology**:  
-build simple systems bottom-up and ask which psychological descriptions humans spontaneously apply. Our code never uses notions like “goal” or “emotion”; those remain observer vocabulary.
-
-### 2.4 Behavior-Based Robotics and Subsumption
-
-Rodney Brooks’ [subsumption architecture](https://people.csail.mit.edu/brooks/papers/robust-layers.pdf) used layers of simple behaviors, where higher layers suppressed lower-level outputs. There was no central world model; behavior emerged from layer interactions and the environment.
-
-We retain:
-
-- locality and concurrency,  
-- incremental layering on real hardware,
-
-but avoid explicit “behavior modules” (*wander*, *avoid*, *dock*). Instead we keep:
-
-- sensor streams,  
-- actuator channels,  
-- statistics of their correlations, in context.
-
-### 2.5 Intrinsic Motivation and Homeostatic Reinforcement Learning
-
-In computational neuroscience and RL, **homeostatic reinforcement learning** (HRL) treats the maintenance of internal variables as the underlying objective of behavior. Keramati and Gutkin’s work formalizes how classical RL can be grounded in physiological drives, explaining risk aversion, satiation, and other behavioral regularities.(Keramati & Gutkin, 2014)
-
-Recent work such as Yoshida & Kuniyoshi’s “Embodied Neural Homeostat” demonstrates that homeostasis-driven RL can yield **integrated behaviors** like walking, foraging, and temperature control in real robots, using internal energy and temperature dynamics as primary signals.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024) 
-
-Our platform is intentionally lighter: we do not run a full value-function-based HRL pipeline. Instead, we:
-
-- maintain a small set of **drives** over internal variables,  
-- use **contingency memory** to bias action sampling based on past outcomes,  
-- rely on stochastic policy sampling rather than gradient-based RL.
-
-Conceptually, we sit between hand-crafted behavior trees and fully learned policies.
-
-### 2.6 Embodied Cognition, Ethology, and Stigmergy
-
-Embodied cognition argues that cognition is not only “in the brain” but distributed across **body and environment**. Ethology emphasizes that behavior must be understood in the ecological niche. Concepts like **stigmergy** show how indirect traces (pheromone trails, footprints) mediate social coordination.
-
-Our robots:
-
-- live in physical rooms with light, RF fields, obstacles, and humans,  
-- may emit chemical, acoustic, and visual traces,  
-- respond to these traces later as if they “meant” something.
-
-All semantics are imposed post-hoc by observers; the firmware only ever sees correlations and contingencies.
-
-### 2.7 Game Theory, Economics, and Foraging
-
-Several concepts from economics and game theory parallel this design:
-
-- **Optimal foraging theory** treats animal foraging as a utility-maximization problem under uncertainty and depletion; modern RL work reproduces patch-selection behavior with deep agents in continuous environments.(Yoshida et al., 2024)  
-- **Utility concavity** and **risk aversion** in economic theory mirror homeostatic drive concavity: as an internal variable approaches its comfortable range, the marginal value of further gains diminishes, encouraging risk-averse choices.(Keramati & Gutkin, 2014)  
-- **Mixed strategies** in evolutionary game theory correspond to **stochastic policies** in RL and to our use of controlled randomness: never fully deterministic, always exploring.
-
-Our architecture adopts these indirectly:
-
-- drives are concave around target ranges,  
-- stochastic action generation acts like a mixed strategy over embodied moves,  
-- spatial and contingency memories coarsely approximate value estimates without ever computing them as such.
-
-### 2.8 Emergent Behavior in Animal-Inspired Robotics
-
-A growing literature puts animal-inspired robots into real environments, using them as **physical models** of behavior. An overview by Gómez-Marín and colleagues summarizes work on social interaction, vocal production, and goal-directed reaching in neurorobotics, arguing that robots and animals share “skin in the game”: friction, noise, wear, and embodiment.(Gomez-Marin & Zhang, 2022)
-
-Closer to this project, recent systems like the Embodied Neural Homeostat (ENH) show emergence of integrated behavior (locomotion, foraging, thermal regulation) from homeostatic drives in physical robots.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  
-
-Swarm-level studies use evolutionary algorithms (e.g., NEAT) to evolve local controllers in simulation that yield group patterns such as flocking, collective transport, or coordinated patrolling.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  
-
-Compared with these, the present project:
-
-- emphasizes **resource-constrained microcontrollers**,  
-- avoids large neural networks and external training,  
-- treats **every signal, including battery**, as uninterpreted at the sensor level,  
-- focuses on **single-agent but socially and ecologically situated** behavior, with optional extensions to groups.
+The remainder of this document presents the system architecture, algorithms, and experimental considerations for this synthetic ethology platform. Theory, prior art, and philosophical framing live separately in [research.md](research.md).
 
 ---
 
@@ -364,8 +268,13 @@ The internal state contains a small vector of slow variables, for example:
 - `h_safety` — recent history of collisions, extreme temperatures, etc.  
 - `h_arousal` — global activity or responsiveness.  
 - `h_curiosity` — based on novelty or prediction error.  
-- `h_boredom` — time spent in low-change regimes.  
-- `h_social` — history of correlated signals from other robots / humans.
+- `h_boredom` — time spent in low-change regimes.
+
+A social variable (history of correlated signals from other robots/humans)
+was considered but isn't implemented: it would need a "presence of another
+agent" sensor no current board has, and an unimplemented drive that never
+moves is worse than no drive at all. See [research notes](research.md) for
+the idea.
 
 Each variable:
 
@@ -874,207 +783,127 @@ Behavior then tends toward:
 
 No code ever says `if low_battery then go_to_station()`.
 
-### 11.6 Example Station Logic
+### 11.6 Station Logic (as implemented)
+
+`src/station` is real, running code, not pseudocode. Its state machine
+(`src/station/src/main.cpp`):
 
 ```python
-# Pseudocode for station microcontroller
-while True:
-    v = measure_robot_voltage()   # or station contact voltage
-    i = measure_current()
-    t = measure_temp()
+charging_active = current > CURRENT_ACTIVE_THRESHOLD
+if charging_active:
+    state = "FULL" if (voltage > VOLTAGE_FULL_THRESHOLD and
+                        current < CURRENT_TAPER_THRESHOLD) else "CHARGING"
+else:
+    state = "IDLE"
 
-    charging_active = (i > I_MIN_ACTIVE) and (t < T_MAX)
-
-    if charging_active:
-        if v > V_FULL_THRESHOLD and i < I_TAPER_THRESHOLD:
-            state = "FULL"
-        else:
-            state = "CHARGING"
-    else:
-        state = "IDLE"
-
-    if state == "IDLE":
-        set_led_mode("attractor_idle")
-        set_rf_pattern("beacon_idle")
-        set_audio_mode("quiet")
-    elif state == "CHARGING":
-        set_led_mode("charging_pulse")
-        set_rf_pattern("beacon_active")
-        set_audio_mode("slow_click")
-    elif state == "FULL":
-        set_led_mode("full_solid")
-        set_rf_pattern("beacon_full")
-        set_audio_mode("rare_tick")
-
-    sleep_ms(100)
+set_led_mode(state)     # slow pulse / fast pulse / solid
+set_audio_mode(state)   # silent / periodic click / rare tick
+# RF beacon is a fixed SoftAP SSID — it does NOT change with state.
+# Near-field cues (LED, audio) carry state; RF only says "over here",
+# a long-range gradient the robot can climb from a distance it can't
+# yet see or hear the near-field cues from.
 ```
 
-The robot never sees `"CHARGING"` or `"FULL"` as symbols; it only experiences the sensory shifts.
+The robot never sees `"CHARGING"` or `"FULL"` as symbols; it only experiences
+the sensory shifts (LED/audio pattern up close, RF signal strength from a
+distance).
 
-### 11.7 Emergent Charging Storyline
+### 11.7 Charging as an Attractor — Hypothesis, Not Yet Observed
 
-A typical emergent narrative:
+The design intent, unverified on real hardware (tracked as
+[v0.9.1](roadmap.md)):
 
-1. **Early life**  
-   - Robot wanders randomly.  
-   - Occasionally collides with ramp, is funneled in, accidentally making contact.  
-   - `battery_voltage` rises; `h_energy` improves.
+1. **Early life** — robot wanders; occasionally contacts the station;
+   `battery_voltage` rises; `h_energy` improves.
+2. **Memory formation** — contingency memory associates approach actions and
+   station cues with `h_energy` improvement; spatial memory notes the
+   location.
+3. **Behavior shaping** — when `h_energy` deviates, drives bias exploration
+   toward patterns that historically improved it.
+4. **Completion and departure** — once charged, cues shift to "full",
+   `h_energy` drive relaxes, and exploration reasserts itself.
 
-2. **Memory formation**  
-   - Contingency memory stores associations between approach actions, station cues, and subsequent `h_energy` improvements.  
-   - Spatial memory notes that certain locations precede such episodes.
-
-3. **Behavior shaping**  
-   - When `h_energy` deviates strongly (simulated “hunger”), drives bias exploration.  
-   - Patterns that historically improved `h_energy` (movements toward station cues) become more probable.
-
-4. **Charging completion and departure**  
-   - Once `battery_voltage` stabilizes and `h_energy` is high,  
-   - station cues shift to the “full” profile,  
-   - `h_energy` drive relaxes,  
-   - stochastic exploration reasserts itself; gentle biases toward remaining weaken and the robot drifts out.
-
-To an observer, the robot “seeks the charging station when low on energy and leaves when full”. In code, it never **knows** what a charging station is.
-
----
-
-## 12. Emergent Phenomena and Cross-Disciplinary Links
-
-### 12.1 Mechanical Voice and Prosody
-
-Repeated action sequences that improve “social” or curiosity-related drives can produce distinct acoustic signatures:
-
-- rising/falling motor tones,  
-- rhythmic tapping,  
-- broadband “grind” pulses.
-
-From linguistics and music theory we can borrow:
-
-- prosodic contours (rise–fall, emphasis),  
-- rhythmic motifs,  
-- call-and-response structures.
-
-Experiments: expose robots to human rhythmic patterns (clapping, tapping) and observe whether particular action-and-sound sequences become more likely after “successful” interactions.
-
-### 12.2 Individual Differences and “Personality”
-
-Because:
-
-- exploration is stochastic,  
-- memory is lossy,  
-- spatial histories differ,
-
-nominally identical robots develop distinct **behavioral profiles**. Behavioral ecology calls such persistent individual differences “behavioral syndromes”.
-
-We can measure:
-
-- risk tolerance (distance to obstacles, collision rate),  
-- exploration rate (spatial coverage),  
-- sociality (time near conspecifics or humans),  
-- persistence (how long patterns are repeated).
-
-Psychology and psychiatry provide a rich vocabulary to interpret perturbations: altering decay rates or drive gains can yield lethargic, manic, compulsive, or avoidant “personalities”.
-
-### 12.3 Social and Crowd-Level Effects
-
-With many robots in a shared environment:
-
-- stigmergic cues (scent, RF, light patterns) become shared media,  
-- simple local rules yield clustering, segregation, or flocking-like motion,  
-- human movement influences robot distributions and vice versa.
-
-This connects to:
-
-- **sociology** (norm formation, crowd dynamics),  
-- **collective behavior** in animals,  
-- **economics** of congestion and resource competition.
-
-Swarm-robotics work using evolutionary methods and NEAT to generate emergent group behavior offers a useful comparison: our system does not optimize a group objective, but similar group-level phenomena may appear as robots individually chase local drive improvements.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)
-
-### 12.4 Game Design, Art, and Education
-
-From game design:
-
-- crafting legible behavior signatures humans can read and respond to,  
-- tuning “reward” landscapes (via environment design) to elicit interesting emergent strategies.
-
-From art:
-
-- robots as kinetic sculptures,  
-- emergent narratives formed by their trajectories and interactions,  
-- audio-visual aesthetics using mechanically produced sound and light.
-
-From education:
-
-- concrete demonstrations of homeostasis, adaptation, dynamical systems, emergence,  
-- visualization tools mapping internal variables to colors, shapes, or sounds.
+If this works, an observer would describe the robot as "seeking the charger
+when low, leaving when full" — but that's a claim about what this system is
+*supposed* to produce, not a measured result. See [research.md](research.md)
+for a longer discussion of what this experiment would need to actually show.
 
 ---
 
 ## 13. Life-State Persistence and Body Transfer
 
-The *organism* is defined as a serializable state blob:
+The organism's state is a downloadable/restorable JSON file (`GET`/`POST
+/api/state`), matching what `src/esp32/src/net/dashboard_server.cpp`
+actually serializes:
 
 ```json
 {
-  "version": 3,
-  "age_s": 172800,
-  "physiology": { "h_energy": 0.73, "h_safety": 0.91 },
-  "drives": { "h_curiosity": 0.82, "h_boredom": 0.12 },
-  "contingencies": [ /* compressed entries */ ],
-  "spatial_memory": [ /* grid or place-cell summaries */ ],
-  "stats": { "risk_tolerance": 0.34, "mean_speed": 0.18 },
-  "channel_fingerprint": "a1b2c3d4"
+  "version": 1,
+  "age_ms": 172800000,
+  "channel_fingerprint": "a1b2c3d4",
+  "physiology": { "h_energy": 0.73, "h_safety": 0.91, "...": "one entry per PhysVar" },
+  "contingency": [
+    { "actuators": { "motor_left": 1 }, "sensors": { "light": 1 },
+      "ctx_hash": 12, "strength": 0.8, "mean_drive_delta": 0.05, "age": 40 }
+  ],
+  "spatial": [
+    { "sensors": { "light": 2 }, "visit_count": 6, "age": 3,
+      "drive_improvement": { "h_energy": 0.12 } }
+  ]
 }
 ```
 
 Mechanism:
 
-- state can be downloaded from one chassis and uploaded into another,  
-- a mapping layer remaps channels where possible and gradually forgets mismatched contingencies,  
-- observers experience continuity of “character” even as body and environment change.
-
-This gives an experimental handle on **embodied identity**: what, if anything, remains the same when you change the body but preserve part of the internal history?
+- state can be downloaded from one board and uploaded into another,  
+- contingency/spatial entries are keyed by channel *name*, not bit position,
+  so they remap onto whatever index a channel sits at on the new body;
+  channels that don't exist on the new body are dropped from that entry,  
+- `channel_fingerprint` is informational only (a hash of the channel layout)
+  — restore is name-based regardless of whether it matches.
 
 ---
 
 ## 14. Implementation on ESP32-Class Hardware
 
-### 14.1 Software Structure
+### 14.1 Software Structure (as implemented)
+
+One `loop()`, no FreeRTOS tasks, no interrupts:
 
 ```mermaid
 graph TD
-    hf["High-Frequency Tasks<br/>(PWM, ADC, audio)"]
-    beh["Behavior Task<br/>(15–30 Hz)"]
-    slow["Slow Tasks<br/>(~1 Hz: logging,<br/>checkpoints)"]
+    hf["PWM (hardware LEDC) +<br/>ADC (Sensor::read(), cached)"]
+    beh["Behavior tick<br/>(~20 Hz, elapsed-millis gated)"]
+    slow["Slow tick<br/>(~1 Hz: StateLogger)"]
 
     hf --> beh
     beh --> slow
-    slow --> beh
 ```
 
-- **High-frequency tasks**  
-  - Motor PWM, audio sampling, quick safety checks.  
-  - Interrupt-driven where needed.
-
-- **Behavior task**  
-  - Implements the core loop.  
-  - Runs at 15–30 Hz.
-
-- **Slow tasks**  
-  - State snapshots to flash or external storage.  
-  - Telemetry via HTTP/WebSocket.  
-  - Occasional parameter adaptation.
+- PWM output runs continuously in hardware once configured (ESP32's LEDC
+  peripheral); ADC reads happen on-demand inside the behavior tick via
+  `Sensor::read()`, cached per `update_rate_hz` — neither needs a separate
+  task.
+- The behavior tick (sense → physiology → memory → action → actuate →
+  learn) runs inside `loop()`, gated to ~20 Hz by comparing elapsed
+  `millis()` against a threshold, not a fixed-rate scheduler.
+- The slow tick (`StateLogger`, ~1 Hz) is the same pattern at a longer
+  interval, inside the same `loop()`.
 
 ### 14.2 Memory and Timing Constraints
 
 To stay microcontroller-friendly:
 
-- use fixed-size arrays for contingency and spatial memory,  
-- aggressively quantize and hash to keep entries small,  
-- prefer integer or fixed-point arithmetic inside the loop,  
-- avoid dynamic allocation,  
-- bound per-tick work (e.g., scan only subsets of memory each step).
+- fixed-size arrays for contingency (256 entries) and spatial (32 entries)
+  memory, no dynamic allocation,  
+- aggressively quantize and hash to keep entries small (2 bits/channel),  
+- plain `float` throughout the behavior tick — deliberately, not
+  fixed-point: at 20 Hz with these table sizes, float arithmetic isn't the
+  bottleneck, and fixed-point would cost real code complexity for no
+  measured benefit,  
+- bound per-tick work (e.g., contingency/spatial decay and query scan the
+  whole table each tick, but the tables are small enough that this is
+  trivially cheap even at 20 Hz).
 
 ---
 
@@ -1087,7 +916,7 @@ To treat this as a *scientific* platform:
 - **Homeostasis quality**: variance of internal variables under perturbations.  
 - **Exploration structure**: spatial coverage, visitation entropy.  
 - **History dependence**: divergence between individuals with different pasts under matched environments.  
-- **Perceived aliveness**: blinded human ratings from short video clips (as used in work on believable agents and animal-inspired robotics).(Gomez-Marin & Zhang, 2022)
+- **Perceived aliveness**: blinded human ratings from short video clips.
 
 ### 15.2 Ablations
 
@@ -1099,137 +928,4 @@ To treat this as a *scientific* platform:
 - decouple battery from `h_energy` to see how much charging behavior is lost.
 
 Comparing ablated and full agents isolates which mechanisms contribute most to diverse, legible behavior.
-
----
-
-## 16. What This Project Illustrates and Future Directions
-
-### 16.1 What the Project Illustrates
-
-This architecture demonstrates that:
-
-1. **Believable creature-like behavior does not require big models.**  
-   Carefully structured local feedback, homeostatic drives, and bounded memory can produce behavior that observers interpret using rich psychological language.
-
-2. **Semantics can emerge from statistics.**  
-   Battery, collision, and RF signals start as untyped numbers. Yet, because they systematically affect internal variables, the system comes to behave *as if* it understood “danger”, “safety”, or “charging”, without symbolic representation.
-
-3. **Energy and ecology can be coupled without scripting goals.**  
-   The charging station is designed as an attractor in sensor and energy space; “seeking the charger” is an emergent pattern, not a coded routine.
-
-4. **Microcontrollers are sufficient for serious synthetic ethology.**  
-   By trading off explicit value functions and large networks for simpler homeostatic and statistical machinery, we can run interesting experiments entirely on-device.
-
-5. **Robots can be used as physical thought experiments about behavior.**  
-   Like earlier work on animal-inspired robots and homeostatic RL, the platform blurs lines between robotics, neuroscience, and ethology.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)(Gomez-Marin & Zhang, 2022)
-
-### 16.2 Possible Further Steps
-
-Some natural extensions:
-
-- **Richer physiology.**  
-  Add more internal variables (e.g., “temperature comfort”, “social saturation”) and study interactions.
-
-- **Minimal learning rules** closer to biological plasticity.  
-  Replace the abstract contingency memory with variants of Hebbian learning or predictive coding.
-
-- **Multi-agent experiments.**  
-  Introduce several robots with shared or conflicting drives, and simple stigmergic channels (scent, light, RF tags). Explore collective phenomena and analogues of market-like resource allocation.
-
-- **Task-free vs task-biased regimes.**  
-  Keep architecture unchanged but change environment statistics (e.g., how often particular stimuli correlate with drive improvements). Compare to explicit task-focused RL agents in the same morphology.
-
-- **Bridges to formal RL.**  
-  Treat the contingency + spatial memories as approximate value structures and compare behavior against HRL models in similar setups.(Keramati & Gutkin, 2014)
-
-- **Open-world benchmarks.**  
-  Define shared environments, metrics, and logging formats so others can run comparable experiments on their own microcontroller platforms.
-
----
-
-## 17. Related Projects and Prior Art in Practice
-
-While this project stresses **extreme on-device simplicity**, it sits in a broader ecosystem of work on emergent behavior and embodied agents:
-
-- **Homeostatic RL in robots.**  
-  - Yoshida & Kuniyoshi’s “Embodied Neural Homeostat” implements deep HRL on a physical quadruped, achieving emergent walking, foraging, and temperature regulation under homeostatic objectives.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  
-  - Several studies model animal-like long-term nutritional behavior using homeostatic RL in simulated agents.(Yoshida et al., 2024)
-
-- **Embodied co-design surveys.**  
-  - The *Embodied Co-Design for Rapidly Evolving Agents* survey compiles work on jointly optimizing morphology and control, often with deep RL and evolution, and links to multiple open-source implementations (e.g., DERL, emergent hand morphology).(Wang, 2024/2026)  
-  These tend to operate in simulation with heavy compute, but share the emphasis on body-environment loops.
-
-- **Swarm emergent behavior with NEAT.**  
-  - Work on *Learning Emergent Behavior in Robot Swarms with NEAT* evolves controllers for agents whose local rules yield collective patterns.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  
-  Many of these controllers are available in public GitHub repositories (e.g., swarm benchmarks in CoppeliaSim), though typically targeting desktops or simulators.
-
-- **Animal-inspired neurorobotics.**  
-  - A collection of neurorobotics papers shows robots as models for social interaction, vocalization, and goal-directed reaching, with code often accompanying publications via lab GitHub accounts.(Gomez-Marin & Zhang, 2022)
-
-Compared with these, the present project contributes:
-
-- an **explicit, end-to-end specification** of a pure-emergence architecture tuned for ESP32-class boards,  
-- an emphasis on **semantic symmetry** of all sensory channels (even battery),  
-- a concrete, low-profile **charging station design** that supports emergent self-charging,  
-- a blueprint for **life-state transfer** and systematic ablation experiments.
-
----
-
-## 18. Philosophical Boundaries
-
-This project stays at the levels of:
-
-- **behavior:** patterns of motion and interaction,  
-- **organismic organization:** regulation, memory, embodiment.
-
-It does *not* claim:
-
-- subjective experience,  
-- moral status,  
-- or a solution to consciousness.
-
-It offers a **concrete, tunable dynamical system** where:
-
-- things like “caring” about battery or avoiding collisions arise from low-level statistical structure and feedback,  
-- observers can apply concepts from biology, psychology, economics, and sociology without those concepts being present in code.
-
----
-
-## 19. References
-
-Classics and conceptual background:
-
-- Norbert Wiener, *Cybernetics: Or Control and Communication in the Animal and the Machine*, 1948.  
-- W. Grey Walter, *The Living Brain*, 1953.  
-- Valentino Braitenberg, *Vehicles: Experiments in Synthetic Psychology*, [MIT Press](https://mitpress.mit.edu/9780262521123/vehicles/), 1984.  
-- Rodney A. Brooks, “A robust layered control system for a mobile robot,” *IEEE Journal of Robotics and Automation*, 1986.  
-- Warren S. McCulloch, W. Ross Ashby, and others on early homeostatic machine designs.  
-- J. J. Gibson, *The Ecological Approach to Visual Perception*, 1979.  
-- J. O’Keefe & L. Nadel, *The Hippocampus as a Cognitive Map*, 1978.  
-- P.-P. Grassé, “La théorie de la stigmergie,” *Insectes Sociaux*, 1959.
-
-Homeostatic RL and animal-like behavior:
-
-- Mehdi Keramati & Boris Gutkin, “A Reinforcement Learning Theory for Homeostatic Regulation,” *NeurIPS 2011*.  
-- Mehdi Keramati & Boris Gutkin, “[Homeostatic reinforcement learning for integrating reward collection and physiological stability](https://elifesciences.org/articles/04811),” *eLife* 3:e04811, 2014.(Keramati & Gutkin, 2014)  
-- S. Yoshida & Y. Kuniyoshi, “Synthesising integrated robot behaviour through reinforcement learning for homeostasis (Embodied Neural Homeostat),” bioRxiv, 2024.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)  
-- H. Yoshida et al., “Modeling long-term nutritional behaviors using deep homeostatic reinforcement learning,” *PNAS Nexus* (open-access preprint).(Yoshida et al., 2024)
-
-Emergent behavior and neurorobotics:
-
-- A. Gómez-Marín, “[Editorial: Emergent Behavior in Animal-Inspired Robotics](https://www.frontiersin.org/articles/10.3389/fnbot.2022.861831/full),” *Frontiers in Neurorobotics*, 2022.(Gomez-Marin & Zhang, 2022)  
-- M. Reséndiz-Benhumea et al., “Testing the social brain hypothesis with minimal models in robotics,” *Frontiers in Neurorobotics*, 2021.  
-- A. Amador & G. B. Mindlin, “Low-dimensional biomechanical model of birdsong production,” *Frontiers in Neuroscience*, 2021.
-
-Swarm and emergent control:
-
-- “Learning Emergent Behavior in Robot Swarms with NEAT,” arXiv:2309.14663, 2023.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023)  
-- E. Pagello et al., “Emergent behaviors of a robot team performing cooperative tasks,” *Advanced Robotics*, 2003.  
-- Pranav Rajbhandari, *Swarm CoppeliaSim* (GitHub).
-
-Embodied co-design and morphology:
-
-- Y. Wang et al., “[Embodied Co-Design for Rapidly Evolving Agents: Taxonomy, Frontiers, and Challenges](https://github.com/Yuxing-Wang-THU/SurveyBrainBody),” survey with code links, 2023.(Wang, 2024/2026)  
-
-And many more in the overlapping literatures of artificial life, developmental robotics, and believable agents.
 
