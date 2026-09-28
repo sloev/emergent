@@ -274,6 +274,7 @@
       <a class="nav-btn" href="#status">Status</a>
       <a class="nav-btn" href="synth-behavior.html">Paper</a>
       <a class="nav-btn" href="roadmap.html">Roadmap</a>
+      <a class="nav-btn" href="sim-viewer.html">Simulator</a>
       <a class="nav-btn" href="https://github.com/sloev/emergent/releases/latest">Firmware</a>
     </nav>
   </header>
@@ -362,16 +363,18 @@
     <div class="section-label"><span class="num">03</span><h2>Status</h2></div>
     <table class="status-table">
       <tr><th>Layer</th><th>Fact</th></tr>
-      <tr><td>Implemented</td><td>20&nbsp;Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine.</td></tr>
-      <tr><td>Tested</td><td>Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware.</td></tr>
+      <tr><td>Implemented</td><td>20&nbsp;Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine.</td></tr>
+      <tr><td>Tested</td><td>Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware.</td></tr>
+      <tr><td>Simulated</td><td>The unmodified engine in a modelled room with a station (<code>src/sim</code>): learned reflexes lift mean lifespan from 1.26&nbsp;h to 1.86&nbsp;h (hand-wired bound 2.46&nbsp;h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives. <a href="sim-viewer.html">Watch one organism</a>.</td></tr>
       <tr><td>Hardware tested</td><td>Nothing. No board has run this.</td></tr>
-      <tr><td>Designed / planned</td><td>Approach-and-dock, ablations, extra boards.</td></tr>
-      <tr><td>Hypothesis</td><td>That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified.</td></tr>
+      <tr><td>Designed / planned</td><td>Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds (<a href="https://github.com/sloev/emergent/blob/main/docs/example-body.md">example build</a>); approach-and-dock on hardware; extra boards.</td></tr>
+      <tr><td>Hypothesis</td><td>That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified.</td></tr>
     </table>
     <p class="status-links">
       <a href="https://github.com/sloev/emergent/blob/main/CHANGELOG.md">Changelog</a> ·
       <a href="roadmap.html">Full roadmap</a> ·
-      <a href="https://github.com/sloev/emergent/blob/main/docs/research.md">Research notes</a>
+      <a href="https://github.com/sloev/emergent/blob/main/docs/research.md">Research notes</a> ·
+      <a href="https://github.com/sloev/emergent/blob/main/docs/example-body.md">Example build (7 in, 5 out)</a>
     </p>
   </section>
 

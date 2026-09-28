@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Organism 5 Observation Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: an ethologist's tracking rig. Arena (top-down) beside the live state readout, polygraph strips of the physiology underneath, one playhead through both. */
+:root {
+  --bg: #eceee9;
+  --panel: #f7f8f4;
+  --ink: #1b2320;
+  --muted: #5a6560;
+  --rule: #c5ccc6;
+  --organism: #c8412c;
+  --station: #2a769f;
+  --energy: #b67c0e;
+  --band: rgba(42, 118, 159, 0.10);
+  --trail: 200, 65, 44;
+  --window: 182, 124, 14;
+  --f-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131917; --panel: #1a2220; --ink: #e2e7e3; --muted: #93a09a; --rule: #2d3834;
+    --organism: #ef6a52; --station: #5eaed6; --energy: #e2a638; --band: rgba(94, 174, 214, 0.13);
+    --trail: 239, 106, 82; --window: 226, 166, 56; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131917; --panel: #1a2220; --ink: #e2e7e3; --muted: #93a09a; --rule: #2d3834;
+  --organism: #ef6a52; --station: #5eaed6; --energy: #e2a638; --band: rgba(94, 174, 214, 0.13);
+  --trail: 239, 106, 82; --window: 226, 166, 56; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 48px; display: grid; gap: 22px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font: 600 11px/1 var(--f-data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 clamp(28px, 4vw, 40px)/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+.lede { max-width: 68ch; margin: 0; color: var(--muted); }
+.lede a { color: var(--station); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 4px 0 0; padding: 0; list-style: none; font: 13px var(--f-data); font-variant-numeric: tabular-nums; }
+.facts b { font-weight: 600; }
+.stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 820px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.arena-box { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; min-width: 0; }
+#arena { width: 100%; aspect-ratio: 3.4 / 2.9; display: block; max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font: 12px var(--f-data); color: var(--muted); margin-top: 8px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 6px; }
+.readout { display: grid; gap: 16px; min-width: 0; }
+.clock { font: 600 34px/1 var(--f-data); font-variant-numeric: tabular-nums; }
+.clock small { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 12px/1 var(--f-data); padding: 6px 9px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); }
+.chip.on { color: var(--panel); background: var(--station); border-color: var(--station); }
+.chip.hungry.on { background: var(--energy); border-color: var(--energy); }
+.meters { display: grid; gap: 7px; }
+.meter { display: grid; grid-template-columns: 88px minmax(0, 1fr) 44px; gap: 10px; align-items: center; font: 12px var(--f-data); font-variant-numeric: tabular-nums; }
+.meter .track { position: relative; height: 10px; background: var(--bg); border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+.meter .comfort { position: absolute; top: 0; bottom: 0; background: var(--band); }
+.meter .fill { position: absolute; top: 2px; bottom: 2px; left: 0; background: var(--ink); border-radius: 1px; }
+.meter.soc .fill { background: var(--energy); }
+.meter .val { text-align: right; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button, select { font: 600 13px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 5px; padding: 7px 12px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, canvas:focus-visible { outline: 2px solid var(--station); outline-offset: 2px; }
+.strips-box { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; min-width: 0; }
+#strips { width: 100%; display: block; cursor: crosshair; touch-action: none; }
+.strips-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+h2 { font: 600 20px/1.2 var(--f-display); margin: 0; }
+.method { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+.method p { margin: 0; max-width: 60ch; }
+.method h3 { font: 700 13px/1.3 var(--f-body); margin: 0 0 4px; letter-spacing: 0.02em; }
+#status { font: 13px var(--f-data); color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Emergent · simulator trace · seed 5 · first life</div>
+    <h1>Organism 5 Observation Log</h1>
+    <p class="lede">Three simulated hours of one organism running the unmodified firmware behavior engine in a 3 × 2.5 m room with a charging station on the right wall. It started with every reflex weight at zero. Nothing told it which channels are wheels, eyes or battery beyond "this input is my energy". <a href="https://github.com/sloev/emergent/tree/main/src/sim">How the simulator works</a>.</p>
+    <ul class="facts" id="facts"><li>loading trace…</li></ul>
+  </header>
+
+  <section class="stage">
+    <div class="arena-box">
+      <canvas id="arena" aria-label="Top-down view of the room with the organism's path"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--organism)"></i>organism, last 10 min of path</span>
+        <span><i class="sw" style="background:var(--station)"></i>station and funnel</span>
+        <span><i class="sw" style="background:var(--energy)"></i>window light</span>
+        <span>grey: where it spent the whole life</span>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="clock" id="clock">0:00:00<small>of 3:00:00</small></div>
+      <div class="chips">
+        <span class="chip" id="chip-dock">on the dock</span>
+        <span class="chip hungry" id="chip-hungry">hungry</span>
+        <span class="chip" id="chip-drive">dominant drive: none</span>
+      </div>
+      <div class="meters" id="meters"></div>
+      <p class="note">Shaded part of each bar is the comfortable band. Outside it, that variable becomes a drive, and relieving drives is the only reward the organism gets.</p>
+      <div class="controls">
+        <button id="play" type="button">Pause</button>
+        <label for="speed" class="eyebrow">speed</label>
+        <select id="speed">
+          <option value="30">30× (1 min in 2 s)</option>
+          <option value="120" selected>120×</option>
+          <option value="600">600×</option>
+          <option value="1800">1800×</option>
+        </select>
+      </div>
+      <div id="status" role="status"></div>
+    </div>
+  </section>
+
+  <section class="strips-box">
+    <div class="strips-head">
+      <h2>Physiology over the whole life</h2>
+      <span class="eyebrow">click or drag to jump</span>
+    </div>
+    <canvas id="strips" tabindex="0" aria-label="Timeline of battery, docking and internal variables; click to jump in time"></canvas>
+  </section>
+
+  <section class="method">
+    <div><h3>What learned</h3><p>A small map from sensors to actuators, one per motivational state, trained only by whether drive pressure fell afterwards (REINFORCE with an eligibility trace). Time on the dock goes from 6% in the first half hour to 36%, then over 90% from 60 minutes on. It learned to get there and stay. It did not learn to leave when full: it sits on the dock at 87% charge, and the gaps in the docked strip are short slips off the contacts.</p></div>
+    <div><h3>What it can sense</h3><p>Battery voltage (with real LiPo sag under load), a microphone that hears its own steppers and the station's clicks, two light sensors on a panning head, a bumper, IR distance ahead, and the station's Wi-Fi signal strength, refreshed every 5 s.</p></div>
+    <div><h3>How typical this is</h3><p>This is one of the better first lives. Across 8 organisms, learned reflexes lift mean lifespan from 1.26 h to about 1.9 h, and the skill is not yet stable across repeated lives. The numbers are in the simulator README.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const VARS = [
+    { key: "h_energy", label: "energy", band: [0.65, 1] },
+    { key: "h_fatigue", label: "fatigue", band: [0, 0.6] },
+    { key: "h_safety", label: "safety", band: [0.7, 1] },
+    { key: "h_arousal", label: "arousal", band: [0, 0.7] },
+    { key: "h_curiosity", label: "curiosity", band: null },
+    { key: "h_boredom", label: "boredom", band: [0, 0.4] },
+  ];
+  const arena = document.getElementById("arena");
+  const strips = document.getElementById("strips");
+  const playBtn = document.getElementById("play");
+  const speedSel = document.getElementById("speed");
+  const statusEl = document.getElementById("status");
+  let D = null, N = 0, meta = null;
+  let t = 0, playing = !window.matchMedia("(prefers-reduced-motion: reduce)").matches, last = null;
+  let occupancy = null;
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function fmt(sec) {
+    sec = Math.max(0, Math.round(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60;
+    return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+  function fit(canvas, cssH) {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(cssH || r.height));
+    if (cssH) canvas.style.height = h + "px";
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  // Meter rows.
+  const meters = document.getElementById("meters");
+  const rows = [{ key: "soc", label: "battery", band: null, cls: "soc" }].concat(VARS);
+  rows.forEach(v => {
+    const el = document.createElement("div");
+    el.className = "meter" + (v.cls ? " " + v.cls : "");
+    const band = v.band ? `<span class="comfort" style="left:${v.band[0] * 100}%;width:${(v.band[1] - v.band[0]) * 100}%"></span>` : "";
+    el.innerHTML = `<span>${v.label}</span><span class="track">${band}<span class="fill" id="m-${v.key}"></span></span><span class="val" id="v-${v.key}">–</span>`;
+    meters.appendChild(el);
+  });
+
+  function drawArena(i) {
+    const { ctx, w, h } = fit(arena);
+    const [RW, RH] = meta.room;
+    const pad = 14;
+    const s = Math.min((w - 2 * pad) / RW, (h - 2 * pad - 14) / RH);
+    const ox = (w - RW * s) / 2, oy = pad + 14;
+    const X = x => ox + x * s, Y = y => oy + (RH - y) * s;
+    ctx.clearRect(0, 0, w, h);
+
+    // Window along the top wall.
+    const g = ctx.createLinearGradient(0, oy, 0, oy + RH * s * 0.6);
+    g.addColorStop(0, `rgba(${css("--window")},0.22)`);
+    g.addColorStop(1, `rgba(${css("--window")},0)`);
+    ctx.fillStyle = g; ctx.fillRect(X(0), Y(RH), RW * s, RH * s * 0.6);
+    ctx.fillStyle = css("--energy");
+    ctx.fillRect(X(0.4), oy - 6, (RW - 0.8) * s, 3);
+    ctx.font = "11px " + css("--f-data"); ctx.fillStyle = css("--muted");
+    ctx.fillText("window", X(0.4), oy - 10);
+
+    // Occupancy over the whole life.
+    const cells = occupancy.cells, nx = occupancy.nx, ny = occupancy.ny, cw = RW / nx, ch = RH / ny;
+    let max = 1; for (const c of cells) if (c > max) max = c;
+    ctx.fillStyle = css("--ink");
+    for (let a = 0; a < nx; a++) for (let b = 0; b < ny; b++) {
+      const c = cells[a * ny + b]; if (!c) continue;
+      ctx.globalAlpha = 0.04 + 0.22 * Math.sqrt(c / max);
+      ctx.fillRect(X(a * cw), Y((b + 1) * ch), cw * s + 0.5, ch * s + 0.5);
+    }
+    ctx.globalAlpha = 1;
+
+    // Walls.
+    ctx.strokeStyle = css("--ink"); ctx.lineWidth = 2;
+    ctx.strokeRect(X(0), Y(RH), RW * s, RH * s);
+
+    // Station + funnel.
+    const [sx, sy] = meta.station, fd = meta.funnel_depth;
+    const docked = D.docked[i] > 0;
+    ctx.strokeStyle = css("--station"); ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(X(sx - fd), Y(sy + fd + 0.03)); ctx.lineTo(X(sx), Y(sy + 0.03));
+    ctx.moveTo(X(sx - fd), Y(sy - fd - 0.03)); ctx.lineTo(X(sx), Y(sy - 0.03));
+    ctx.stroke();
+    ctx.fillStyle = css("--station");
+    ctx.fillRect(X(sx) + 1, Y(sy + 0.09), (RW - sx) * s - 2, 0.18 * s);
+    if (docked) {
+      ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(X(sx), Y(sy), 0.28 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = css("--muted");
+    ctx.fillText("station", X(sx) - 46, Y(sy + fd + 0.1));
+
+    // Trail: last 10 minutes.
+    const from = Math.max(0, i - 600);
+    ctx.lineWidth = 1.6; ctx.lineCap = "round";
+    for (let k = from + 1; k <= i; k++) {
+      const a = (k - from) / (i - from + 1);
+      ctx.strokeStyle = `rgba(${css("--trail")},${0.08 + 0.7 * a})`;
+      ctx.beginPath(); ctx.moveTo(X(D.x[k - 1]), Y(D.y[k - 1])); ctx.lineTo(X(D.x[k]), Y(D.y[k])); ctx.stroke();
+    }
+
+    // Body, heading, head.
+    const x = X(D.x[i]), y = Y(D.y[i]), r = meta.robot_radius * s, th = D.theta[i];
+    ctx.fillStyle = css("--organism");
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = css("--panel"); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(th) * r, y - Math.sin(th) * r); ctx.stroke();
+    const hp = th + D.head_pan[i] * Math.PI / 2;
+    ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1.2;
+    for (const off of [0.6, -0.6]) {
+      ctx.beginPath(); ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(hp + off) * r * 2.1, y - Math.sin(hp + off) * r * 2.1); ctx.stroke();
+    }
+
+    // Scale bar.
+    ctx.fillStyle = css("--muted"); ctx.fillRect(X(0.1), Y(0.08), 0.5 * s, 2);
+    ctx.fillText("50 cm", X(0.1), Y(0.08) - 5);
+  }
+
+  const STRIPS = [{ key: "soc", label: "battery" }, { key: "docked", label: "docked" }].concat(VARS);
+  function drawStrips(i) {
+    const rowH = 30, gap = 6, top = 4, left = 76, axis = 22;
+    const H = top + STRIPS.length * (rowH + gap) + axis;
+    const { ctx, w } = fit(strips, H);
+    const W = w - left - 8;
+    const X = k => left + (k / (N - 1)) * W;
+    ctx.clearRect(0, 0, w, H);
+    ctx.font = "11px " + css("--f-data");
+    STRIPS.forEach((v, r) => {
+      const y0 = top + r * (rowH + gap);
+      ctx.fillStyle = css("--muted"); ctx.textBaseline = "middle";
+      ctx.fillText(v.label, 0, y0 + rowH / 2);
+      ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+      ctx.strokeRect(left + 0.5, y0 + 0.5, W, rowH);
+      if (v.band) {
+        ctx.fillStyle = css("--band");
+        ctx.fillRect(left, y0 + (1 - v.band[1]) * rowH, W, (v.band[1] - v.band[0]) * rowH);
+      }
+      const col = D[v.key];
+      if (v.key === "docked") {
+        ctx.fillStyle = css("--station");
+        for (let k = 0; k < N; k++) if (col[k] > 0) ctx.fillRect(X(k), y0 + 4, Math.max(1, W / N), rowH - 8);
+        return;
+      }
+      ctx.strokeStyle = v.key === "soc" ? css("--energy") : css("--ink");
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const step = Math.max(1, Math.floor(N / W / 2));
+      for (let k = 0; k < N; k += step) {
+        const px = X(k), py = y0 + (1 - col[k]) * rowH;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+    // Hour axis.
+    const yA = top + STRIPS.length * (rowH + gap) + 12;
+    ctx.fillStyle = css("--muted"); ctx.textBaseline = "middle";
+    const totalH = (N - 1) / 3600;
+    for (let hh = 0; hh <= Math.floor(totalH + 1e-6); hh++) {
+      const px = X(hh * 3600);
+      ctx.fillRect(px, yA - 8, 1, 4);
+      ctx.fillText(hh + " h", Math.min(px - 6, w - 30), yA + 2);
+    }
+    // Playhead.
+    ctx.fillStyle = css("--organism");
+    ctx.fillRect(X(i) - 1, top, 2, STRIPS.length * (rowH + gap) - gap);
+  }
+
+  function readout(i) {
+    document.getElementById("clock").innerHTML = fmt(D.t[i]) + "<small>of " + fmt(D.t[N - 1]) + "</small>";
+    const docked = D.docked[i] > 0, hungry = D.h_energy[i] < 0.65;
+    document.getElementById("chip-dock").classList.toggle("on", docked);
+    document.getElementById("chip-hungry").classList.toggle("on", hungry);
+    let best = null, bestD = 0;
+    VARS.forEach(v => {
+      if (!v.band) return;
+      const x = D[v.key][i];
+      const d = x < v.band[0] ? (v.band[0] - x) / (v.band[1] - v.band[0]) : x > v.band[1] ? (x - v.band[1]) / (v.band[1] - v.band[0]) : 0;
+      if (d > bestD) { bestD = d; best = v.label; }
+    });
+    document.getElementById("chip-drive").textContent = "dominant drive: " + (best || "none");
+    rows.forEach(v => {
+      const x = D[v.key][i];
+      document.getElementById("m-" + v.key).style.width = (Math.max(0, Math.min(1, x)) * 100) + "%";
+      document.getElementById("v-" + v.key).textContent = v.key === "soc" ? Math.round(x * 100) + "%" : x.toFixed(2);
+    });
+  }
+
+  function render() {
+    const i = Math.max(0, Math.min(N - 1, Math.floor(t)));
+    drawArena(i); drawStrips(i); readout(i);
+  }
+
+  function frame(now) {
+    if (last !== null && playing) {
+      t += (now - last) / 1000 * Number(speedSel.value) * meta.hz;
+      if (t >= N - 1) { t = N - 1; playing = false; playBtn.textContent = "Replay"; }
+      render();
+    }
+    last = now;
+    requestAnimationFrame(frame);
+  }
+
+  function seek(ev) {
+    const r = strips.getBoundingClientRect();
+    const left = 76, W = r.width - left - 8;
+    const f = (ev.clientX - r.left - left) / W;
+    t = Math.max(0, Math.min(1, f)) * (N - 1);
+    render();
+  }
+  let dragging = false;
+  strips.addEventListener("pointerdown", e => { dragging = true; strips.setPointerCapture(e.pointerId); seek(e); });
+  strips.addEventListener("pointermove", e => { if (dragging) seek(e); });
+  strips.addEventListener("pointerup", () => { dragging = false; });
+  strips.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { t = Math.min(N - 1, t + 300); render(); }
+    if (e.key === "ArrowLeft") { t = Math.max(0, t - 300); render(); }
+  });
+  playBtn.addEventListener("click", () => {
+    if (t >= N - 1) t = 0;
+    playing = !playing;
+    playBtn.textContent = playing ? "Pause" : "Play";
+  });
+  window.addEventListener("resize", () => D && render());
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => D && render());
+
+  fetch("sim/trace-seed5.json").then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(data => {
+    D = data.cols; meta = data.meta; N = D.t.length;
+    const nx = 30, ny = 25, cells = new Array(nx * ny).fill(0);
+    for (let k = 0; k < N; k++) {
+      const a = Math.min(nx - 1, Math.floor(D.x[k] / meta.room[0] * nx));
+      const b = Math.min(ny - 1, Math.floor(D.y[k] / meta.room[1] * ny));
+      cells[a * ny + b]++;
+    }
+    occupancy = { nx, ny, cells };
+    document.getElementById("facts").innerHTML = [
+      ["lived", meta.lived_h.toFixed(2) + " h" + (meta.died ? " (died)" : " (run capped at " + meta.capped_h + " h)")],
+      ["dockings", meta.dockings + " (" + meta.hungry_dockings + " while hungry)"],
+      ["time docked", meta.docked_pct.toFixed(1) + "%"],
+      ["charge taken", meta.charged_ah.toFixed(2) + " Ah"],
+    ].map(([k, v]) => `<li>${k} <b>${v}</b></li>`).join("");
+    t = playing ? 0 : 2400;
+    playBtn.textContent = playing ? "Pause" : "Play";
+    render();
+    requestAnimationFrame(frame);
+  }).catch(err => {
+    statusEl.textContent = "Couldn't load the trace (" + err.message + "). Regenerate it with the command in src/sim/README.md.";
+  });
+})();
+</script>
+</body>
+</html>

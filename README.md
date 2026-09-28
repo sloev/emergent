@@ -15,11 +15,16 @@ pio run -e esp32dev              # or -e esp32-s3-devkitc-1
 pio run -e esp32dev -t uploadfs   # flash the dashboard filesystem
 pio run -e esp32dev -t upload     # flash the firmware
 pio test -e native                # host-native unit + behavior-scenario tests
+
+cd ../sim && make                 # simulator: the same engine in a modelled room
+./emergent-sim --runs 8 --lives 6 --hours 3
 ```
 
 See [`src/esp32/README.md`](src/esp32/README.md) for adding a board or channel, the
 dashboard API, and what the native tests cover. [`src/station`](src/station) is a
-separate, much simpler PlatformIO project for the companion charging dock.
+separate, much simpler PlatformIO project for the companion charging dock. [`src/sim`](src/sim/README.md)
+runs the unmodified behavior engine against a modelled room, station and battery, and
+[`docs/example-body.md`](docs/example-body.md) is a full 7-input, 5-output build.
 
 ## Architecture
 
@@ -34,11 +39,12 @@ Theory, prior art, and speculative extensions live separately in
 
 | Layer | Fact |
 |---|---|
-| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
-| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware. |
+| Simulated | The unmodified engine in a modelled room with a station (`src/sim`): learned reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives. |
 | Hardware tested | Nothing. No board has run this. |
-| Designed / planned | Approach-and-dock, ablations, extra boards. |
-| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
+| Designed / planned | Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds ([example build](docs/example-body.md)); approach-and-dock on hardware; extra boards. |
+| Hypothesis | That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified. |
 
 See [`CHANGELOG.md`](CHANGELOG.md) for what shipped in each release and
 [`docs/roadmap.md`](docs/roadmap.md) for open work — one release at a time, versioned

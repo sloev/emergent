@@ -13,13 +13,37 @@ open work only.
 
 | Layer | Fact |
 |---|---|
-| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
-| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware. |
+| Simulated | The unmodified engine in a modelled room with a station (`src/sim`): learned reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives. |
 | Hardware tested | Nothing. No board has run this. |
-| Designed / planned | Approach-and-dock, ablations, extra boards. |
-| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
+| Designed / planned | Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds ([example build](example-body.md)); approach-and-dock on hardware; extra boards. |
+| Hypothesis | That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified. |
 
 ---
+
+## v0.10.0 — Simulator and learned reflexes (current)
+
+- [x] Native simulator driving the unmodified engine in a modelled room with a station,
+      ablation conditions, a no-engine baseline and a hand-wired upper bound
+      ([src/sim](../src/sim/README.md))
+- [x] Learned sensor→actuator reflexes trained by drive reduction, with an eligibility trace
+- [x] Physiology fixes the simulator exposed: hunger band, hunger→activity, energy double
+      count, sensory adaptation and startle habituation, curiosity out of the reward,
+      convex drive, correlated exploration noise
+- [x] [Example build](example-body.md): 7 inputs, 5 outputs on one ESP32 DevKit
+- [ ] Save reflex weights in life-state (today they're lost on reboot)
+- [ ] Leave when full: the learned organism stays docked at 87% charge
+- [ ] Learning that accumulates across lives instead of peaking in the first one
+- [ ] Reflex weights on the dashboard
+
+## v0.11.0 — Body from a file
+
+- [ ] `body.json` on LittleFS, editable from the dashboard, applied live without reflash
+- [ ] Per-input range (battery 9.0–12.6 V → 0..1)
+- [ ] `envelope` input for an analog mic (background sampling, RMS)
+- [ ] `stepper` output (velocity mode, shared enable, disabled at rest)
+- [ ] ESP-NOW station beacon for ~10 Hz RSSI (the simulator can measure what the 5 s scan costs)
 
 ## v0.9.1 — Hardware validation (blocked, no hardware in this environment)
 

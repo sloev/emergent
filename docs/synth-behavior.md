@@ -28,15 +28,16 @@
    2. [Core Loop Pseudocode](#92-core-loop-pseudocode)  
 - 10\. [Battery as “Just Another Input”, Coupled to Energy](#10-battery-as-just-another-input-coupled-to-energy)
 - 11\. [Charging Station](#11-charging-station)
+- 12\. [Learned Reflexes](#12-learned-reflexes)
 - 13\. [Life-State Persistence and Body Transfer](#13-life-state-persistence-and-body-transfer)
 - 14\. [Implementation on ESP32-Class Hardware](#14-implementation-on-esp32-class-hardware)
     1. [Software Structure](#141-software-structure-as-implemented)  
     2. [Memory and Timing Constraints](#142-memory-and-timing-constraints)  
-- 15\. [Experimental Program and Ablations (Planned)](#15-experimental-program-and-ablations-planned)
+- 15\. [Experimental Program and Ablations](#15-experimental-program-and-ablations)
 
 This document describes what the firmware does. History, prior art,
 speculative modality ideas, and philosophy live in [research.md](research.md).
-Section numbers are kept stable, so there are gaps (2, 12).
+Section numbers are kept stable, so there is a gap (2).
 
 ---
 
@@ -44,11 +45,12 @@ Section numbers are kept stable, so there are gaps (2, 12).
 
 | Layer | Fact |
 |---|---|
-| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
-| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware. |
+| Simulated | The unmodified engine in a modelled room with a station (`src/sim`): learned reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives. |
 | Hardware tested | Nothing. No board has run this. |
-| Designed / planned | Approach-and-dock, ablations, extra boards. |
-| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
+| Designed / planned | Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds ([example build](example-body.md)); approach-and-dock on hardware; extra boards. |
+| Hypothesis | That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified. |
 
 ---
 
@@ -86,6 +88,7 @@ Instead, we rely on:
 - a small vector of **physiological variables and drives**,  
 - a compact, decaying **contingency memory** of action→sensation relationships,  
 - a stochastic **action generator** modulated by drives and history,  
+- **learned reflexes**: a sensor→actuator map shaped only by drive reduction,  
 - a coarse **spatial memory**,  
 - an optional **metabolic subsystem** that ties behavior to energy.
 
@@ -261,12 +264,17 @@ This echoes how infants learn their own bodies through co-occurrence of actuatio
 
 The internal state contains a small vector of slow variables, for example:
 
-- `h_energy` — abstract “resource” level. It is **numerically coupled** to battery readings and actuator costs, but never treated as “battery percentage” symbolically.  
-- `h_fatigue` — accumulated exertion.  
-- `h_safety` — recent history of collisions, extreme temperatures, etc.  
-- `h_arousal` — global activity or responsiveness.  
-- `h_curiosity` — based on novelty or prediction error.  
-- `h_boredom` — time spent in low-change regimes.
+- `h_energy`: resource level. With an energy sensor (the battery) it simply follows that reading; the battery already reflects exertion, so nothing else drains it. Without one, a modelled drain (actuator cost) and trickle regen stand in.  
+- `h_fatigue`: saturating exertion, `dF = g·cost·(1−F) − r·F`. Settles near 0.3 at moderate effort; reaches the tired band only under sustained high effort.  
+- `h_safety`: drops on *startle*, a salient jolt on any channel, which habituates when the same channel keeps jolting; recovers slowly.  
+- `h_arousal`: rises with salient change, decays. Only over-arousal is a drive.  
+- `h_curiosity`: rises with contingency memory's prediction error.  
+- `h_boredom`: habituation. Rises whenever less happens than usually does here, and is reset by more-than-usual change.
+
+**Salience.** Every sensor channel is predicted to keep changing at the rate it just
+did, and only a miss beyond a few times that channel's own learned jitter counts as an
+event. So ADC noise is never an event, a steady turn habituates away, and a bump, a new
+light or a sound stands out.
 
 A social variable (history of correlated signals from other robots/humans)
 was considered but isn't implemented: it would need a "presence of another
@@ -278,13 +286,23 @@ Each variable:
 
 - integrates selected sensor channels,  
 - decays or recovers over time,  
-- may be coupled (e.g., high exertion drains `h_energy` and raises `h_fatigue`).
+- is clamped to [0, 1].
 
-Drives are scalar pressures derived from deviations from preferred bands:
+Drives are scalar pressures derived from deviations from preferred bands. The bands
+are part of the organism's constitution: energy `[0.65, 1]` (hunger from about half
+charge on a LiPo read across its full voltage span), fatigue `[0, 0.6]`, safety
+`[0.7, 1]`, arousal `[0, 0.7]`, boredom `[0, 0.4]`.
 
 ```text
 drive[name] = deviation(h_name, target_range[name])
+homeostatic distance D = sum over drives except curiosity of drive^2
+reward each tick      = D(t-1) - D(t)
 ```
+
+That reward, drive reduction, is the only one anything learns from (Keramati & Gutkin
+2014, with their exponent n = 2: relieving a large deficit outweighs small
+fluctuations). Curiosity is left out of it on purpose: it rises with surprise, so
+counting it would make every novel outcome a setback.
 
 ### 6.2 Drive Modulation Algorithm
 
@@ -310,18 +328,22 @@ def calculate_fuzz_scale(drives):
     safety    = drives.get("h_safety", 0.0)   # high = unsafe
 
     fuzz = (
-        0.6 * curiosity +
-        0.4 * boredom   -
-        0.4 * energy    -
+        0.3 * curiosity +
+        0.4 * boredom   +
+        0.3 * energy    -
         0.3 * safety
     )
-    return clamp(fuzz, 0.03, 0.8)
+    return clamp(fuzz, 0.05, 0.8)
 ```
 
 Intuitively:
 
-- high curiosity and boredom → more exploration;  
-- high energy and safety pressures → less exploration, more exploitation.
+- curiosity, boredom and hunger → more exploration (food deprivation raises activity in
+  animals: foraging);  
+- threat → less (freezing).
+
+Exploiting what has been learned when hungry comes from the hunger-gated reflexes
+(§12), not from standing still.
 
 ---
 
@@ -485,7 +507,10 @@ void behavior_tick(float dt_s, uint32_t now_ms) {
     spatial.update(body, phys, dt_s);   // place signature + drive change here
 
     // 3. Act. For each actuator not under manual override:
-    //    next = clamp(current + rest_pull + noise * (1 + spatial_nudge) + contingency_bias)
+    //    next = clamp((reflex + explore) * (1 - rest) + contingency_bias)
+    //    reflex:  learned sensorimotor map (§12), learns from this tick's reward first
+    //    explore: Ornstein-Uhlenbeck noise (tau 1 s) * fuzz * span * (1 + spatial_nudge)
+    //    rest:    shrink toward 0 (zero cost) with fatigue and hunger
     action_gen.tick(body, phys, contingency, spatial, now_ms);
 
     // 4. Hard limits, last: per-channel thermal budget, critical-battery cut.
@@ -734,9 +759,44 @@ The design intent, unverified on real hardware (tracked as
    `h_energy` drive relaxes, and exploration reasserts itself.
 
 If this works, an observer would describe the robot as "seeking the charger
-when low, leaving when full" — but that's a claim about what this system is
-*supposed* to produce, not a measured result. See [research.md](research.md)
-for a longer discussion of what this experiment would need to actually show.
+when low, leaving when full". On hardware that's still a claim about what the system
+is *supposed* to produce. In simulation (§15), steps 1–3 happen in some lives: the
+learned organism reaches the dock and stays. Step 4 does not: it stays docked when
+full. See [research.md](research.md) for what the hardware experiment would need to
+show.
+
+---
+
+## 12. Learned Reflexes
+
+A small linear map from sensor channels to actuator channels, trained only by drive
+reduction (`include/core/sensorimotor_policy.h`). Nothing is pre-wired. If a light
+sensor on one side comes to drive the opposite wheel, it's because that wiring kept
+being followed by drive pressure falling: the organism built itself a Braitenberg
+vehicle.
+
+- **Inputs:** each sensor relative to its own 5-minute running mean, plus a constant.
+- **Contexts:** one map that is always on, plus one per drive, gated by that drive
+  (0..1). Hungry, the energy map dominates; startled, the safety map does.
+- **Learning:** REINFORCE / node perturbation (Williams 1992; Fiete & Seung 2006)
+  with a 3 s eligibility trace, so a docking reward that arrives seconds after an
+  approach still credits the approach. Credit goes to the exploration sample itself,
+  which is zero-mean by construction.
+
+```text
+e[k][i][j] <- λ·e + (1-λ)·gate_k·x_i·ξ_j        ξ = exploration sample on actuator j
+w[k][i][j] += η·A·e                              A = reward normalized by its running mean and sd
+w          *= (1 - decay·dt), |w| <= 1.5         unrewarded habits fade over ~1.5 h
+```
+
+Memory: 7 contexts × 17 inputs × 16 outputs × 2 floats, about 15 KB at the maximum
+channel counts. Weights are not yet part of the saved life-state.
+
+**What it has produced (simulator only, §15):** from all-zero weights, backing away
+after bumps (the safety context learns reverse) and, in some lives, reaching and
+staying on the dock. Before sensory adaptation was added it also found a stereotypy:
+spinning in place, which kept the light sensors changing and so relieved boredom,
+like pacing in under-stimulated captive animals.
 
 ---
 
@@ -817,9 +877,18 @@ To stay microcontroller-friendly:
 
 ---
 
-## 15. Experimental Program and Ablations (Planned)
+## 15. Experimental Program and Ablations
 
-None of this has been run. It is the plan for turning the §11.7 hypothesis into a measured result:
+Run in simulation only (`src/sim`, which drives the unmodified engine in a modelled
+room; results and the model in [its README](../src/sim/README.md)). On hardware,
+none of this has been run. Currently measured: lifespan, time docked, coverage,
+distance to the station when hungry vs sated, and behavior entropy, per life, across
+repeated lives; ablations for reflexes, each memory, the battery link, and all memory,
+plus a no-engine random-walk baseline and a hand-wired upper bound. Headline: learned
+reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h); nothing
+accumulates across lives yet.
+
+The full program:
 
 ### 15.1 Metrics
 

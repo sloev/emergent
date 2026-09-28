@@ -3,36 +3,41 @@
 // Action generator: each tick, for every actuator channel that hasn't been
 // manually driven recently (Actuator::manual_override_active), it proposes:
 //
-//   next = clamp(baseline + rest_pull + noise + contingency_bias + spatial_nudge)
+//   next = clamp((reflex + explore) * (1 - rest) + contingency_bias)
 //
-// - baseline: the channel's current value (persistence — "keep doing what
-//   you were doing" is the simplest stand-in for a baseline action).
-// - rest_pull: pulls toward 0 — the zero-cost state for every actuator kind
-//   here (Actuator::cost() is |value| * cost_per_unit) — scaled by fatigue
-//   and low-energy pressure. Without this, a channel that drifted to a
-//   high-cost value under low drive pressure would just sit there
-//   indefinitely; persistence alone has no reason to move it back.
-// - noise: uniform random, scaled by Physiology::fuzz_scale() and the
-//   channel's own range.
+// - reflex: what the learned sensorimotor map (SensorimotorPolicy) proposes
+//   for this channel given current sensors and drives. Starts at 0 for
+//   everything; only drive reduction shapes it.
+// - explore: Ornstein-Uhlenbeck noise per channel (correlation time
+//   tuning.action.noise_tau_s), scaled by Physiology::fuzz_scale() and the
+//   channel's span. Correlated noise gives smooth runs and turns instead of
+//   per-tick jitter that averages to standing still. Widened or narrowed by
+//   the spatial nudge.
+// - rest: shrinks everything toward 0, the zero-cost state for every
+//   actuator kind (Actuator::cost() is |value| * cost_per_unit), in
+//   proportion to fatigue and low-energy pressure.
 // - contingency_bias: decoded from ContingencyMemory::query_bias() against
 //   the sensor-delta pattern just observed, scaled by its confidence.
-// - spatial_nudge: NOT a direction — this hardware has no positioning
-//   sensor, so SpatialMemory::best_cell() can only say *which* remembered
-//   place looks promising, not *which way*. This uses it to modulate
-//   explore-vs-exploit instead of steering — noise widens when a better
-//   place than "here" is known to exist, narrows when the current place
-//   already looks like the best one remembered.
+// - spatial nudge: NOT a direction. There's no positioning sensor, so
+//   SpatialMemory::best_cell() can only say *which* remembered place looks
+//   promising, not *which way*. Exploration widens when a better place than
+//   "here" is known to exist and narrows when "here" already looks best.
+//
+// After writing, each channel's exploration sample is handed back to the
+// policy as the perturbation its next reward will be credited against.
 //
 // tick() is templated on the body type (duck-typed) so it can run against a
-// plain, hardware-free test double under the native test environment as
-// well as the real Body — see test/test_behavior_scenarios/fake_body.h.
+// plain, hardware-free test double under the native test environment and
+// the simulator as well as the real Body.
 
+#include <cmath>
 #include <cstdint>
 
 #include "body/body.h"
 #include "core/contingency_memory.h"
 #include "core/math_util.h"
 #include "core/physiology.h"
+#include "core/sensorimotor_policy.h"
 #include "core/spatial_memory.h"
 #include "core/tuning.h"
 
@@ -67,20 +72,32 @@ public:
         float fuzz = phys.fuzz_scale();
 
         // Independent of any single channel: how much pressure there is to
-        // stop spending and settle toward the zero-cost state. Every
-        // ActuatorKind's cost() is |value| * cost_per_unit, so 0 is the
-        // rest state for all of them regardless of what they physically are.
+        // stop spending and settle toward the zero-cost state.
         float rest_pressure = clampf(phys.drive(PhysVar::kFatigue) + phys.drive(PhysVar::kEnergy), 0.0f, 1.0f);
+        float keep = 1.0f - rest_pressure * kTuning.action.rest_pull_gain;
 
-        for (size_t i = 0; i < body.actuator_count(); i++) {
+        constexpr float kDt = 0.05f;  // behavior tick, see main.cpp
+        float reflex[SensorimotorPolicy::kMaxOut] = {};
+        if (learning_) {
+            if (plastic_) policy_.learn(phys, kDt);
+            policy_.propose(body, phys, kDt, reflex);
+        }
+
+        float ou_decay = expf(-kDt / kTuning.action.noise_tau_s);
+        float ou_kick = sqrtf(1.0f - ou_decay * ou_decay);
+
+        float taken[SensorimotorPolicy::kMaxOut] = {};
+        size_t n = body.actuator_count() < SensorimotorPolicy::kMaxOut ? body.actuator_count()
+                                                                        : SensorimotorPolicy::kMaxOut;
+        for (size_t i = 0; i < n; i++) {
             auto& a = body.actuator_at(i);
             if (a.manual_override_active(now_ms)) continue;
 
             float span = a.spec().range_max - a.spec().range_min;
 
-            float baseline = a.value();
-            float rest_pull = -baseline * rest_pressure * kTuning.action.rest_pull_gain;
-            float noise_term = noise() * fuzz * span * kTuning.action.noise_gain * (1.0f + spatial_nudge);
+            // Unit-variance OU process: persistent, smooth, zero-mean.
+            ou_[i] = ou_decay * ou_[i] + ou_kick * gaussian();
+            float explore = ou_[i] * fuzz * span * kTuning.action.noise_gain * (1.0f + spatial_nudge);
 
             float bias = 0.0f;
             if (have_bias) {
@@ -88,10 +105,32 @@ public:
                 bias = static_cast<float>(dir) * confidence * span * kTuning.action.contingency_gain;
             }
 
-            float target = clampf(baseline + rest_pull + noise_term + bias, a.spec().range_min, a.spec().range_max);
+            float target = clampf((reflex[i] + explore) * keep + bias, a.spec().range_min, a.spec().range_max);
             a.write(target);
+            // Credit the exploration sample itself (zero-mean by
+            // construction), not "executed minus proposed": when a proposal
+            // hits a range or rate limit that difference becomes a constant
+            // offset, which biases every weight the same way and runs away.
+            taken[i] = explore * keep;
         }
+
+        if (learning_) policy_.record(taken, kDt);
     }
+
+    // Learned reflexes start empty for this body's channel layout. Call
+    // once after the body is up (and again if its channels change).
+    template <typename BodyT>
+    void begin_learning(BodyT& body) {
+        policy_.begin(body);
+    }
+
+    // Ablation switch: with learning off, reflexes contribute nothing and
+    // nothing is learned; the rest of the generator is unchanged.
+    void set_learning(bool on) { learning_ = on; }
+    // Reflexes still act but stop changing (for experiments that fix them).
+    void set_plasticity(bool on) { plastic_ = on; }
+    SensorimotorPolicy& policy() { return policy_; }
+    const SensorimotorPolicy& policy() const { return policy_; }
 
     // Exploration noise comes from a small xorshift32 PRNG owned here, not
     // Arduino's random() — on ESP32, random() draws from the hardware TRNG
@@ -114,5 +153,13 @@ private:
         return (static_cast<float>(rng_state_) / 4294967295.0f) * 2.0f - 1.0f;
     }
 
+    // Approximately standard normal (Irwin-Hall: sum of four uniforms,
+    // rescaled to unit variance). Good enough for exploration, no libm.
+    float gaussian() { return (noise() + noise() + noise() + noise()) * 0.8660254f; }
+
     uint32_t rng_state_ = 1;
+    float ou_[SensorimotorPolicy::kMaxOut] = {};
+    SensorimotorPolicy policy_;
+    bool learning_ = true;
+    bool plastic_ = true;
 };

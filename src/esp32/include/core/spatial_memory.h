@@ -65,7 +65,8 @@ public:
     // Advance one behavior tick: computes this tick's place signature,
     // ages every cell, and reinforces/inserts the record for the place
     // we're in now with how drives changed since last tick.
-    void update(Body& body, Physiology& phys, float dt_s) {
+    template <typename BodyT>
+    void update(BodyT& body, Physiology& phys, float dt_s) {
         if (dt_s <= 0.0f) return;
 
         uint32_t signature = compute_signature(body);

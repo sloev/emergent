@@ -7,11 +7,12 @@ PlatformIO project for the synthetic-ethology organism described in
 
 | Layer | Fact |
 |---|---|
-| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
-| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware. |
+| Implemented | 20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine. |
+| Tested | Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware. |
+| Simulated | The unmodified engine in a modelled room with a station (`src/sim`): learned reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives. |
 | Hardware tested | Nothing. No board has run this. |
-| Designed / planned | Approach-and-dock, ablations, extra boards. |
-| Hypothesis | That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified. |
+| Designed / planned | Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds ([example build](../../docs/example-body.md)); approach-and-dock on hardware; extra boards. |
+| Hypothesis | That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified. |
 
 See [`CHANGELOG.md`](../../CHANGELOG.md) for what shipped in each release and
 [`docs/roadmap.md`](../../docs/roadmap.md) for open work.
