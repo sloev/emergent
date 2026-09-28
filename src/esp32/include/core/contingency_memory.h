@@ -200,8 +200,11 @@ public:
     // out_action_code (decode with decode_channel()) and out_confidence
     // (discounted by match distance), and returns true.
     bool query_bias(uint32_t sensor_code, uint32_t& out_action_code, float& out_confidence) const {
+        // Starts at 0, not -inf: an entry is only recalled if it helped
+        // (score > 0). The "least bad" of several patterns that all raised
+        // drive pressure is still one that raised it.
         bool found = false;
-        float best_score = -1e9f;
+        float best_score = 0.0f;
 
         for (size_t i = 0; i < kCapacity; i++) {
             const ContingencyEntry& e = table_[i];

@@ -1,7 +1,7 @@
 # Emergent charging station (reference firmware)
 
-Companion firmware for [`docs/synth-behavior.md`](../../docs/synth-behavior.md)
-§11 — "Charging Station as an Emergent Attractor". A separate, much simpler
+Companion firmware for the charging station described in
+[`docs/synth-behavior.md`](../../docs/synth-behavior.md#11-charging-station). A separate, much simpler
 PlatformIO project from [`src/esp32`](../esp32): the station is a state
 machine, not an organism. It has no physiology, no drives, no memory, and
 no dashboard. Its entire job is:
@@ -26,9 +26,9 @@ for your battery without touching this code at all.
 
 ## Mechanical & circuit build notes
 
-The article's own §11.2 (mechanical/contact geometry) and §11.3 (sensory
-lures) are the actual design reference — this section is just how this
-firmware's assumptions map onto that.
+The spec's mechanical/contact-geometry and sensory-lure sections are the
+design reference; this is how this firmware's assumptions map onto them.
+None of this has been built and tested.
 
 - **Contact geometry:** self-aligning is doing the real work here, not
   precise control — a funnel entrance and a shallow ramp with a soft stop
@@ -54,13 +54,12 @@ firmware's assumptions map onto that.
   isn't reliably available across ESP32 Arduino core versions.
 - **RF beacon:** the station's own SoftAP (`kApSsid`, default
   `"emergent-station"`). This is a long-range gradient, not a state signal —
-  state lives entirely in the LED/audio pattern per §11.5, so the SSID
-  never changes. See below for wiring this into the robot.
+  state lives entirely in the LED/audio pattern, so the SSID never changes. See below for wiring this into the robot.
 
 ## Tuning thresholds
 
-`kCurrentActiveThreshold`, `kVoltageFullThreshold`, and
-`kCurrentTaperThreshold` in `src/main.cpp` are normalized-ADC placeholders,
+`current_active_threshold`, `voltage_full_threshold`, and
+`current_taper_threshold` in [`include/tuning.h`](include/tuning.h) are normalized-ADC placeholders,
 not calibrated values — tune them against your actual pack's real
 voltage/current curve. Get a multimeter reading at "definitely charging"
 and "definitely full" for your specific battery before trusting the
@@ -71,14 +70,14 @@ defaults.
 The robot doesn't need any station-specific code — it just needs a sensor
 channel that perceives the beacon:
 
-1. On the robot, add a `SensorKind::kWifiRssi` channel to a board profile
-   (see [`src/esp32/include/board_config.h`](../esp32/include/board_config.h))
-   with `target_ssid` set to this firmware's `kApSsid`.
-2. That's it. Everything past that point — learning that the beacon's
-   signal strength correlates with rising `battery_voltage`, and eventually
-   biasing exploration toward it — is contingency memory and spatial memory
-   doing their ordinary job on an ordinary-looking sensor channel, exactly
-   as docs/synth-behavior.md §11.7 describes.
+1. The reference board profiles (`src/esp32/include/boards/`) already have
+   an `rf_rssi_station` channel (`SensorKind::kWifiRssi`) with `target_ssid`
+   matching this firmware's default `kApSsid`. If you change one, change both.
+2. That's it. The robot treats the beacon like any other sensor. Whether
+   contingency and spatial memory turn "RSSI high, then battery rises" into
+   the robot ending up at the station is an untested hypothesis (spec
+   §11.7). Note spatial memory can't steer: there's no heading sensor, so
+   the robot can't climb the RSSI gradient directly.
 
 ## Build
 
