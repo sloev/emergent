@@ -227,7 +227,7 @@ private:
                 c.visit_count++;
                 c.age = 0;
                 for (size_t v = 0; v < kPhysVarCount; v++) {
-                    c.drive_improvement[v] += kTuning.spatial.learn_rate * (drive_delta[v] - c.drive_improvement[v]);
+                    c.drive_improvement[v] += g_tuning.spatial.learn_rate * (drive_delta[v] - c.drive_improvement[v]);
                 }
                 return slot;
             }

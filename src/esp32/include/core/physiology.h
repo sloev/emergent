@@ -38,29 +38,10 @@ enum class PhysVar : uint8_t {
 constexpr size_t kPhysVarCount = static_cast<size_t>(PhysVar::kCount);
 
 namespace physiology_detail {
-struct Band {
-    float lo, hi;
-};
-
-// Comfortable range per variable; drives fire on deviation outside this
-// band. h_curiosity is a pressure rather than a regulated quantity, so it's
-// exempted from the band formula and its drive is just its own value —
-// "comfortable range" for it is the whole [0,1], shown here for the
-// dashboard, not used in the drive calc.
-inline constexpr Band kBands[kPhysVarCount] = {
-    // Hunger starts around half charge on a LiPo read across its full
-    // 9.0-12.6 V span; any lower and it arrives minutes before empty.
-    /* kEnergy    */ {0.65f, 1.0f},
-    /* kFatigue   */ {0.0f, 0.6f},
-    /* kSafety    */ {0.7f, 1.0f},
-    /* kArousal   */ {0.0f, 0.7f},  // only over-arousal is aversive
-    /* kCuriosity */ {0.0f, 1.0f},
-    /* kBoredom   */ {0.0f, 0.4f},
-};
-
 inline constexpr const char* kNames[kPhysVarCount] = {
     "h_energy", "h_fatigue", "h_safety", "h_arousal", "h_curiosity", "h_boredom",
 };
+static_assert(kPhysVarCount == 6, "Tuning::bands is sized for 6 physiology variables");
 }  // namespace physiology_detail
 
 class Physiology {
@@ -112,14 +93,14 @@ public:
         float sum_abs_delta = 0.0f;
         float max_abs_delta = 0.0f;
         size_t n = body.sensor_count() < BodyT::kMaxSensors ? body.sensor_count() : BodyT::kMaxSensors;
-        float adapt = dt_s / kTuning.senses.adaptation_tau_s;
+        float adapt = dt_s / g_tuning.senses.adaptation_tau_s;
         for (size_t i = 0; i < n; i++) {
             float v = body.sensor_at(i).read();
             if (has_prev_) {
                 float predicted = prev_sensor_[i] + prev_velocity_[i];
                 float d = fabsf(v - predicted);
                 prev_velocity_[i] = v - prev_sensor_[i];
-                float floor = kTuning.senses.salience_k * jitter_[i] + kTuning.senses.min_salient_change;
+                float floor = g_tuning.senses.salience_k * jitter_[i] + g_tuning.senses.min_salient_change;
                 float salient = d > floor ? d - floor : 0.0f;
                 sum_abs_delta += salient;
                 // Startle habituates: a channel that keeps producing the same
@@ -127,8 +108,8 @@ public:
                 // less each time, recovering over habituation_tau_s.
                 float startle = salient * (1.0f - habituation_[i]);
                 if (startle > max_abs_delta) max_abs_delta = startle;
-                if (salient > 0.0f) habituation_[i] += kTuning.senses.habituation_step * (1.0f - habituation_[i]);
-                habituation_[i] -= habituation_[i] * (dt_s / kTuning.senses.habituation_tau_s);
+                if (salient > 0.0f) habituation_[i] += g_tuning.senses.habituation_step * (1.0f - habituation_[i]);
+                habituation_[i] -= habituation_[i] * (dt_s / g_tuning.senses.habituation_tau_s);
                 // Outlier-resistant: a real event shouldn't teach the
                 // channel that it's noisy.
                 float capped = d < 2.0f * floor ? d : 2.0f * floor;
@@ -159,30 +140,30 @@ public:
         // body with no energy sensor gets the synthetic drain/regen model.
         if (energy_sensor_index_ >= 0) {
             float battery = body.sensor_at(static_cast<size_t>(energy_sensor_index_)).last_value();
-            value_[iE] += (battery - value_[iE]) * kTuning.energy.battery_gain * dt_s;
+            value_[iE] += (battery - value_[iE]) * g_tuning.energy.battery_gain * dt_s;
         } else {
-            value_[iE] += (kTuning.energy.idle_regen_rate - kTuning.energy.drain_rate * total_cost) * dt_s;
+            value_[iE] += (g_tuning.energy.idle_regen_rate - g_tuning.energy.drain_rate * total_cost) * dt_s;
         }
         value_[iE] = clampf(value_[iE], 0.0f, 1.0f);
 
         // Fatigue: saturating accumulation, dF = g*cost*(1-F) - r*F. It
         // settles at g*c / (g*c + r): comfortable at moderate effort, into
         // the "tired" band only under sustained high effort.
-        value_[iF] += (kTuning.fatigue.gain * total_cost * (1.0f - value_[iF]) -
-                       kTuning.fatigue.recovery_rate * value_[iF]) *
+        value_[iF] += (g_tuning.fatigue.gain * total_cost * (1.0f - value_[iF]) -
+                       g_tuning.fatigue.recovery_rate * value_[iF]) *
                       dt_s;
         value_[iF] = clampf(value_[iF], 0.0f, 1.0f);
 
-        value_[iS] += (kTuning.safety.recovery_rate * (1.0f - value_[iS]) - kTuning.safety.drop_gain * spike_) * dt_s;
+        value_[iS] += (g_tuning.safety.recovery_rate * (1.0f - value_[iS]) - g_tuning.safety.drop_gain * spike_) * dt_s;
         value_[iS] = clampf(value_[iS], 0.0f, 1.0f);
 
-        value_[iAr] += (kTuning.arousal.gain * activity_ - kTuning.arousal.decay * value_[iAr]) * dt_s;
+        value_[iAr] += (g_tuning.arousal.gain * activity_ - g_tuning.arousal.decay * value_[iAr]) * dt_s;
         value_[iAr] = clampf(value_[iAr], 0.0f, 1.0f);
 
         // Real prediction error: `surprise` is how much the last tick's
         // outcome differed from what contingency memory already expected,
         // not a proxy like raw sensor activity.
-        value_[iC] += (kTuning.curiosity.gain * surprise - kTuning.curiosity.decay * value_[iC]) * dt_s;
+        value_[iC] += (g_tuning.curiosity.gain * surprise - g_tuning.curiosity.decay * value_[iC]) * dt_s;
         value_[iC] = clampf(value_[iC], 0.0f, 1.0f);
 
         // Boredom is habituation: it rises whenever things change less than
@@ -190,9 +171,9 @@ public:
         // more-than-usual change. Relative to a slow running average of
         // activity, so a body with sluggish sensors isn't bored forever and
         // one with lively sensors isn't never bored.
-        activity_avg_ += (activity_ - activity_avg_) * (dt_s / kTuning.boredom.habituation_tau_s);
+        activity_avg_ += (activity_ - activity_avg_) * (dt_s / g_tuning.boredom.habituation_tau_s);
         float relative = clampf(activity_ / (activity_avg_ + 1e-4f), 0.0f, 2.0f);
-        value_[iB] += (kTuning.boredom.gain * (1.0f - value_[iB]) - kTuning.boredom.reset_gain * relative * value_[iB]) *
+        value_[iB] += (g_tuning.boredom.gain * (1.0f - value_[iB]) - g_tuning.boredom.reset_gain * relative * value_[iB]) *
                       dt_s;
         value_[iB] = clampf(value_[iB], 0.0f, 1.0f);
 
@@ -218,8 +199,9 @@ public:
         // (food deprivation raises locomotor activity in animals: foraging),
         // falls under threat (freezing). Exploiting what's been learned when
         // hungry comes from the energy-gated reflexes, not from going still.
-        float fuzz = 0.3f * drive_[iC] + 0.4f * drive_[iB] + 0.3f * drive_[iE] - 0.3f * drive_[iS];
-        fuzz_ = clampf(fuzz, 0.05f, 0.8f);
+        const auto& ex = g_tuning.exploration;
+        float fuzz = ex.curiosity * drive_[iC] + ex.boredom * drive_[iB] + ex.hunger * drive_[iE] - ex.threat * drive_[iS];
+        fuzz_ = clampf(fuzz, ex.min, ex.max);
     }
 
     float value(PhysVar v) const { return value_[static_cast<size_t>(v)]; }
@@ -261,8 +243,8 @@ public:
 
     static const char* var_name(PhysVar v) { return physiology_detail::kNames[static_cast<size_t>(v)]; }
     static void target_band(PhysVar v, float& lo, float& hi) {
-        lo = physiology_detail::kBands[static_cast<size_t>(v)].lo;
-        hi = physiology_detail::kBands[static_cast<size_t>(v)].hi;
+        lo = g_tuning.bands.lo[static_cast<size_t>(v)];
+        hi = g_tuning.bands.hi[static_cast<size_t>(v)];
     }
 
 private:

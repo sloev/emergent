@@ -54,7 +54,9 @@ jobs:
 
       - name: Smoke run
         working-directory: src/sim
-        run: ./emergent-sim --runs 2 --lives 2 --hours 0.5
+        run: |
+          ./emergent-sim --runs 2 --lives 2 --hours 0.5
+          for k in 3 7 12 20; do ./emergent-sim --organism $k --condition full --runs 1 --lives 1 --hours 0.3; done
 
   build:
     runs-on: ubuntu-latest

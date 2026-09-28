@@ -68,7 +68,7 @@ public:
         float r = prev_drive_ - drive;  // positive = things got better
         prev_drive_ = drive;
 
-        const auto& t = kTuning.policy;
+        const auto& t = g_tuning.policy;
         float a = dt_s / t.reward_baseline_tau_s;
         float dev = r - reward_mean_;
         reward_mean_ += a * dev;
@@ -93,7 +93,7 @@ public:
     // channel units. Also latches this tick's inputs and gates for record().
     template <typename BodyT>
     void propose(BodyT& body, const Physiology& phys, float dt_s, float* out) {
-        float a = dt_s / kTuning.policy.input_mean_tau_s;
+        float a = dt_s / g_tuning.policy.input_mean_tau_s;
         for (size_t i = 0; i < n_in_; i++) {
             float v = body.sensor_at(i).last_value();
             mean_[i] += a * (v - mean_[i]);
@@ -123,7 +123,7 @@ public:
     void record(const float* taken, float dt_s) {
         // Normalized trace: a running average of recent g*x*xi, not a sum,
         // so its size doesn't scale with the trace length.
-        float lambda = expf(-dt_s / kTuning.policy.trace_tau_s);
+        float lambda = expf(-dt_s / g_tuning.policy.trace_tau_s);
         for (size_t k = 0; k < kContexts; k++) {
             float g = gate_[k];
             for (size_t i = 0; i <= n_in_; i++) {

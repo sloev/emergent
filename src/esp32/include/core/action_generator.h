@@ -65,7 +65,7 @@ public:
         // it if "here" already looks like the best one known.
         float spatial_nudge = 0.0f;
         if (have_place && best_score > 0.0f) {
-            float magnitude = clampf(best_score * kTuning.action.spatial_gain, 0.0f, kTuning.action.spatial_nudge_max);
+            float magnitude = clampf(best_score * g_tuning.action.spatial_gain, 0.0f, g_tuning.action.spatial_nudge_max);
             spatial_nudge = (best_sig == current_sig) ? -magnitude : magnitude;
         }
 
@@ -74,7 +74,7 @@ public:
         // Independent of any single channel: how much pressure there is to
         // stop spending and settle toward the zero-cost state.
         float rest_pressure = clampf(phys.drive(PhysVar::kFatigue) + phys.drive(PhysVar::kEnergy), 0.0f, 1.0f);
-        float keep = 1.0f - rest_pressure * kTuning.action.rest_pull_gain;
+        float keep = 1.0f - rest_pressure * g_tuning.action.rest_pull_gain;
 
         constexpr float kDt = 0.05f;  // behavior tick, see main.cpp
         float reflex[SensorimotorPolicy::kMaxOut] = {};
@@ -83,7 +83,7 @@ public:
             policy_.propose(body, phys, kDt, reflex);
         }
 
-        float ou_decay = expf(-kDt / kTuning.action.noise_tau_s);
+        float ou_decay = expf(-kDt / g_tuning.action.noise_tau_s);
         float ou_kick = sqrtf(1.0f - ou_decay * ou_decay);
 
         float taken[SensorimotorPolicy::kMaxOut] = {};
@@ -97,12 +97,12 @@ public:
 
             // Unit-variance OU process: persistent, smooth, zero-mean.
             ou_[i] = ou_decay * ou_[i] + ou_kick * gaussian();
-            float explore = ou_[i] * fuzz * span * kTuning.action.noise_gain * (1.0f + spatial_nudge);
+            float explore = ou_[i] * fuzz * span * g_tuning.action.noise_gain * (1.0f + spatial_nudge);
 
             float bias = 0.0f;
             if (have_bias) {
                 int8_t dir = ContingencyMemory::decode_channel(action_code, i);
-                bias = static_cast<float>(dir) * confidence * span * kTuning.action.contingency_gain;
+                bias = static_cast<float>(dir) * confidence * span * g_tuning.action.contingency_gain;
             }
 
             float target = clampf((reflex[i] + explore) * keep + bias, a.spec().range_min, a.spec().range_max);

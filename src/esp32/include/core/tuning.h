@@ -2,7 +2,10 @@
 //
 // Every tunable rate/gain/threshold in the behavior engine, in one place, so
 // changing "how curious" or "how fast energy drains" doesn't require hunting
-// through five files. Structural constants (table sizes, bit widths, probe
+// through five files. Together these are the organism's constitution: its
+// comfort bands and temperament. g_tuning is mutable so a constitution can
+// be set at runtime (the simulator gives each organism its own; later the
+// dashboard's Config tab) without recompiling. Structural constants (table sizes, bit widths, probe
 // bounds) stay next to the code they size instead — those aren't things
 // you'd tune, only things you'd resize if you changed the underlying data
 // layout.
@@ -10,6 +13,27 @@
 // All rates are "per second" so behavior is independent of tick rate.
 
 struct Tuning {
+    // Comfortable band per physiology variable, in PhysVar order: energy,
+    // fatigue, safety, arousal, curiosity, boredom. Outside its band a
+    // variable becomes a drive. Curiosity's band is unused (its drive is its
+    // value). Energy's lower edge is where hunger starts: 0.65 is about
+    // half charge on a LiPo read across its full voltage span.
+    struct {
+        float lo[6] = {0.65f, 0.0f, 0.7f, 0.0f, 0.0f, 0.0f};
+        float hi[6] = {1.0f, 0.6f, 1.0f, 0.7f, 1.0f, 0.4f};
+    } bands;
+
+    // Exploration width (Physiology::fuzz_scale) from drives: curiosity,
+    // boredom and hunger widen it (foraging), threat narrows it (freezing).
+    struct {
+        float curiosity = 0.3f;
+        float boredom = 0.4f;
+        float hunger = 0.3f;
+        float threat = 0.3f;
+        float min = 0.05f;
+        float max = 0.8f;
+    } exploration;
+
     struct {
         float adaptation_tau_s = 10.0f;     // how fast a channel's noise floor is learned
         float salience_k = 3.0f;            // change must exceed k x a channel's typical jitter
@@ -88,4 +112,4 @@ struct Tuning {
     } safety_monitor;
 };
 
-constexpr Tuning kTuning{};
+inline Tuning g_tuning{};

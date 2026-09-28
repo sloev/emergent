@@ -28,18 +28,18 @@ void SafetyMonitor::enforce(Body& body, float dt_s) {
     battery_critical_ = false;
     if (energy_sensor_index_ >= 0) {
         float level = body.sensor_at(static_cast<size_t>(energy_sensor_index_)).last_value();
-        battery_critical_ = level < kTuning.safety_monitor.critical_battery_level;
+        battery_critical_ = level < g_tuning.safety_monitor.critical_battery_level;
     }
 
     size_t n = body.actuator_count() < Body::kMaxActuators ? body.actuator_count() : Body::kMaxActuators;
     for (size_t i = 0; i < n; i++) {
         Actuator& a = body.actuator_at(i);
 
-        float accum = thermal_accum_[i] + a.cost() * dt_s - kTuning.safety_monitor.thermal_cooldown_rate * dt_s;
+        float accum = thermal_accum_[i] + a.cost() * dt_s - g_tuning.safety_monitor.thermal_cooldown_rate * dt_s;
         if (accum < 0.0f) accum = 0.0f;
         thermal_accum_[i] = accum;
 
-        thermal_tripped_[i] = accum > kTuning.safety_monitor.thermal_limit;
+        thermal_tripped_[i] = accum > g_tuning.safety_monitor.thermal_limit;
 
         if (battery_critical_ || thermal_tripped_[i]) {
             a.write(0.0f);

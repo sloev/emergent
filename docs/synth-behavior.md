@@ -134,45 +134,52 @@ We aim for an architecture that:
 
 ```mermaid
 graph TD
-    env_world["Environment<br/>(physical & social)"]
+    env_world["Environment<br/>(room, station, light, walls)"]
 
     body_sensors["Sensors"]
-    body_smux["Sensor Mux<br/>& Normalization"]
-    body_actgate["Actuator<br/>Gateway"]
+    body_smux["Normalization<br/>(0..1 per channel)"]
+    body_actgate["Actuator Gateway<br/>(clamp, rate limit)"]
+    safety["Safety Floor<br/>(thermal, battery)"]
 
-    core_phys["Physiology<br/>(internal vars)"]
-    core_drives["Drives"]
+    core_phys["Physiology<br/>(adaptation, habituation)"]
+    core_drives["Drives<br/>(squared: reward = drop)"]
     core_cont["Contingency<br/>Memory"]
     core_space["Spatial<br/>Memory"]
+    core_reflex["Learned Reflexes<br/>(per-drive maps)"]
     core_gen["Action<br/>Generator"]
 
-    obs_ui["Telemetry /<br/>Web UI"]
+    obs_ui["Dashboard /<br/>Life-state JSON"]
 
     env_world --> body_sensors
     body_sensors --> body_smux
 
-    body_actgate --> env_world
-
     body_smux --> core_phys
     body_smux --> core_cont
     body_smux --> core_space
+    body_smux --> core_reflex
 
     core_phys --> core_drives
 
     core_drives --> core_gen
+    core_drives -->|"gates + reward"| core_reflex
+    core_drives -->|"reward"| core_cont
     core_cont  --> core_gen
     core_space --> core_gen
+    core_reflex --> core_gen
 
+    core_gen -->|"exploration taken"| core_reflex
     core_gen --> body_actgate
-    core_gen --> core_cont
-    core_gen --> core_space
+    body_actgate --> safety
+    safety --> env_world
 
     core_phys -.-> obs_ui
     core_cont -.-> obs_ui
     core_space -.-> obs_ui
 ```
 
-This diagram uses simple node IDs, HTML `<br/>` for multi-line labels, and only ASCII characters to avoid Mermaid parsing issues.
+Everything above the gateway is the behavior engine, header-only and identical in the
+firmware and the [simulator](../src/sim/README.md). The only reward anywhere is the drop
+in drive pressure; the only privileged wire is battery → `h_energy`.
 
 ### 4.2 Layers and Responsibilities
 
@@ -184,7 +191,8 @@ This diagram uses simple node IDs, HTML `<br/>` for multi-line labels, and only 
   - Maintains physiology and drives.  
   - Tracks contingencies between action deltas and sensor deltas.  
   - Maintains a coarse spatial map.  
-  - Generates new actions from baseline + noise + memory-derived bias.
+  - Learns sensor→actuator reflexes from drive reduction.  
+  - Generates new actions from reflexes + correlated exploration noise + memory-derived bias.
 
 - **Observation layer**  
   - Streams internals for analysis and visualization.  
@@ -476,16 +484,26 @@ on). It does not know which way that place is.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> UpdatePhysiology
+    [*] --> Sense
 
+    Sense --> UpdatePhysiology
     UpdatePhysiology --> UpdateContingency
     UpdateContingency --> UpdateSpatial
-    UpdateSpatial --> GenerateAction
-    GenerateAction --> SafetyEnforce
-    SafetyEnforce --> UpdatePhysiology
+    UpdateSpatial --> CreditReflexes
+    CreditReflexes --> ProposeAction
+    ProposeAction --> Actuate
+    Actuate --> SafetyEnforce
+    SafetyEnforce --> Sense
+
+    note right of CreditReflexes
+        reward = drop in drive pressure
+        since the previous tick
+    end note
 ```
 
-One pass every 50 ms (20 Hz), inside Arduino `loop()`.
+One pass every 50 ms (20 Hz), inside Arduino `loop()`. `CreditReflexes` and
+`ProposeAction` both happen inside `ActionGenerator::tick()`: the reflexes are first
+credited with how drives changed since the last action, then propose the next one.
 
 ### 9.2 Core Loop Pseudocode
 
@@ -782,6 +800,31 @@ vehicle.
   with a 3 s eligibility trace, so a docking reward that arrives seconds after an
   approach still credits the approach. Credit goes to the exploration sample itself,
   which is zero-mean by construction.
+
+```mermaid
+graph LR
+    s["sensor inputs<br/>(each minus its 5 min mean)"]
+    b["constant 1"]
+    m0["map: always"]
+    mE["map: energy"]
+    mS["map: safety"]
+    mB["map: boredom ..."]
+    sum["sum, each map scaled<br/>by its drive (0..1)"]
+    out["reflex proposal<br/>per actuator"]
+    s --> m0
+    s --> mE
+    s --> mS
+    s --> mB
+    b --> m0
+    b --> mE
+    b --> mS
+    b --> mB
+    m0 --> sum
+    mE --> sum
+    mS --> sum
+    mB --> sum
+    sum --> out
+```
 
 ```text
 e[k][i][j] <- λ·e + (1-λ)·gate_k·x_i·ξ_j        ξ = exploration sample on actuator j

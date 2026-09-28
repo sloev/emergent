@@ -45,9 +45,9 @@ inline uint32_t contingency_quantize_deltas(const float* now, const float* prev,
     for (size_t i = 0; i < n; i++) {
         float d = now[i] - prev[i];
         int8_t sym = 0;
-        if (d > kTuning.contingency.deadzone) {
+        if (d > g_tuning.contingency.deadzone) {
             sym = 1;
-        } else if (d < -kTuning.contingency.deadzone) {
+        } else if (d < -g_tuning.contingency.deadzone) {
             sym = -1;
         }
         code = encode_channel_delta(code, i, sym);
@@ -139,10 +139,10 @@ public:
             for (size_t i = 0; i < kCapacity; i++) {
                 if (!table_[i].occupied) continue;
 
-                table_[i].strength = decay_strength(table_[i].strength, kTuning.contingency.decay_rate);
+                table_[i].strength = decay_strength(table_[i].strength, g_tuning.contingency.decay_rate);
                 table_[i].age = bump_age_saturating(table_[i].age);
 
-                if (should_prune(table_[i].strength, kTuning.contingency.prune_threshold)) {
+                if (should_prune(table_[i].strength, g_tuning.contingency.prune_threshold)) {
                     table_[i] = ContingencyEntry{};
                     count_--;
                 }
@@ -333,7 +333,7 @@ private:
                 e.action_code = action_code;
                 e.sensor_code = sensor_code;
                 e.ctx_hash = ctx_hash;
-                e.strength = kTuning.contingency.learn_rate;
+                e.strength = g_tuning.contingency.learn_rate;
                 e.mean_drive_delta = drive_delta;
                 e.age = 0;
                 count_++;
@@ -341,8 +341,8 @@ private:
             }
 
             if (e.action_code == action_code && e.sensor_code == sensor_code && e.ctx_hash == ctx_hash) {
-                e.strength += kTuning.contingency.learn_rate * (1.0f - e.strength);
-                e.mean_drive_delta += kTuning.contingency.learn_rate * (drive_delta - e.mean_drive_delta);
+                e.strength += g_tuning.contingency.learn_rate * (1.0f - e.strength);
+                e.mean_drive_delta += g_tuning.contingency.learn_rate * (drive_delta - e.mean_drive_delta);
                 e.age = 0;
                 return slot;
             }
@@ -361,7 +361,7 @@ private:
         e.action_code = action_code;
         e.sensor_code = sensor_code;
         e.ctx_hash = ctx_hash;
-        e.strength = kTuning.contingency.learn_rate;
+        e.strength = g_tuning.contingency.learn_rate;
         e.mean_drive_delta = drive_delta;
         e.age = 0;
         return weakest_slot;
