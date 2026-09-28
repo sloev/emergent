@@ -98,6 +98,17 @@ public:
                 w = (vr - vl) / plan_.wheel_base;
                 break;
             }
+            case Loco::kWheelServo: {
+                // Continuous-rotation servos: small deadband, speed varies a
+                // few percent between units.
+                auto sp = [&](float u, float k) {
+                    return std::fabs(u) < 0.05f ? 0.0f : u * plan_.max_speed * k;
+                };
+                float vl = sp(val(Role::kLocoLeft), 0.97f), vr = sp(val(Role::kLocoRight), 1.03f);
+                v = 0.5f * (vl + vr);
+                w = (vr - vl) / plan_.wheel_base;
+                break;
+            }
             case Loco::kDiffDc: {
                 // Gearmotors: no motion below ~15% duty, ~0.3 s to spin up,
                 // and two "identical" motors never quite match.
@@ -167,6 +178,11 @@ public:
                 draw += d.current_a * mag;
                 noise_ += d.noise * mag;
                 if (d.role == Role::kHaptic) vibration_ += a[i];
+                // A solenoid knocks on the rising edge: loud, and felt.
+                if (d.role == Role::kKnock && a[i] > 0.5f && prev_act_[i] <= 0.5f) {
+                    noise_ += 1.0f;
+                    vibration_ += 2.0f;
+                }
             }
         }
         for (size_t i = 0; i < a.size(); i++) prev_act_[i] = a[i];
@@ -183,6 +199,9 @@ public:
         soc_ = std::clamp(soc_, 0.0f, 1.0f);
 
         jolt_ = (bumped_ && !was_bumped_) ? 1.0f : 0.0f;
+        yaw_rate_ = w;
+        // Motors warm the body a little; the thermistor mostly reads the room.
+        self_heat_ += (std::min(1.0f, draw_ / 2.0f) - self_heat_) * dt / 120.0f;
         was_bumped_ = bumped_;
     }
 
@@ -242,6 +261,20 @@ public:
                 return clamp01(charge_ / cfg_.charge_current_a + 0.01f * n01(rng_));
             case Sense::kAccel:
                 return clamp01(0.4f * vibration_ + jolt_ + 0.02f * n01(rng_));
+            case Sense::kTurn:
+                return clamp01(0.5f + yaw_rate_ / 6.0f + 0.01f * n01(rng_));
+            case Sense::kWarmth: {
+                // Room field: charger warm (+3 C within ~0.5 m), window cool
+                // (-2 C at the top wall); 15..30 C mapped to 0..1. Slow sensor.
+                float d = distance_to_station();
+                float c = 21.0f + 3.0f * std::exp(-d * d / 0.25f) - 2.0f * (pose_.y / cfg_.room_h) + 1.5f * self_heat_;
+                if (charging_) c += 1.0f;
+                warm_ += (c - warm_) * 0.05f / 5.0f;
+                return clamp01((warm_ - 15.0f) / 15.0f + 0.003f * n01(rng_));
+            }
+            case Sense::kRadioMsg:
+                // The station broadcasts its state byte: idle, charging, full.
+                return charging_ ? (soc_ > 0.98f ? 1.0f : 0.6f) : 0.2f;
             case Sense::kProprio: {
                 const ActuatorDef& d = plan_.actuators[static_cast<size_t>(s.proprio_of)];
                 float v = prev_act_[static_cast<size_t>(s.proprio_of)];
@@ -341,6 +374,9 @@ private:
     float noise_ = 0.0f;
     float vibration_ = 0.0f;
     float jolt_ = 0.0f;
+    float yaw_rate_ = 0.0f;
+    float self_heat_ = 0.0f;
+    float warm_ = 21.0f;
     float dc_speed_[2];
     bool bumped_ = false, was_bumped_ = false;
     bool docked_ = false;

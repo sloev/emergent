@@ -1,8 +1,8 @@
 CXX ?= g++
-CXXFLAGS ?= -O2 -std=gnu++17 -Wall -Wextra -Wno-class-memaccess
+CXXFLAGS ?= -O2 -pthread -std=gnu++17 -Wall -Wextra -Wno-class-memaccess
 INCLUDES = -I../esp32/include -I.
 
-emergent-sim: main.cpp world.h sim_body.h body_plan.h $(wildcard ../esp32/include/core/*.h)
+emergent-sim: main.cpp world.h sim_body.h body_plan.h $(wildcard ../esp32/include/core/*.h) $(wildcard ../esp32/include/life/*.h)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) main.cpp -o $@
 
 clean:

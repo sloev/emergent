@@ -31,6 +31,7 @@ enum class Loco : uint8_t {
     kVibro2,       // two vibration motors (Kilobot-like): slow, noisy, turns by imbalance
     kVibro1,       // one vibration motor (bristlebot): speed only, curves and wanders
     kCrawler,      // two servo legs: thrust only on the backward sweep, so it must oscillate
+    kWheelServo,   // two continuous-rotation servos as wheels: small deadband, modest speed
 };
 
 enum class Sense : uint8_t {
@@ -45,6 +46,9 @@ enum class Sense : uint8_t {
     kChargeCurrent,  // INA219 on the charge input: current flowing in
     kAccel,          // accelerometer magnitude: vibration, jolts
     kProprio,        // position feedback of one of its own servos
+    kTurn,           // gyro yaw rate (MPU6050): 0.5 = not turning
+    kWarmth,         // NTC thermistor: the charger runs warm, the window side cool
+    kRadioMsg,       // last byte heard over ESP-NOW (the station says its state)
 };
 
 enum class Role : uint8_t {
@@ -53,6 +57,9 @@ enum class Role : uint8_t {
     kVibro,                  // vibro1's only motor
     kHead,                   // servo panning head-mounted sensors
     kLed, kBuzzer, kFan, kHaptic,
+    kKnock,                  // solenoid tapper: a sharp sound and a jolt
+    kRadio,                  // ESP-NOW broadcast of one byte
+    kSwitch,                 // generic on/off load (relay, magnet, pump)
 };
 
 struct SensorDef {
@@ -108,6 +115,7 @@ inline const char* loco_name(Loco l) {
         case Loco::kVibro2: return "two vibration motors";
         case Loco::kVibro1: return "one vibration motor";
         case Loco::kCrawler: return "servo crawler";
+        case Loco::kWheelServo: return "continuous-servo wheels";
     }
     return "?";
 }
@@ -120,6 +128,7 @@ inline const char* loco_short(Loco l) {
         case Loco::kVibro2: return "vibro-2";
         case Loco::kVibro1: return "vibro-1";
         case Loco::kCrawler: return "crawler";
+        case Loco::kWheelServo: return "servo-wheels";
     }
     return "?";
 }
@@ -137,6 +146,9 @@ inline const char* sense_name(Sense s) {
         case Sense::kChargeCurrent: return "charge-current";
         case Sense::kAccel: return "accel";
         case Sense::kProprio: return "proprio";
+        case Sense::kTurn: return "turn";
+        case Sense::kWarmth: return "warmth";
+        case Sense::kRadioMsg: return "radio-message";
     }
     return "?";
 }
@@ -153,6 +165,9 @@ inline const char* role_name(Role r) {
         case Role::kBuzzer: return "buzzer";
         case Role::kFan: return "fan";
         case Role::kHaptic: return "haptic";
+        case Role::kKnock: return "knock";
+        case Role::kRadio: return "radio";
+        case Role::kSwitch: return "switch";
     }
     return "?";
 }
@@ -226,11 +241,12 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
 
     // Locomotion.
     float w = r.uni(0, 1);
-    p.loco = w < 0.22f ? Loco::kDiffStepper
-             : w < 0.37f ? Loco::kDiffDc
-             : w < 0.52f ? Loco::kTricycle
-             : w < 0.72f ? Loco::kVibro2
-             : w < 0.82f ? Loco::kVibro1
+    p.loco = w < 0.18f ? Loco::kDiffStepper
+             : w < 0.32f ? Loco::kDiffDc
+             : w < 0.46f ? Loco::kWheelServo
+             : w < 0.58f ? Loco::kTricycle
+             : w < 0.74f ? Loco::kVibro2
+             : w < 0.84f ? Loco::kVibro1
                          : Loco::kCrawler;
 
     auto act = [&](Role role, const std::string& name, const std::string& part, ActuatorKind kind, float mn,
@@ -255,6 +271,14 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
             float a = r.uni(0.3f, 0.6f);
             act(Role::kLocoLeft, "motor_left", "N20 gearmotor + DRV8833", ActuatorKind::kPwmBidirectional, -1, 1, 4, 1, a, 0.25f);
             act(Role::kLocoRight, "motor_right", "N20 gearmotor + DRV8833", ActuatorKind::kPwmBidirectional, -1, 1, 4, 1, a, 0.25f);
+            break;
+        }
+        case Loco::kWheelServo: {
+            p.radius = r.uni(0.06f, 0.10f);
+            p.max_speed = r.uni(0.08f, 0.15f);
+            p.wheel_base = p.radius * 1.5f;
+            act(Role::kLocoLeft, "wheel_left", "continuous-rotation servo", ActuatorKind::kPwmBidirectional, -1, 1, 4, 0.5f, 0.3f, 0.15f);
+            act(Role::kLocoRight, "wheel_right", "continuous-rotation servo", ActuatorKind::kPwmBidirectional, -1, 1, 4, 0.5f, 0.3f, 0.15f);
             break;
         }
         case Loco::kTricycle: {
@@ -295,8 +319,10 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
     if (head) act(Role::kHead, "head_pan", "SG90 servo", ActuatorKind::kServo, -1, 1, 2, 0.2f, 0.15f, 0.05f);
     if (r.chance(0.6f)) act(Role::kLed, "led", "LED", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.1f, 0.03f, 0.0f);
     if (r.chance(0.4f)) act(Role::kBuzzer, "buzzer", "piezo", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.1f, 0.03f, 0.8f);
-    if (!small && r.chance(0.15f)) act(Role::kFan, "fan", "30 mm fan", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.4f, 0.15f, 0.4f);
-    if (!small && r.chance(0.15f)) act(Role::kHaptic, "haptic", "vibration motor", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.2f, 0.08f, 0.2f);
+    if (!small && r.chance(0.2f)) act(Role::kKnock, "knock", "5 V solenoid tapper", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.3f, 0.4f, 0.0f);
+    if (!small && r.chance(0.15f)) act(Role::kHaptic, "vibe", "vibration motor", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.2f, 0.08f, 0.2f);
+    if (r.chance(0.3f)) act(Role::kRadio, "radio", "ESP-NOW broadcast", ActuatorKind::kPwmUnipolar, 0, 1, 0, 0.02f, 0.01f, 0.0f);
+    if (!small && r.chance(0.1f)) act(Role::kSwitch, "switch", "relay", ActuatorKind::kDigitalOut, 0, 1, 0, 0.1f, 0.07f, 0.0f);
 
     // Battery: 1-3 LiPo cells. Tiny bodies carry tiny packs.
     p.cells = small ? 1 : 1 + r.pick(3);
@@ -317,7 +343,6 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
         s.name = std::string("light_") + detail::side(s.angle) + (s.on_head ? "_head" : "") + "_" + std::to_string(i);
         add(s);
     }
-    if (r.chance(0.3f)) add({Sense::kAmbientLight, "light_up", "LDR facing up"});
     if (r.chance(0.6f)) add({Sense::kMic, "mic", "MAX4466 envelope"});
     int n_bump = r.pick(3);
     for (int i = 0; i < n_bump; i++) {
@@ -342,15 +367,12 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
         }
         add(s);
     }
-    if (r.chance(0.35f)) add({Sense::kChargeCurrent, "charge_in", "INA219 on charge input"});
-    if (r.chance(0.4f)) add({Sense::kAccel, "accel", "MPU6050 magnitude"});
-    for (size_t j = 0; j < p.actuators.size(); j++) {
-        if (p.actuators[j].kind == ActuatorKind::kServo && r.chance(0.5f)) {
-            SensorDef s{Sense::kProprio, "feel_" + p.actuators[j].name, "servo feedback pot"};
-            s.proprio_of = static_cast<int>(j);
-            add(s);
-        }
+    if (r.chance(0.45f)) {
+        add({Sense::kAccel, "shake", "MPU6050 accel magnitude"});
+        if (r.chance(0.7f)) add({Sense::kTurn, "turn", "MPU6050 gyro yaw"});
     }
+    if (r.chance(0.35f)) add({Sense::kWarmth, "warmth", "NTC thermistor"});
+    if (r.chance(0.35f)) add({Sense::kRadioMsg, "radio_heard", "ESP-NOW receive"});
 
     // Temperament: the same knobs the firmware exposes, drawn around the
     // defaults. Each draw gets a word so a reader can tell organisms apart.
