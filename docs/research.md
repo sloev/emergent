@@ -104,6 +104,81 @@ From game design: crafting legible behavior signatures humans can read and respo
 
 ---
 
+## Modality Ideas (Speculative)
+
+Moved out of the spec: none of these sensors or actuators exist on the
+reference boards, and none of these behaviors has been observed.
+
+### Light and Phototaxis-Like Behavior
+
+**Inputs:** `light_*`, `temperature`.  
+**Outputs:** motors, servos, LEDs, heater.
+
+Emergent possibilities:
+
+- drift toward brightness (windows, lamps) when curiosity-like drives dominate,  
+- retreat from heat when safety worsens with rising temperature,  
+- internal variables entrained to day/night cycles, yielding activity rhythms.
+
+Self-emitted LEDs can support **self-inspection** and **inter-robot signaling** when robots see each other’s flashes.
+
+### RF Fields as Digital Gradients
+
+**Inputs:** `rf_rssi_*`.  
+**Outputs:** locomotion, RF beacons.
+
+RF strength often correlates with human presence, power availability, or network access. The system may discover that:
+
+- some locations yield higher `rf_rssi` and later improvements to energy-related variables,  
+- beacons define **digital territories**.
+
+From a sociology and urban-studies perspective, these are analogues of public squares, Wi-Fi hotspots, and infrastructure hubs.
+
+### Chemosensation and Scent Trails
+
+**Inputs:** `gas`, `humidity`, etc.  
+**Outputs:** `pump`, `atomizer`, brush or fan.
+
+Robots can:
+
+- lay down “chemical signatures” where certain drives improved,  
+- later follow or avoid regions with those signatures,  
+- converge on trail networks analogous to ant foraging paths, shaped by evaporation and deposition.
+
+This is direct hardware for stigmergy experiments.
+
+### Touch and Collision
+
+**Inputs:** `touch_*`, sudden IMU changes.  
+**Outputs:** motors, vibration, LEDs, sound.
+
+Collisions are never special-cased. They are just patterns where:
+
+- certain touch or IMU channels spike when certain actions are taken,  
+- those spikes correlate with later changes in `h_safety`, `h_energy`, etc.
+
+From repeated exposure, the system can:
+
+- favor motion patterns that reduce the chance of these patterns,  
+- or, under some experimental manipulations, seek them.
+
+This aligns with classical conditioning and simple risk-avoidance or risk-seeking learning.
+
+### Acoustic and Vibrational Coupling
+
+**Inputs:** microphone bands, peak frequency.  
+**Outputs:** `grind_motor`, `vibe_motor`, general motion.
+
+Uses:
+
+- self-monitoring of actuator health (motor sound spectra),  
+- emergent “mechanical voice” where actuation patterns become expressive,  
+- inter-robot signaling through coded bursts of vibration or tone sequences.
+
+This connects to bioacoustics and human–robot interaction via tapping, clapping, or speech-like patterns.
+
+---
+
 ## What This Project Would Illustrate, If It Works
 
 This architecture is a bet that:

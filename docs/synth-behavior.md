@@ -20,33 +20,23 @@
    1. [Data Structure](#71-data-structure)  
    2. [Update Algorithm](#72-update-algorithm)  
    3. [No Privileged Semantics](#73-no-privileged-semantics)  
-- 8\. [Spatial Memory and Navigation](#8-spatial-memory-and-navigation)
-   1. [Spatial Representation](#81-spatial-representation)  
-   2. [Action Biasing from Space](#82-action-biasing-from-space)  
+- 8\. [Spatial Memory](#8-spatial-memory)
+   1. [Places from Sensor Signatures](#81-places-from-sensor-signatures)  
+   2. [Explore/Exploit Modulation, Not Steering](#82-exploreexploit-modulation-not-steering)  
 - 9\. [Core Loop](#9-core-loop)
    1. [Behavior Flow Diagram](#91-behavior-flow-diagram)  
    2. [Core Loop Pseudocode](#92-core-loop-pseudocode)  
-- 10\. [Input/Output Modalities and Emergent Uses](#10-inputoutput-modalities-and-emergent-uses)
-    1. [Light and Phototaxis-Like Behavior](#101-light-and-phototaxis-like-behavior)  
-    2. [RF Fields as Digital Gradients](#102-rf-fields-as-digital-gradients)  
-    3. [Chemosensation and Scent Trails](#103-chemosensation-and-scent-trails)  
-    4. [Touch and Collision](#104-touch-and-collision)  
-    5. [Acoustic and Vibrational Coupling](#105-acoustic-and-vibrational-coupling)  
-    6. [Battery as “Just Another Input”, Coupled to Energy](#106-battery-as-just-another-input-coupled-to-energy)  
-- 11\. [Charging Station as an Emergent Attractor](#11-charging-station-as-an-emergent-attractor)
+- 10\. [Battery as “Just Another Input”, Coupled to Energy](#10-battery-as-just-another-input-coupled-to-energy)
+- 11\. [Charging Station](#11-charging-station)
 - 13\. [Life-State Persistence and Body Transfer](#13-life-state-persistence-and-body-transfer)
 - 14\. [Implementation on ESP32-Class Hardware](#14-implementation-on-esp32-class-hardware)
-    1. [Software Structure](#141-software-structure)  
+    1. [Software Structure](#141-software-structure-as-implemented)  
     2. [Memory and Timing Constraints](#142-memory-and-timing-constraints)  
-- 15\. [Experimental Program and Ablations](#15-experimental-program-and-ablations)
+- 15\. [Experimental Program and Ablations (Planned)](#15-experimental-program-and-ablations-planned)
 
-History, prior art, "personality"/social speculation, and philosophical
-framing that used to live in this document — as sections 2, 12, 16, 17, 18 —
-have moved to [research.md](research.md), a separate, explicitly-not-the-spec
-document, per [issue #2](https://github.com/sloev/emergent/issues/2): this
-document should be a short, falsifiable description of working code, not a
-6,000-word essay in the critical path. Numbering below keeps each remaining
-section's original number rather than renumbering the whole document.
+This document describes what the firmware does. History, prior art,
+speculative modality ideas, and philosophy live in [research.md](research.md).
+Section numbers are kept stable, so there are gaps (2, 12).
 
 ---
 
@@ -219,6 +209,10 @@ Example actuator set:
 | `heater`             | continuous | 0 … 1    | Local thermal field                       |
 | `electromagnet`      | continuous | 0 … 1    | Gripping, field perturbation              |
 
+The reference boards (`src/esp32/include/boards/`) wire only `motor_left/right`,
+`led_status`, `led_r/g/b`, and `head_pan`. Implemented actuator kinds:
+`kPwmUnipolar`, `kPwmBidirectional`, `kDigitalOut`, `kServo`.
+
 Each actuator has:
 
 - range and rate limits,  
@@ -244,11 +238,15 @@ Example sensors:
 | `battery_voltage`, `current` | continuous  | ADC monitoring of power rails            |
 | `internal_temp`              | continuous  | MCU or board temperature                 |
 
+The reference boards wire only `battery_voltage`, `touch_bump`, and
+`rf_rssi_station`. Implemented sensor kinds: `kAdcNormalized`, `kDigitalIn`,
+`kWifiRssi`.
+
 Battery signals enter at this layer as raw numbers, like any other sensor.
 
 ### 5.3 Body Schema as an Emergent Construct
 
-We do **not** predefine kinematics or a body model. Instead, the system gradually learns regularities such as:
+We do **not** predefine kinematics or a body model. The intent (untested on hardware) is that contingency memory picks up regularities such as:
 
 - “When `motor_left` and `motor_right` change like this, IMU and `distance_front` change like that.”  
 - “When `servo_pan` increases, a particular light sensor often saturates.”
@@ -339,7 +337,8 @@ Entry:
     sensor_delta_code    # compressed Δsensor at t
     strength             # reliability / confidence
     age                  # ticks since last reinforcement
-    ctx_hash (optional)  # coarse context (space, physiology bins)
+    ctx_hash             # 1 bit per physiology variable, set if >= 0.5
+    mean_drive_delta     # EMA of how much total drive fell after this pattern
 ```
 
 Quantization and hashing compress high-dimensional deltas into small codes so memory remains bounded.
@@ -347,15 +346,18 @@ Quantization and hashing compress high-dimensional deltas into small codes so me
 ### 7.2 Update Algorithm
 
 ```python
-LEARN = 0.1
-DECAY = 0.005
-MAX_ENTRIES = 1024
+LEARN = 0.1          # kTuning.contingency.learn_rate
+DECAY = 0.005        # kTuning.contingency.decay_rate
+PRUNE = 0.02         # kTuning.contingency.prune_threshold
+MAX_ENTRIES = 256    # ContingencyMemory::kCapacity
 
-def update_contingency(mem, d_action, d_sensor, ctx_hash=None):
-    # decay existing entries
+def update_contingency(mem, d_action, d_sensor, ctx_hash):
+    # decay existing entries; reclaim ones that decayed to nothing
     for e in mem.values():
         e.strength *= (1.0 - DECAY)
-        e.age += 1
+        e.age = min(e.age + 1, AGE_MAX)
+        if e.strength < PRUNE:
+            del mem[e.key]
 
     key = hash_quantized(d_action, d_sensor, ctx_hash)
 
@@ -373,10 +375,10 @@ def update_contingency(mem, d_action, d_sensor, ctx_hash=None):
         )
 
     if len(mem) > MAX_ENTRIES:
-        prune(mem)  # drop weakest / oldest
+        evict_weakest(mem)
 ```
 
-When generating new actions, the system can query for entries whose `sensor_delta_code` historically led to improvements in drives and bias toward their `action_delta_code`.
+When generating new actions, the system queries for entries whose `sensor_delta_code` is within a small Hamming distance of what it just observed and whose `mean_drive_delta` is positive (the pattern helped), and biases toward the best one's `action_delta_code`. Patterns that only made drives worse are never recalled.
 
 ### 7.3 No Privileged Semantics
 
@@ -393,57 +395,56 @@ Those are interpretations we may assign later. For the agent, there are only:
 
 ---
 
-## 8. Spatial Memory and Navigation
+## 8. Spatial Memory
 
-### 8.1 Spatial Representation
+No supported board has a positioning sensor: no encoders, no IMU, no GPS.
+So a "place" is a sensor signature, and spatial memory **cannot steer**. It
+only changes how much exploration noise the action generator injects.
 
-We use a light-weight spatial representation, for example a coarse 2-D grid or a set of “place cells”.
+### 8.1 Places from Sensor Signatures
 
-Each cell stores:
+Each sensor reading in [0,1] is binned into its quartile (2 bits per
+channel). The packed bits are the place's signature: two spots that read
+the same are the same place, and one spot whose readings drift is several
+places. With the reference boards' three sensors there are at most 64
+distinct places.
 
-- visitation count and recency,  
-- average changes in key drives when entering, staying, or leaving,  
-- simple summaries of observed contingencies there.
+A table of 32 cells (open addressing, evict least-visited) stores, per place:
+
+- `signature`,
+- `visit_count`, and `age` (ticks since last visit, saturating),
+- `drive_improvement[var]` — EMA (rate 0.15) of how much each drive fell
+  per tick while here.
 
 ```mermaid
 graph LR
-    cell["Spatial Cell"]
-    vstat["Visit Stats"]
-    dprof["Drive Profiles"]
-    csum["Local Contingency<br/>Summaries"]
+    sig["Sensor Signature<br/>(quartile per channel)"]
+    cell["Place Cell"]
+    vstat["Visit Count / Age"]
+    dimp["Drive Improvement<br/>per variable"]
 
+    sig --> cell
     cell --> vstat
-    cell --> dprof
-    cell --> csum
+    cell --> dimp
 ```
 
-### 8.2 Action Biasing from Space
-
-When drives are high, spatial memory suggests promising directions.
+### 8.2 Explore/Exploit Modulation, Not Steering
 
 ```python
-def best_cell_for(drives, spatial_map):
-    best_score, best_cell = -1e9, None
-    for cell in spatial_map.cells:
-        score = 0.0
-        for name, d in drives.items():
-            w = DRIVE_WEIGHTS.get(name, 1.0)
-            score += w * cell.expected_improvement[name]
-        if score > best_score:
-            best_score, best_cell = score, cell
-    return best_cell
+def spatial_nudge(phys, spatial, body):
+    best = max(spatial.cells, key=lambda c: sum(phys.drive[v] * c.drive_improvement[v] for v in VARS))
+    if best is None or best.score <= 0:
+        return 0.0
+    m = clamp(best.score * SPATIAL_GAIN, 0.0, SPATIAL_NUDGE_MAX)   # 0.5, 0.3
+    return -m if best.signature == signature(body) else +m
 
-def spatial_bias(position, drives, spatial_map):
-    cell = best_cell_for(drives, spatial_map)
-    if cell is None:
-        return zero_action_bias()
-    direction = cell.center - position
-    motor_bias = direction_to_motor(direction)
-    urgency = max(drives.values())
-    return motor_bias * urgency
+# in the action generator, per actuator:
+noise_term = noise() * fuzz * span * NOISE_GAIN * (1 + spatial_nudge)
 ```
 
-A “charging corner” is simply a region where internal energy tends to improve.
+If the current place is the best one remembered for what's pressing now,
+noise narrows (stay). If a better place is remembered, noise widens (move
+on). It does not know which way that place is.
 
 ---
 
@@ -453,138 +454,48 @@ A “charging corner” is simply a region where internal energy tends to improv
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Sense
+    [*] --> UpdatePhysiology
 
-    Sense --> UpdatePhys
-    UpdatePhys --> ComputeDrives
-    ComputeDrives --> QueryMemory
-    QueryMemory --> GenerateAction
-    GenerateAction --> Actuate
-    Actuate --> WaitPropagation
-    WaitPropagation --> SenseOutcome
-    SenseOutcome --> UpdateContingency
-    UpdateContingency --> UpdateSpace
-    UpdateSpace --> Sense
-
+    UpdatePhysiology --> UpdateContingency
+    UpdateContingency --> UpdateSpatial
+    UpdateSpatial --> GenerateAction
+    GenerateAction --> SafetyEnforce
+    SafetyEnforce --> UpdatePhysiology
 ```
 
-This uses standard `stateDiagram-v2` syntax and simple state names.
+One pass every 50 ms (20 Hz), inside Arduino `loop()`.
 
 ### 9.2 Core Loop Pseudocode
 
+Mirrors `loop()` in `src/esp32/src/main.cpp`:
+
 ```c
-void tick() {
-    // 1. Sense
-    SensorReadings s_t = read_sensors();
+void behavior_tick(float dt_s, uint32_t now_ms) {
+    // 1. Physiology + drives. Reads the energy sensor and actuator costs;
+    //    curiosity consumes contingency memory's prediction error from the
+    //    previous tick.
+    phys.update(body, dt_s, contingency.last_surprise());
 
-    // 2. Internal updates
-    update_physiology(&phys, s_t);             // includes battery -> h_energy mapping
-    DriveVector drives = compute_drives(phys, drive_targets);
+    // 2. Learn. Contingency: (Δactuators since last tick, Δsensors since
+    //    last tick, physiology context bits) -> reinforce/insert, tagged
+    //    with how total drive changed. The previous tick's action is judged
+    //    by what the sensors did over the following 50 ms; there is no
+    //    separate propagation delay.
+    contingency.update(body, phys, dt_s);
+    spatial.update(body, phys, dt_s);   // place signature + drive change here
 
-    // 3. Candidate actions
-    ActionVector a_base  = generate_baseline_action();
-    float        fuzz    = calculate_fuzz_scale(drives);
-    ActionVector a_noise = sample_noise_vector() * fuzz;
+    // 3. Act. For each actuator not under manual override:
+    //    next = clamp(current + rest_pull + noise * (1 + spatial_nudge) + contingency_bias)
+    action_gen.tick(body, phys, contingency, spatial, now_ms);
 
-    BiasVector b_cont  = contingency_bias(memory, phys, s_t);
-    BiasVector b_space = spatial_bias(position, drives, spatial_map);
-
-    ActionVector a_t = clamp_action(a_base + a_noise + b_cont + b_space);
-
-    // 4. Act
-    apply_actions(a_t);
-
-    // 5. Wait for physical propagation
-    delay_ms(PROPAGATION_DELAY);
-
-    // 6. Observe consequences
-    SensorReadings s_tp1 = read_sensors();
-
-    DeltaAction d_a = diff_actions(prev_action, a_t);
-    DeltaSensor d_s = diff_sensors(s_t, s_tp1);
-
-    // 7. Learn
-    uint32_t ctx = context_hash(position, phys);
-    update_contingency(&memory, d_a, d_s, ctx);
-    update_spatial(&spatial_map, position, drives, d_s);
-
-    prev_action = a_t;
+    // 4. Hard limits, last: per-channel thermal budget, critical-battery cut.
+    safety.enforce(body, dt_s);
 }
 ```
 
 ---
 
-## 10. Input/Output Modalities and Emergent Uses
-
-### 10.1 Light and Phototaxis-Like Behavior
-
-**Inputs:** `light_*`, `temperature`.  
-**Outputs:** motors, servos, LEDs, heater.
-
-Emergent possibilities:
-
-- drift toward brightness (windows, lamps) when curiosity-like drives dominate,  
-- retreat from heat when safety worsens with rising temperature,  
-- internal variables entrained to day/night cycles, yielding activity rhythms.
-
-Self-emitted LEDs can support **self-inspection** and **inter-robot signaling** when robots see each other’s flashes.
-
-### 10.2 RF Fields as Digital Gradients
-
-**Inputs:** `rf_rssi_*`.  
-**Outputs:** locomotion, RF beacons.
-
-RF strength often correlates with human presence, power availability, or network access. The system may discover that:
-
-- some locations yield higher `rf_rssi` and later improvements to “social” or energy-related variables,  
-- beacons define **digital territories**.
-
-From a sociology and urban-studies perspective, these are analogues of public squares, Wi-Fi hotspots, and infrastructure hubs.
-
-### 10.3 Chemosensation and Scent Trails
-
-**Inputs:** `gas`, `humidity`, etc.  
-**Outputs:** `pump`, `atomizer`, brush or fan.
-
-Robots can:
-
-- lay down “chemical signatures” where certain drives improved,  
-- later follow or avoid regions with those signatures,  
-- converge on trail networks analogous to ant foraging paths, shaped by evaporation and deposition.
-
-This is direct hardware for stigmergy experiments.
-
-### 10.4 Touch and Collision
-
-**Inputs:** `touch_*`, sudden IMU changes.  
-**Outputs:** motors, vibration, LEDs, sound.
-
-Collisions are never special-cased. They are just patterns where:
-
-- certain touch or IMU channels spike when certain actions are taken,  
-- those spikes correlate with later changes in `h_safety`, `h_energy`, etc.
-
-From repeated exposure, the system can:
-
-- favor motion patterns that reduce the chance of these patterns,  
-- or, under some experimental manipulations, seek them.
-
-This aligns with classical conditioning and simple risk-avoidance or risk-seeking learning.
-
-### 10.5 Acoustic and Vibrational Coupling
-
-**Inputs:** microphone bands, peak frequency.  
-**Outputs:** `grind_motor`, `vibe_motor`, general motion.
-
-Uses:
-
-- self-monitoring of actuator health (motor sound spectra),  
-- emergent “mechanical voice” where actuation patterns become expressive,  
-- inter-robot signaling through coded bursts of vibration or tone sequences.
-
-This connects to bioacoustics and human–robot interaction via tapping, clapping, or speech-like patterns.
-
-### 10.6 Battery as “Just Another Input”, Coupled to Energy
+## 10. Battery as “Just Another Input”, Coupled to Energy
 
 **Inputs:** `battery_voltage`, `current`.  
 **No explicit “charge” routine.**
@@ -593,14 +504,13 @@ Battery signals enter as normal sensor channels. The only “privilege” they h
 
 - `h_energy` is updated partly from battery readings and partly from behavior-dependent load estimates,  
 - `h_energy` is then treated like any other internal variable; drives are deviations from a comfortable band,  
-- if certain spatial regions or action patterns systematically raise `battery_voltage`, those patterns become associated with improvements in `h_energy`,  
-- drives then bias future exploration toward them.
+- action patterns that precede a rise in `battery_voltage` are stored in contingency memory with a positive `mean_drive_delta`, so they can be recalled as bias when `h_energy` is low.
 
-Externally, this looks like self-charging behavior. Internally, it is homeostatic regulation driven by sensor streams and contingencies.
+Whether that adds up to something an observer would call self-charging is the hypothesis in §11.7, not a result. Other modality ideas (phototaxis, scent trails, acoustic signaling) are in [research.md](research.md).
 
 ---
 
-## 11. Charging Station as an Emergent Attractor
+## 11. Charging Station
 
 The charging station is part of the **ecology**, not a coded “home base”. It should:
 
@@ -614,7 +524,7 @@ From the robot’s perspective, the station is just a **cluster of regularities*
 - being near this object correlates with rising `battery_voltage`,  
 - and with consistent patterns on other sensors (light, sound, RF, etc.).
 
-Over time, those regularities make station-seeking behavior emergent.
+The hypothesis (§11.7) is that those regularities are enough for the robot to end up at the station when energy is low. The station firmware in `src/station` implements the RF beacon, LED, and click cues; nothing has been observed on hardware.
 
 ### 11.1 Station Architecture Overview
 
@@ -907,9 +817,9 @@ To stay microcontroller-friendly:
 
 ---
 
-## 15. Experimental Program and Ablations
+## 15. Experimental Program and Ablations (Planned)
 
-To treat this as a *scientific* platform:
+None of this has been run. It is the plan for turning the §11.7 hypothesis into a measured result:
 
 ### 15.1 Metrics
 

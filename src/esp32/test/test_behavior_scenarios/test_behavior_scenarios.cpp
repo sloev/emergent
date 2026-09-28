@@ -144,10 +144,36 @@ void test_repeated_pattern_biases_action_generator(void) {
     TEST_ASSERT_TRUE(trained_output > fresh_output + 0.05f);
 }
 
+// --- scenario 4: a pattern that only ever made things worse is not recalled --
+//
+// query_bias() answers "what did I do last time this happened, that
+// helped?". A matching entry whose drive pressure *rose* afterwards
+// (mean_drive_delta < 0) is not an answer to that — biasing toward it
+// would repeat whatever made things worse.
+
+void test_harmful_pattern_is_not_recalled_as_bias(void) {
+    uint32_t action_code = ContingencyMemory::encode_channel(0, 0, 1);
+    uint32_t sensor_code = ContingencyMemory::encode_channel(0, 0, 1);
+
+    ContingencyMemory harmful;
+    harmful.restore_raw(action_code, sensor_code, 0, 0.9f, -0.5f, 0);
+
+    uint32_t out_action_code = 0;
+    float out_confidence = 0.0f;
+    TEST_ASSERT_FALSE(harmful.query_bias(sensor_code, out_action_code, out_confidence));
+
+    // Same entry with the sign flipped (it helped) is recalled.
+    ContingencyMemory helpful;
+    helpful.restore_raw(action_code, sensor_code, 0, 0.9f, 0.5f, 0);
+    TEST_ASSERT_TRUE(helpful.query_bias(sensor_code, out_action_code, out_confidence));
+    TEST_ASSERT_EQUAL_INT8(1, ContingencyMemory::decode_channel(out_action_code, 0));
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_energy_falls_under_sustained_actuator_cost);
     RUN_TEST(test_energy_rises_toward_high_energy_sensor);
     RUN_TEST(test_repeated_pattern_biases_action_generator);
+    RUN_TEST(test_harmful_pattern_is_not_recalled_as_bias);
     return UNITY_END();
 }
