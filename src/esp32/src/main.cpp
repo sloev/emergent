@@ -1,136 +1,64 @@
-// Emergent firmware entry point.
-//
-// One loop(): sense -> physiology/drives -> memory query -> action ->
-// actuate -> learn, gated to ~20 Hz by elapsed millis() (kBehaviorTickMs)
-// below, plus a ~1 Hz slow tick (kSlowTickMs) for logging. No FreeRTOS
-// tasks, no interrupts — PWM output is hardware LEDC (runs continuously
-// once configured) and ADC reads are on-demand via Sensor::read() (cached
-// per update_rate_hz), so a single loop() is enough. Actuators drive
-// themselves each tick unless a human is actively overriding a channel from
-// the dashboard (Actuator::manual_override_active).
+// Emergent firmware: the body's channels in, the organism, the body's
+// channels out, at 20 Hz. Everything the robot does comes from
+// ../../organism.h; this file only wires it to pins.
 
 #include <Arduino.h>
+#include <WiFi.h>
 
+#include <cstring>
+
+#include "../../organism.h"
 #include "body/body.h"
 #include "board_config.h"
-#include "core/action_generator.h"
-#include "core/contingency_memory.h"
-#include "core/physiology.h"
-#include "core/safety_monitor.h"
-#include "core/spatial_memory.h"
-#include "core/state_logger.h"
-#include "net/dashboard_server.h"
-#include "net/wifi_ap.h"
 
 namespace {
-constexpr uint32_t kBehaviorTickMs = 50;  // 20 Hz, within the 15-30 Hz the article targets
-constexpr uint32_t kSlowTickMs = 1000;    // ~1 Hz
-}
+constexpr uint32_t kTickMs = 50;
+constexpr float kBatteryFloor = 0.05f;  // below this energy reading every output is held at 0
 
-static Body body(active_board());
-static Physiology phys;
-static ContingencyMemory contingency;
-static SpatialMemory spatial;
-static ActionGenerator action_gen;
-static SafetyMonitor safety;
-static StateLogger logger;
-
-static void self_test() {
-    const BoardConfig& board = active_board();
-
-    Serial.println();
-    Serial.print("[emergent] board profile: ");
-    Serial.println(board.name);
-
-    Serial.print("[emergent] actuators (");
-    Serial.print(body.actuator_count());
-    Serial.println("):");
-    for (size_t i = 0; i < body.actuator_count(); i++) {
-        Actuator& a = body.actuator_at(i);
-        Serial.print("  - ");
-        Serial.print(a.name());
-        Serial.print("  range [");
-        Serial.print(a.spec().range_min);
-        Serial.print(", ");
-        Serial.print(a.spec().range_max);
-        Serial.println("]");
-    }
-
-    Serial.print("[emergent] sensors (");
-    Serial.print(body.sensor_count());
-    Serial.println("):");
-    for (size_t i = 0; i < body.sensor_count(); i++) {
-        Sensor& s = body.sensor_at(i);
-        Serial.print("  - ");
-        Serial.print(s.name());
-        Serial.print(" = ");
-        Serial.println(s.read());
-    }
-}
+Body body(active_board());
+life::Organism org;
+float in[life::Organism::kMaxIn];
+float out[life::Organism::kMaxOut];
+int energy = -1;
+}  // namespace
 
 void setup() {
     Serial.begin(115200);
-    delay(200);
-
+    WiFi.mode(WIFI_STA);  // RSSI sensors scan for the station's beacon
     body.begin();
-    // WiFi mode has to be set before anything reads a sensor — self_test()
-    // below reads every sensor including a possible SensorKind::kWifiRssi,
-    // which needs AP_STA (not the plain AP default) to scan at all.
-    wifi_ap::begin(active_board());
-    self_test();
-    phys.begin(body);
-    contingency.begin(body);
-    spatial.begin(body);
-    action_gen.begin(body);
-    safety.begin(body);
 
-    dashboard::begin(body, phys, contingency, spatial, safety);  // mounts LittleFS
-    logger.begin();
+    const BoardConfig& b = active_board();
+    uint32_t pain = 0;
+    for (size_t i = 0; i < body.sensor_count(); i++) {
+        const SensorSpec& s = body.sensor_at(i).spec();
+        if (s.hurts) pain |= 1u << i;
+        if (b.energy_sensor && strcmp(s.name, b.energy_sensor) == 0) energy = static_cast<int>(i);
+    }
+    bool bipolar[life::Organism::kMaxOut] = {};
+    for (size_t j = 0; j < body.actuator_count(); j++) bipolar[j] = body.actuator_at(j).spec().range_min < 0.0f;
+
+    life::Genome g;
+    g.seed = esp_random() | 1u;  // a new individual each boot until genomes are flashed
+    org.begin(g, body.sensor_count(), body.actuator_count(), energy, pain, bipolar);
+    Serial.printf("[emergent] %s: %u inputs, %u outputs\n", b.name, static_cast<unsigned>(body.sensor_count()),
+                  static_cast<unsigned>(body.actuator_count()));
 }
 
 void loop() {
-    static uint32_t last_toggle_ms = 0;
-    static uint32_t last_tick_ms = 0;
-    static uint32_t last_slow_ms = 0;
-    static bool led_on = false;
-
+    static uint32_t last_ms = millis(), last_log_ms = 0;
     uint32_t now = millis();
+    if (now - last_ms < kTickMs) return;
+    float dt = (now - last_ms) / 1000.0f;
+    last_ms = now;
 
-    // Heartbeat: proves a flashed board is alive without a serial monitor.
-    // Uses write_manual() so the action generator treats led_status as
-    // permanently human/system-owned rather than fighting over it — the
-    // same generic mechanism dashboard sliders use, not a hardcoded
-    // exception for this one channel.
-    Actuator* led = body.actuator("led_status");
-    if (now - last_toggle_ms >= (led_on ? 150u : 850u)) {
-        led_on = !led_on;
-        if (led) led->write_manual(led_on ? 1.0f : 0.0f);
-        last_toggle_ms = now;
+    for (size_t i = 0; i < body.sensor_count(); i++) in[i] = body.sensor_at(i).read();
+    org.tick(in, out, dt);
+    bool flat = energy >= 0 && in[energy] < kBatteryFloor;
+    for (size_t j = 0; j < body.actuator_count(); j++) body.actuator_at(j).write(flat ? 0.0f : out[j]);
+
+    if (now - last_log_ms >= 1000) {
+        last_log_ms = now;
+        Serial.printf("hunger %.2f full %.2f pain %.2f bored %.2f dopa %+.2f place %d/%u\n", org.hunger(), org.fullness(),
+                      org.pain(), org.boredom(), org.dopamine(), org.place(), static_cast<unsigned>(org.place_count()));
     }
-
-    // Behavior tick: sense -> physiology/drives -> memory update -> act.
-    // Physiology's curiosity term consumes contingency's last_surprise()
-    // from the *previous* tick, since this tick's contingency.update()
-    // (which recomputes it) hasn't run yet — a harmless one-tick lag at
-    // 20 Hz, standard for this kind of feedback loop.
-    if (now - last_tick_ms >= kBehaviorTickMs) {
-        float dt_s = (now - last_tick_ms) / 1000.0f;
-        phys.update(body, dt_s, contingency.last_surprise());
-        contingency.update(body, phys, dt_s);
-        spatial.update(body, phys, dt_s);
-        action_gen.tick(body, phys, contingency, spatial, now);
-        // Independent hard floor, enforced last so nothing upstream — drives,
-        // memory bias, even a manual dashboard override — gets a vote once a
-        // limit is crossed.
-        safety.enforce(body, dt_s);
-        last_tick_ms = now;
-    }
-
-    // Slow task: bounded flash log for later offline analysis.
-    if (now - last_slow_ms >= kSlowTickMs) {
-        logger.tick(body, phys, now);
-        last_slow_ms = now;
-    }
-
-    dashboard::loop_tick(body, phys, safety);
 }

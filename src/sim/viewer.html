@@ -113,7 +113,7 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
   <header>
     <div class="eyebrow">Emergent · simulator</div>
     <h1>Emergent Observatory</h1>
-    <p class="lede">Simulated organisms running the unmodified firmware behavior engine in a 3 × 2.5 m room with a charging station on the right wall. Each starts with every learned reflex at zero and is told only each channel's kind and range, plus which input is its battery. <a href="https://github.com/sloev/emergent/blob/main/src/sim/README.md">How the simulator works</a> · <a href="https://github.com/sloev/emergent/blob/main/src/sim/ZOO.md">Full zoo report</a></p>
+    <p class="lede">One simulated organism running the unmodified <code>organism.h</code> in a 3 × 2.5 m room with charging stations. It is told only each channel's kind and range, which input is its battery, and which inputs hurt. <a href="https://github.com/sloev/emergent#simulator">How the simulator works</a></p>
   </header>
 
   <section class="box who" aria-live="polite">
@@ -446,7 +446,7 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
 
   function load(file) {
     $("status").textContent = "Loading " + file + "…";
-    return fetch("sim/traces/" + file).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(data => {
+    return fetch("traces/" + file).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(data => {
       T = data; meta = data.meta; org = meta.organism; rows = data.rows; N = rows.length;
       col = {}; meta.columns.forEach((c, k) => col[c] = k);
       const tu = org.tuning || {};
@@ -489,7 +489,7 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
       playBtn.textContent = playing ? "Pause" : "Play";
       $("status").textContent = "";
       render();
-    }).catch(err => { $("status").textContent = "Couldn't load the trace (" + err.message + "). Regenerate it with the commands in src/sim/README.md."; });
+    }).catch(err => { $("status").textContent = "Couldn't load the trace (" + err.message + "). Regenerate it with the commands in the README."; });
   }
 
   function dots(res) {
@@ -499,8 +499,8 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
   }
 
   Promise.all([
-    fetch("sim/traces/index.json").then(r => r.json()),
-    fetch("sim/zoo.json").then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch("traces/index.json").then(r => r.json()),
+    Promise.resolve(null),
   ]).then(([index, zoo]) => {
     const pick = $("pick");
     index.traces.forEach(tr => { const o = document.createElement("option"); o.value = tr.file; o.textContent = tr.label; pick.appendChild(o); });

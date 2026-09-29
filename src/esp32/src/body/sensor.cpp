@@ -53,8 +53,7 @@ float Sensor::read_hardware() {
 }
 
 // WiFi.scanNetworks() blocks for seconds if called synchronously — long
-// enough to stall the 20 Hz behavior tick and freeze the dashboard's web
-// server mid-request. Kick off an async scan (scanNetworks(true, ...)) and
+// enough to stall the 20 Hz behavior tick. Kick off an async scan (scanNetworks(true, ...)) and
 // harvest the result on a *later* call instead. Consequence, disclosed
 // rather than hidden: this channel's value only actually changes every few
 // seconds (one scan cycle), no matter how often read() is called.

@@ -21,4 +21,5 @@ struct SensorSpec {
                              // cycle takes a few seconds regardless.
     const char* target_ssid = nullptr;  // kWifiRssi only: SSID to track (e.g. a
                                          // charging station's beacon)
+    bool hurts = false;                  // jolts on this input are pain (e.g. a bumper)
 };

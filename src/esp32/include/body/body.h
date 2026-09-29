@@ -6,9 +6,7 @@
 #include "body/sensor.h"
 #include "board_config.h"
 
-// Owns the live Actuator/Sensor instances for a board. This is the only
-// place that knows how many channels exist; everything above it (self-test,
-// dashboard, later the behavior engine) talks to channels by name.
+// Owns the live Actuator/Sensor instances for a board.
 class Body {
 public:
     static constexpr size_t kMaxActuators = 16;

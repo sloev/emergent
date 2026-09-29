@@ -134,7 +134,7 @@ public:
         started_ = true;
     }
 
-    // --- introspection (dashboard, simulator, tests) -----------------------
+    // --- introspection (firmware log, simulator, tests) -----------------------
     float hunger() const { return hunger_; }
     float fullness() const { return fullness_; }
     float pain() const { return pain_; }

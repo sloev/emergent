@@ -1,17 +1,37 @@
-# Research Notes: Theory, Prior Art, and Philosophy
+# Research: Prior Work and Ideas
 
-[← Back to project overview](index.html)
+[← README](README.md)
 
-This is **not the spec**. [`synth-behavior.md`](synth-behavior.md) describes
-what the firmware actually does; this document is the theoretical
-background, prior-art comparison, speculative extensions, and philosophical
-framing that used to live inside it, split out per
-[issue #2](https://github.com/sloev/emergent/issues/2) so the spec stays a
-short, falsifiable description of working code. Nothing here is a claim
-about what this project *has done* — treat every present-tense description
-below as illustrative or aspirational, not observed.
+Background, prior work and ideas not yet built. Nothing here is a claim about what
+the project does; the [README](README.md) is.
 
----
+## Where each mechanism comes from
+
+| Mechanism in `organism.h` | Source |
+|---|---|
+| Reward = reduction of squared homeostatic need | Keramati & Gutkin 2014, homeostatic reinforcement learning |
+| Satiety: more of a good thing stops being pleasant | Cabanac 1971, alliesthesia |
+| Curiosity as learning progress, not prediction error | Schmidhuber 1991/2010; Oudeyer, Kaplan & Hafner 2007 (intelligent adaptive curiosity) |
+| Count-based novelty of places | Bellemare et al. 2016; place cells: O'Keefe & Nadel 1978 |
+| Fixed random recurrent brain, learned readout | reservoir computing (Jaeger 2001; Maass et al. 2002); reward-modulated readout learning: Hoerzer, Legenstein & Maass 2014 |
+| Dopamine as reward-prediction error; three-factor rule with eligibility traces | Schultz, Dayan & Montague 1997; Gerstner et al. 2018 |
+| Hormones as the knobs of learning and exploration | Doya 2002, metalearning and neuromodulation |
+| Pleasure of being a cause (engagement) | White 1959, effectance motivation |
+| Evolved instincts, refined by learning | Baldwin effect; Hinton & Nowlan 1987 |
+| Two-speed habits and sleep consolidation (planned) | complementary learning systems: McClelland, McNaughton & O'Reilly 1995; replay during sleep |
+| Signaling only when both sides gain | Lewis 1969 signaling games; Lowe et al. 2019 |
+
+## Ideas not yet built
+
+- **Fatigue** as a need: recent effort per output, relieved by rest (M3).
+- **Sleep**: consolidation while docked and calm (M2).
+- **Proprioceptive heading**: stepper step counts or a gyro integrated into the place
+  situation, so places carry direction.
+- **Social curiosity**: two organisms in one room; measure information between one's
+  light/sound/radio and the other's state (M4).
+- **Stigmergy**: leaving traces (light, RF tags) that later change behavior.
+- **Morphology co-evolution**: evolving the body plan along with the genome in the
+  simulator.
 
 ## Historical and Conceptual Background
 
@@ -50,7 +70,7 @@ In computational neuroscience and RL, **homeostatic reinforcement learning** (HR
 
 Recent work such as Yoshida & Kuniyoshi's "Embodied Neural Homeostat" demonstrates that homeostasis-driven RL can yield **integrated behaviors** like walking, foraging, and temperature control in real robots, using internal energy and temperature dynamics as primary signals.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)
 
-This platform is intentionally lighter: no full value-function-based HRL pipeline. Instead: a small set of **drives** over internal variables, a **contingency memory** that biases action sampling based on past outcomes, and stochastic policy sampling rather than gradient-based RL. Conceptually, it sits between hand-crafted behavior trees and fully learned policies.
+This platform is intentionally lighter: a linear readout of a small fixed recurrent network, trained online by one three-factor rule, on a microcontroller. Conceptually, it sits between hand-crafted behavior trees and fully learned policies.
 
 ### Embodied Cognition, Ethology, and Stigmergy
 
@@ -66,7 +86,7 @@ Several concepts from economics and game theory parallel this design:
 - **Utility concavity** and **risk aversion** in economic theory mirror homeostatic drive concavity: as an internal variable approaches its comfortable range, the marginal value of further gains diminishes, encouraging risk-averse choices.(Keramati & Gutkin, 2014)
 - **Mixed strategies** in evolutionary game theory correspond to **stochastic policies** in RL and to this project's use of controlled randomness: never fully deterministic, always exploring.
 
-This architecture adopts these indirectly: drives are concave around target ranges, stochastic action generation acts like a mixed strategy over embodied moves, and spatial/contingency memories coarsely approximate value estimates without ever computing them as such.
+This architecture adopts these indirectly: needs are convex (squared) around set-points, exploration noise acts like a mixed strategy over embodied moves, and a TD value estimate over senses and places does the bookkeeping.
 
 ### Emergent Behavior in Animal-Inspired Robotics
 
@@ -90,13 +110,13 @@ Repeated action sequences that improve curiosity/arousal-related drives could in
 
 ### Individual Differences and "Personality"
 
-Because exploration is stochastic, memory is lossy, and spatial histories differ, nominally identical robots *should* develop distinct behavioral profiles — what behavioral ecology calls "behavioral syndromes". Candidate measurements: risk tolerance (distance to obstacles, collision rate), exploration rate (spatial coverage), sociality (time near other agents), persistence (how long patterns are repeated). None of these metrics are currently computed or logged anywhere in the firmware — an earlier draft of the spec described a life-state field for some of them (`stats.risk_tolerance`, `stats.mean_speed`) that was never implemented; the real life-state schema is in `synth-behavior.md` §13.
+Because exploration is stochastic, memory is lossy, and spatial histories differ, nominally identical robots *should* develop distinct behavioral profiles — what behavioral ecology calls "behavioral syndromes". Candidate measurements: risk tolerance (distance to obstacles, collision rate), exploration rate (spatial coverage), sociality (time near other agents), persistence (how long patterns are repeated). In the simulator the genome is the obvious source of such differences; none of these metrics are computed yet.
 
 Psychology and psychiatry provide a rich vocabulary to interpret perturbations: altering decay rates or drive gains might yield lethargic, manic, compulsive, or avoidant "personalities" — untested.
 
 ### Social and Crowd-Level Effects
 
-With many robots in a shared environment, stigmergic cues (scent, RF, light patterns) could become shared media; simple local rules might yield clustering, segregation, or flocking-like motion; human movement could influence robot distributions and vice versa. This would connect to sociology (norm formation, crowd dynamics), collective behavior in animals, and economics of congestion/resource competition. Swarm-robotics work using evolutionary methods and NEAT to generate emergent group behavior offers a useful comparison point.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023) Entirely unimplemented: there is no multi-robot support, no `h_social` drive (considered, never wired to a sensor — see `synth-behavior.md` §6.1), no stigmergic channel.
+With many robots in a shared environment, stigmergic cues (scent, RF, light patterns) could become shared media; simple local rules might yield clustering, segregation, or flocking-like motion; human movement could influence robot distributions and vice versa. This would connect to sociology (norm formation, crowd dynamics), collective behavior in animals, and economics of congestion/resource competition. Swarm-robotics work using evolutionary methods and NEAT to generate emergent group behavior offers a useful comparison point.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023) Unimplemented: no multi-robot support yet (M4), no stigmergic channel.
 
 ### Game Design, Art, and Education
 
@@ -106,7 +126,7 @@ From game design: crafting legible behavior signatures humans can read and respo
 
 ## Modality Ideas (Speculative)
 
-Moved out of the spec: none of these sensors or actuators exist on the
+None of these sensors or actuators exist on the
 reference boards, and none of these behaviors has been observed.
 
 ### Light and Phototaxis-Like Behavior
@@ -116,8 +136,8 @@ reference boards, and none of these behaviors has been observed.
 
 Emergent possibilities:
 
-- drift toward brightness (windows, lamps) when curiosity-like drives dominate,  
-- retreat from heat when safety worsens with rising temperature,  
+- drift toward brightness (windows, lamps) while boredom dominates,  
+- retreat from heat if heat is declared to hurt,  
 - internal variables entrained to day/night cycles, yielding activity rhythms.
 
 Self-emitted LEDs can support **self-inspection** and **inter-robot signaling** when robots see each other’s flashes.
@@ -155,7 +175,7 @@ This is direct hardware for stigmergy experiments.
 Collisions are never special-cased. They are just patterns where:
 
 - certain touch or IMU channels spike when certain actions are taken,  
-- those spikes correlate with later changes in `h_safety`, `h_energy`, etc.
+- those spikes are declared `hurts`, or correlate with later changes in hunger.
 
 From repeated exposure, the system can:
 
@@ -185,19 +205,18 @@ This architecture is a bet that:
 
 1. **Believable creature-like behavior does not require big models.** Carefully structured local feedback, homeostatic drives, and bounded memory can produce behavior that observers interpret using rich psychological language.
 2. **Semantics can emerge from statistics.** Battery, collision, and RF signals start as untyped numbers. If they systematically affect internal variables, the hope is that the system comes to behave *as if* it understood "danger", "safety", or "charging", without symbolic representation.
-3. **Energy and ecology can be coupled without scripting goals.** The charging station is designed as an attractor in sensor and energy space; "seeking the charger" would be an emergent pattern, not a coded routine — this is the specific, unverified hypothesis tracked as v0.9.1 in the roadmap.
+3. **Energy and ecology can be coupled without scripting goals.** The charging station is designed as an attractor in sensor and energy space; "seeking the charger" would be an emergent pattern, not a coded routine.
 4. **Microcontrollers are sufficient for serious synthetic ethology.** By trading off explicit value functions and large networks for simpler homeostatic and statistical machinery, interesting experiments should run entirely on-device.
 5. **Robots can be used as physical thought experiments about behavior**, in the tradition of animal-inspired robots and homeostatic RL blurring lines between robotics, neuroscience, and ethology.(Synthesising Integrated Robot Behaviour through Reinforcement Learning for Homeostasis | bioRxiv, 2024)(Gomez-Marin & Zhang, 2022)
 
-None of these five are demonstrated yet. See `synth-behavior.md`'s Status table and §15 for what a real demonstration would require.
+None of these five are demonstrated yet.
 
 ### Possible Further Steps
 
 - **Richer physiology.** More internal variables (e.g., "temperature comfort") and their interactions.
-- **Minimal learning rules** closer to biological plasticity — Hebbian learning or predictive coding instead of the current contingency-memory scheme.
 - **Multi-agent experiments.** Several robots with shared or conflicting drives and simple stigmergic channels (scent, light, RF tags).
 - **Task-free vs. task-biased regimes.** Same architecture, different environment statistics, compared to explicit task-focused RL agents in the same morphology.
-- **Bridges to formal RL.** Treat contingency + spatial memory as approximate value structures and compare against HRL models in similar setups.(Keramati & Gutkin, 2014)
+- **Bridges to formal RL.** Compare against HRL agents in the same morphology.(Keramati & Gutkin, 2014)
 - **Open-world benchmarks.** Shared environments, metrics, and logging formats so others can run comparable experiments on their own microcontroller platforms.
 
 ---
@@ -211,7 +230,7 @@ While this project stresses **extreme on-device simplicity**, it sits in a broad
 - **Swarm emergent behavior with NEAT.** Work on *Learning Emergent Behavior in Robot Swarms with NEAT* evolves controllers for agents whose local rules yield collective patterns.(“Learning Emergent Behavior in Robot Swarms with NEAT,” 2023) Many of these controllers are available in public GitHub repositories (e.g., swarm benchmarks in CoppeliaSim), though typically targeting desktops or simulators.
 - **Animal-inspired neurorobotics.** A collection of neurorobotics papers shows robots as models for social interaction, vocalization, and goal-directed reaching, with code often accompanying publications via lab GitHub accounts.(Gomez-Marin & Zhang, 2022)
 
-Compared with these, this project's contribution (once built out) would be: an explicit, end-to-end specification of a pure-emergence architecture tuned for ESP32-class boards; an emphasis on semantic symmetry of all sensory channels (even battery); a concrete, low-profile charging station design intended to support emergent self-charging; a blueprint for life-state transfer and systematic ablation experiments.
+Compared with these, this project's contribution (once built out) would be: an explicit, end-to-end specification of a pure-emergence architecture tuned for ESP32-class boards; an emphasis on semantic symmetry of all sensory channels (even battery); a concrete, low-profile charging station design intended to support emergent self-charging; systematic ablation of every mechanism in simulation.
 
 ---
 

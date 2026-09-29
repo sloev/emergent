@@ -32,5 +32,5 @@ struct ActuatorSpec {
     float range_min;
     float range_max;
     float max_rate_per_s;   // max |change| per second the channel will accept; 0 = unlimited
-    float cost_per_unit;    // scales |value| into an abstract exertion cost (physiology, later)
+    float cost_per_unit;    // scales |value| into an abstract exertion cost
 };

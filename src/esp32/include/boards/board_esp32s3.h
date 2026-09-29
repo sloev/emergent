@@ -18,7 +18,7 @@ static const ActuatorSpec kActuatorsEsp32S3[] = {
 static const SensorSpec kSensorsEsp32S3[] = {
     // name              kind                        pin  update_rate_hz
     {"battery_voltage", SensorKind::kAdcNormalized,    4, 1.0f},
-    {"touch_bump",       SensorKind::kDigitalIn,        5, 0.0f},
+    {"touch_bump",       SensorKind::kDigitalIn,        5, 0.0f, nullptr, true},
     // rf_rssi_station: signal strength of a charging station's beacon
     // (see src/station/). update_rate_hz here means "no more than one scan
     // per 5s" — see body/sensor.cpp.
@@ -27,8 +27,6 @@ static const SensorSpec kSensorsEsp32S3[] = {
 
 static const BoardConfig kActiveBoard = {
     .name = "esp32-s3-devkitc-1",
-    .ap_ssid = "emergent-esp32s3",
-    .ap_password = "emergent1",
     .actuators = kActuatorsEsp32S3,
     .actuator_count = sizeof(kActuatorsEsp32S3) / sizeof(kActuatorsEsp32S3[0]),
     .sensors = kSensorsEsp32S3,

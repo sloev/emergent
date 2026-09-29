@@ -5,7 +5,7 @@
 // part each one models), its battery, and its temperament (a life::Genome,
 // the same struct the firmware runs on).
 //
-// Organism 0 is the example build from docs/example-body.md. Organisms 1..N
+// Organism 0 is the example build from README.md, "Hardware build". Organisms 1..N
 // are generated from a seed out of real, cheap parts: stepper or DC wheels,
 // a stepper with a steering servo, one or two vibration motors (bristlebot /
 // Kilobot style), or two servo "legs" that only move the body when they
@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "board_config.h"
-#include "life/organism.h"
+#include "organism.h"
 
 namespace sim {
 
@@ -172,7 +172,7 @@ inline const char* role_name(Role r) {
     return "?";
 }
 
-// --- the example build (docs/example-body.md) ------------------------------
+// --- the example build (README.md, "Hardware build") ------------------------------
 
 inline BodyPlan example_plan() {
     BodyPlan p;

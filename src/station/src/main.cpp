@@ -11,7 +11,7 @@
 // This firmware does NOT deliver charge current — that's a real battery
 // charger IC/module (e.g. a TP4056 for single-cell LiPo, sized for your
 // pack), wired in parallel with the sense pins below. This only watches
-// and signals. See README.md for the mechanical/circuit build notes this
+// and signals. See the repo README ("Hardware build") for the build notes this
 // firmware assumes.
 
 #include <Arduino.h>

@@ -91,8 +91,7 @@ float Actuator::write(float value) {
         // *longer* than that: elapsed_s would under-report the true gap
         // (wrapping back to a small number), which could freeze the
         // actuator for a tick instead of letting it jump. clamp_elapsed_
-        // seconds() bounds it to a sane ceiling regardless of cause — see
-        // body/rate_limit.h and test/native/test_rate_limit.cpp.
+        // seconds() bounds it to a sane ceiling regardless of cause .
         float elapsed_s = clamp_elapsed_seconds((now - last_write_us_) / 1'000'000.0f, kMaxElapsedS);
         target = apply_rate_limit(current_, target, spec_.max_rate_per_s, elapsed_s);
         last_write_us_ = now;
@@ -103,16 +102,6 @@ float Actuator::write(float value) {
     current_ = target;
     drive_hardware();
     return current_;
-}
-
-float Actuator::write_manual(float value) {
-    float applied = write(value);
-    last_manual_ms_ = millis();
-    return applied;
-}
-
-bool Actuator::manual_override_active(uint32_t now_ms, uint32_t window_ms) const {
-    return last_manual_ms_ != 0 && (now_ms - last_manual_ms_) < window_ms;
 }
 
 float Actuator::cost() const {

@@ -1,8 +1,6 @@
 #pragma once
 //
-// Pure rate-limiting math factored out of Actuator::write() — zero
-// dependency on Arduino, testable on the host (see
-// test/native/test_rate_limit.cpp).
+// Rate-limiting math for Actuator::write(), shared with the simulator.
 
 // Caps how far `current` can move toward `target` this call, to at most
 // max_rate_per_s * elapsed_s. max_rate_per_s <= 0 means "unlimited".

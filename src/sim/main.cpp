@@ -3,7 +3,6 @@
 // does. It also evolves the genome a robot is born with (--evolve).
 //
 //   ./emergent-sim --runs 8 --lives 6 --hours 3              # organism 0, every condition
-//   ./emergent-sim --organism 12 --json --runs 4 --lives 4   # one zoo organism, machine-readable
 //   ./emergent-sim --organism 12 --trace out.json --seed 3   # 1 Hz trace of every channel
 //   ./emergent-sim --organism 12 --describe                  # what organism 12 is made of
 //
@@ -22,7 +21,7 @@
 #include <vector>
 
 #include "body_plan.h"
-#include "life/organism.h"
+#include "organism.h"
 #include "sim_body.h"
 #include "world.h"
 
@@ -136,8 +135,7 @@ bool load_genome(const char* path, EvoGenome& e) {
 // One organism across one or more lives. A life ends when the battery is
 // flat away from the dock. The next life is what an experimenter would do
 // with the real robot: recharge it, put it down somewhere random, power it
-// on. Memories and reflexes persist (the firmware saves life-state);
-// physiology restarts from its boot values.
+// on. What it learned persists; needs and hormones restart.
 struct Runner {
     Runner(Condition c, const BodyPlan& p, const WorldConfig& w, float h, int n)
         : cond(c), plan(p), wcfg(w), hours(h), lives(n), world(wcfg, plan), body(plan),
@@ -576,7 +574,7 @@ struct Evolver {
 void usage() {
     fprintf(stderr,
             "usage: emergent-sim [--organism K] [--condition NAME|all] [--runs N] [--lives N] [--hours H]\n"
-            "                    [--seed S] [--rssi-period S] [--json] [--describe] [--trace FILE] [--trace-every S]\n"
+            "                    [--seed S] [--rssi-period S] [--describe] [--trace FILE] [--trace-every S]\n"
             "                    [--evolve G --pop P --births B --out genome.txt]   evolve innate wiring + constitution\n"
             "                    [--genome genome.txt]     run a saved (evolved) genome\n"
             "                    [--stations 1|2] [--station-buffer AH]   (0 = unlimited mains station)\n"
@@ -594,7 +592,7 @@ int main(int argc, char** argv) {
     int runs = 10, lives = 1, organism = 0;
     float hours = 0.0f;
     uint32_t seed = 1;
-    bool json = false, describe = false;
+    bool describe = false;
     const char* trace_path = nullptr;
     const char* genome_path = nullptr;
     const char* out_path = nullptr;
@@ -617,7 +615,6 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[i], "--hours")) hours = static_cast<float>(atof(next()));
         else if (!strcmp(argv[i], "--seed")) seed = static_cast<uint32_t>(atoi(next()));
         else if (!strcmp(argv[i], "--rssi-period")) wcfg.rssi_period_override = static_cast<float>(atof(next()));
-        else if (!strcmp(argv[i], "--json")) json = true;
         else if (!strcmp(argv[i], "--describe")) describe = true;
         else if (!strcmp(argv[i], "--trace")) trace_path = next();
         else if (!strcmp(argv[i], "--trace-every")) trace_interval_s = static_cast<float>(atof(next()));
@@ -705,35 +702,25 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    if (json) {
-        printf("{\"organism\":%s,\"runs\":%d,\"lives\":%d,\"hours\":%g,\"idle_endurance_h\":%g,\"conditions\":{",
-               plan_json(plan).c_str(), runs, lives, hours, idle_h);
-    } else {
-        printf("organism %s (%s; %s)\n", plan.title.c_str(), loco_name(plan.loco), plan.temperament.c_str());
-        printf("%d runs x %d lives (max %.1f h each; idle endurance %.2f h) per condition\n\n", runs, lives, hours, idle_h);
-        printf("%-18s %11s %6s %9s %8s %6s %9s %8s %15s %8s %8s %6s\n", "condition", "lifespan_h", "died", "dockings",
-               "docked%", "full%", "coverage", "speed", "dist hungry/ok", "entropy", "switches", "places");
-    }
+    printf("organism %s (%s; %s)\n", plan.title.c_str(), loco_name(plan.loco), plan.temperament.c_str());
+    printf("%d runs x %d lives (max %.1f h each; idle endurance %.2f h) per condition\n\n", runs, lives, hours, idle_h);
+    printf("%-18s %11s %6s %9s %8s %6s %9s %8s %15s %8s %8s %6s\n", "condition", "lifespan_h", "died", "dockings",
+           "docked%", "full%", "coverage", "speed", "dist hungry/ok", "entropy", "switches", "places");
 
     std::vector<std::pair<const char*, std::vector<Summary>>> curves;
-    bool first_cond = true;
     for (auto& ci : kConditions) {
         if (condition != "all" && condition != ci.name) continue;
         BodyPlan p = plan;
         if (ci.c == Condition::kNoBatteryLink) p.battery_linked = false;
         Summary life, died, docks, docked, fulld, cov, spd, dh, ds, ent, sw, pl;
         std::vector<Summary> curve(lives);
-        std::string lives_json, reflexes;
         for (int k = 0; k < runs; k++) {
             wcfg.seed = seed + k;
             auto r = std::make_unique<Runner>(ci.c, p, wcfg, hours, lives);
             r->evo = evo;
             std::vector<Metrics> ms = r->run_all();
-            if (k == 0 && ci.c == Condition::kFull) reflexes = reflexes_json(*r, 8);
-            lives_json += std::string(k ? "," : "") + "[";
             for (size_t li = 0; li < ms.size(); li++) {
                 const Metrics& m = ms[li];
-                lives_json += std::string(li ? "," : "") + metrics_json(m);
                 curve[li].add(m.lifespan_h);
                 life.add(m.lifespan_h);
                 died.add(m.died ? 1 : 0);
@@ -748,25 +735,14 @@ int main(int argc, char** argv) {
                 fulld.add(100 * m.full_docked_frac);
                 pl.add(m.places);
             }
-            lives_json += "]";
         }
-        if (json) {
-            printf("%s%s:{\"runs\":[%s]%s}", first_cond ? "" : ",", jstr(ci.name).c_str(), lives_json.c_str(),
-                   reflexes.empty() ? "" : (",\"reflexes\":" + reflexes).c_str());
-            first_cond = false;
-        } else {
-            printf("%-18s %5.2f±%-4.2f %5.0f%% %4.1f±%-3.1f %7.1f%% %5.0f%% %8.0f%% %8.3f %6.2f / %-6.2f %8.2f %8.1f %6.1f\n",
+        printf("%-18s %5.2f±%-4.2f %5.0f%% %4.1f±%-3.1f %7.1f%% %5.0f%% %8.0f%% %8.3f %6.2f / %-6.2f %8.2f %8.1f %6.1f\n",
                    ci.name, life.mean(), life.sd(), 100 * died.mean(), docks.mean(), docks.sd(), docked.mean(), fulld.mean(),
                    cov.mean(), spd.mean(), dh.mean(), ds.mean(), ent.mean(), sw.mean(), pl.mean());
-            fflush(stdout);
-        }
+        fflush(stdout);
         curves.emplace_back(ci.name, curve);
     }
 
-    if (json) {
-        printf("}}\n");
-        return 0;
-    }
     if (lives > 1) {
         printf("\nlifespan (h) by life number — does it get better at staying alive?\n%-18s", "condition");
         for (int li = 0; li < lives; li++) printf(" %6d", li + 1);

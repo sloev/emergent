@@ -1,10 +1,6 @@
 #pragma once
 //
-// Pure bounded-counter logic behind ESP32's 16 hardware LEDC channels,
-// factored out of Actuator for host-side testing (see
-// test/native/test_ledc_allocator.cpp). The real allocation path
-// (actuator.cpp) wraps this with the Serial logging and ledcSetup()/
-// ledcAttachPin() hardware calls that can't run on the host.
+// Bounded allocation of the ESP32's 16 hardware LEDC channels.
 //
 // ESP32 has exactly 16 LEDC channels. Silently handing out a 17th would
 // either alias two actuators onto the same channel (they'd fight over its
