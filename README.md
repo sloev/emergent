@@ -231,7 +231,38 @@ remembered. `--trace out.json` writes a 1 Hz trace that
 
 ### Results
 
-RESULTS
+First M1 run. Two populations of organism 0 evolved for 40 generations in the
+two-station world, one with the new traits (satiety, learning-progress curiosity,
+places) and one without. Each genome was then tested on 8 unseen rooms × 4
+consecutive lives, capped at 12 h:
+
+| Genome, traits | Lifespan (h) | Died | Docked | Places | By life 1 → 4 |
+|---|---|---|---|---|---|
+| evolved without, off | **12.0 ± 0.0** | 0% | 58% | – | 12.0 12.0 12.0 12.0 |
+| evolved without, switched on | 7.4 ± 5.0 | 50% | 37% | 4.5 | 8.6 8.0 6.3 6.6 |
+| evolved with, on | 7.9 ± 5.4 | 38% | 60% | 7.0 | 12.0 5.0 6.5 8.0 |
+| … satiety off | 9.5 ± 4.7 | 25% | 74% | 6.8 | 12.0 6.0 12.0 7.9 |
+| … progress off | 6.8 ± 5.5 | 50% | 57% | 7.8 | 10.7 3.8 8.9 3.7 |
+| … places off | 1.8 ± 1.1 | 100% | 49% | – | 2.2 1.7 2.2 1.4 |
+| no instincts, no learning | 1.9 ± 0.2 | 100% | 2% | 11.2 | |
+| random walk | 1.5 ± 0.2 | 100% | 37% | – | |
+
+What this says:
+
+- **Evolution works:** both evolved genomes outlive a random walk several times over.
+- **The traits don't help survival here; they hurt it.** The genome evolved without
+  them lives every life to the cap. It does so by camping: it stays within 5–13 cm of
+  one station and never visits the other (0 station switches). The world
+  doesn't punish camping enough, and survival is the only thing fitness rewards, so
+  the most lifelike genome isn't the fittest one. Switching places off in the
+  traits genome is fatal only because its instincts were evolved to use place
+  features.
+- `full%` (docked above 95% charge) read 0% everywhere: contacts chatter on and off,
+  so charge never tops out. The metric needs replacing (time docked while not hungry).
+
+Next for M1: a world where camping fails (station refill below idle draw, stations
+that go dark), a liveliness term in fitness (coverage, station switches), and a
+satiety test that doesn't depend on a full charge.
 
 ## Hardware build
 
@@ -278,7 +309,7 @@ the robot. Tune the thresholds in `include/tuning.h` against your pack.
 
 | | |
 |---|---|
-| Works in simulation | the organism, evolution, the traits above, measured against ablations and a random walk |
+| Works in simulation | the organism and evolution (survives several times longer than a random walk); the new traits don't yet pay off, see [results](#results) |
 | Firmware | runs the organism on the reference boards; built by CI on pull requests and `main`, **never run on hardware** |
 | Hypothesis | that this looks alive on a real robot. Unverified |
 
