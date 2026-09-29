@@ -13,15 +13,12 @@
 //              timescales from 0.1 s to 10 s, driven by the inputs and by a
 //              copy of its own outputs. Gives it short-term memory and
 //              rhythms without either being written.
-//   places     a handful of remembered situations ("places"): whatever the
-//              senses looked like when it was somewhere different enough.
-//              The nearest one is where it is; how often it has been there
-//              is how familiar that is. A map with no coordinates.
-//   needs      hunger (energy below its set-point), fullness (energy above
-//              its satiety point: nothing is pleasant forever), pain (from
-//              hurting inputs, fading), boredom (rises while it learns
-//              nothing new; relieved by learning progress and unfamiliar
-//              places). Need = sum of squares. Reward = need going down.
+//   places     remembered situations: a map with no coordinates.
+//   needs      hunger (energy below a set-point), fullness (above another),
+//              pain (from hurting inputs, fading), boredom (rises while it
+//              learns nothing; relieved by learning progress and by arriving
+//              somewhere unfamiliar). Need = sum of squares. Reward = need
+//              going down.
 //   hormones   dopamine   = surprise in reward (temporal-difference error of a
 //                           learned value estimate): the learning signal
 //              adrenaline = recent surprise and pain: more exploration, faster learning
@@ -149,11 +146,9 @@ public:
     float serotonin() const { return serotonin_; }
     float value() const { return value_; }
     float surprise() const { return surprise_; }
-    float progress() const { return progress_; }  // learning progress: prediction error falling
-    float interest() const { return interest_; }  // progress + unfamiliarity: what relieves boredom
-    int place() const { return place_; }          // which remembered place it is at, or -1
+    int place() const { return place_; }  // -1 before the first
     size_t place_count() const { return n_places_; }
-    float familiarity(size_t p) const { return p < kPlaces ? visits_[p] : 0.0f; }  // seconds spent there, fading
+    float familiarity(size_t p) const { return p < kPlaces ? visits_[p] : 0.0f; }  // seconds there, fading
     float exploration() const { return sigma_; }
     float neuron(size_t i) const { return y_[i]; }
     size_t input_count() const { return n_in_; }
@@ -176,15 +171,12 @@ public:
 
     void set_plasticity(bool on) { plastic_ = on; }
 
-    // Ablation switches, for measuring what each mechanism is worth. All on
-    // by default; off restores the simpler mechanism it replaced.
+    // Ablation: switch a mechanism off to measure what it's worth. Without
+    // progress, boredom is relieved by raw surprise, as before.
     struct Traits {
-        bool satiety = true;   // off: no fullness need
-        bool progress = true;  // off: boredom relieved by raw surprise, not learning progress
-        bool places = true;    // off: no place memory (no place features, no arrival novelty)
+        bool satiety = true, progress = true, places = true;
     };
     void set_traits(const Traits& t) { traits_ = t; }
-    const Traits& traits() const { return traits_; }
 
 private:
     // --- brain wiring: random, sparse, fixed for life ----------------------
@@ -229,10 +221,8 @@ private:
             for (size_t i = 0; i < n_in_; i++) {
                 float miss = in[i] - pred_[i];
                 float a = fabsf(miss);
-                // Learning progress: error over the last ~2 s below error
-                // over the last ~20 s means the model is getting this input
-                // right. Unlearnable noise keeps both equal and earns
-                // nothing, so a flickering light or hiss can't hold it.
+                // Learning progress: recent error below older error. Noise
+                // keeps both equal and earns nothing.
                 err_fast_[i] += fast * (a - err_fast_[i]);
                 err_slow_[i] += slow * (a - err_slow_[i]);
                 float gain = err_slow_[i] - err_fast_[i] - 0.15f * err_slow_[i] - 0.002f;
@@ -250,11 +240,9 @@ private:
     }
 
     // --- locate: which remembered place is this? ---------------------------
-    // A situation is the senses (minus energy: where it is shouldn't depend
-    // on how hungry it is), smoothed over ~1 s. The nearest remembered
-    // situation is the current place; one far from all of them becomes a new
-    // place, evicting the least familiar if memory is full. Familiarity is
-    // time spent there, fading over an hour.
+    // A situation is the senses minus energy, smoothed over ~1 s. The nearest
+    // remembered one is the current place; one unlike all becomes a new place
+    // (evicting the least familiar). Familiarity = time there, fading ~1 h.
     void locate(const float* in, float dt) {
         float a = started_ ? dt / 1.0f : 1.0f;
         size_t dims = 0;
@@ -295,12 +283,10 @@ private:
             place_act_[slot] = 1.0f;
             bi = static_cast<int>(slot);
         } else {
-            // Drift toward how the place looks now, slower the more familiar it is.
             float rate = dt / (5.0f + visits_[bi]);
             for (size_t k = 0; k < dims; k++) proto_[bi][k] += rate * (situation_[k] - proto_[bi][k]);
         }
-        // Arriving somewhere is interesting in proportion to how unfamiliar
-        // it is; staying put isn't.
+        // Arriving somewhere unfamiliar is interesting; staying put isn't.
         if (bi != place_) arrival_ += 0.05f / (1.0f + visits_[bi] / 30.0f);
         arrival_ -= arrival_ * (dt / 3.0f < 1.0f ? dt / 3.0f : 1.0f);
         place_ = bi;
@@ -328,8 +314,7 @@ private:
         if (!started_) sugar_ = energy;
         sugar_ += (energy - sugar_) * dt / g_.energy_buffer_s;
         hunger_ = clamp((g_.hunger_setpoint - sugar_) / g_.hunger_setpoint, 0.0f, 1.0f);
-        // Satiety: past its set-point, more of a good thing is a mild
-        // discomfort, so no source of relief holds it forever.
+        // Satiety: nothing is pleasant forever.
         fullness_ = !traits_.satiety ? 0.0f : clamp((sugar_ - g_.satiety_setpoint) / (1.0f - g_.satiety_setpoint + 1e-3f), 0.0f, 1.0f);
 
         float hurt = 0.0f;
@@ -342,11 +327,8 @@ private:
         }
         pain_ = clamp(pain_ + 0.5f * hurt - pain_ * dt / g_.pain_fade_s, 0.0f, 1.0f);
 
-        // Boredom is habituation: relieved by interest, i.e. learning
-        // progress plus an unfamiliar place, relative to what it is used to
-        // over the long run (half an hour), so a quiet spell does get boring
-        // instead of becoming the new normal. Mere surprise doesn't count:
-        // noise is surprising forever and teaches nothing.
+        // Boredom is habituation: relieved by more interest (learning progress,
+        // arrivals) than it is used to over half an hour.
         interest_ = traits_.progress ? progress_ + arrival_ : surprise_;
         interest_avg_ += (interest_ - interest_avg_) * dt / 1800.0f;
         float relief = clamp(interest_ / (interest_avg_ + 1e-3f), 0.0f, 2.0f);
@@ -489,7 +471,7 @@ private:
     float surprise_ = 0.0f;
     float err_fast_[kMaxIn] = {};
     float err_slow_[kMaxIn] = {};
-    float progress_ = 0.0f, interest_ = 0.0f, interest_avg_ = 0.0f;
+    float progress_ = 0.0f, interest_ = 0.0f, interest_avg_ = 0.0f;  // curiosity
     // places
     float situation_[kMaxIn] = {};
     float proto_[kPlaces][kMaxIn] = {};

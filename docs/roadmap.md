@@ -37,18 +37,11 @@ open work only.
 - [ ] Learning that accumulates across lives instead of peaking in the first one
 - [ ] Reflex weights on the dashboard
 
-## v0.10.1 — Traits: satiety, curiosity as learning progress, places
+## v0.10.1 — Satiety, curiosity as learning progress, places
 
-Design and rationale: [traits.md](traits.md).
-
-- [x] Satiety: energy above a set-point is a need (no reason to charge forever)
-- [x] Boredom relieved by learning progress instead of raw surprise (noise goes stale)
-- [x] Place memory: remembered situations as features, arrival novelty
-- [x] `--traits` ablation switch in the simulator; docked-while-full and places metrics
-- [x] Re-evolved organism-0 genome for the two-station world
-- [ ] Firmware loop on `life/organism.h` (today only the simulator runs it)
-- [ ] Save learned weights and places across reboots
-- [ ] Fatigue need; two organisms in one room (signaling); a pushable object (engagement)
+- [x] In `organism.h`, with `--off` ablation and tests
+- [ ] Re-evolved organism-0 genome; results in the simulator README
+- [ ] Firmware loop on `organism.h`
 
 ## v0.11.0 — Body from a file
 

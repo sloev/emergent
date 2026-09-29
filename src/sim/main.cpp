@@ -80,33 +80,7 @@ struct Metrics {
 
 constexpr float kDt = 0.05f;
 
-// Which of the life engine's newer mechanisms are on (--traits). Set once
-// from the command line before any thread starts; read-only afterwards.
-life::Organism::Traits g_traits;
-
-bool parse_traits(const char* spec) {
-    std::string s = spec;
-    life::Organism::Traits t;
-    if (s == "none") t.satiety = t.progress = t.places = false;
-    size_t pos = 0;
-    while (s != "all" && s != "none" && pos <= s.size()) {
-        size_t end = s.find(',', pos);
-        std::string item = s.substr(pos, end == std::string::npos ? std::string::npos : end - pos);
-        bool on = true;
-        if (!item.empty() && (item[0] == '-' || item[0] == '+')) {
-            on = item[0] == '+';
-            item = item.substr(1);
-        }
-        if (item == "satiety") t.satiety = on;
-        else if (item == "progress") t.progress = on;
-        else if (item == "places") t.places = on;
-        else return false;
-        if (end == std::string::npos) break;
-        pos = end + 1;
-    }
-    g_traits = t;
-    return true;
-}
+life::Organism::Traits g_traits;  // --off; set before any thread starts
 constexpr int kCellsX = 30, kCellsY = 25;  // 10 cm grid
 
 // What evolution works on: the constitution, the brain's wiring (its seed),
@@ -427,12 +401,6 @@ struct Runner {
             }
 
             if (trace && tick % trace_every == 0) write_trace_row(life);
-#ifdef DEBUG_ORG
-            if (use_life && tick % 1200 == 0)
-                fprintf(stderr, "t=%5.0fs soc=%.2f dock=%d hun=%.2f full=%.2f bor=%.2f prog=%.4f int=%.4f place=%d/%zu ser=%.2f cor=%.2f sig=%.2f\n",
-                        world.time(), world.soc(), world.docked(), org.hunger(), org.fullness(), org.boredom(), org.progress(),
-                        org.interest(), org.place(), org.place_count(), org.serotonin(), org.cortisol(), org.exploration());
-#endif
 
             if (world.soc() <= 0.0f && !world.docked()) {
                 m.died = true;
@@ -722,7 +690,7 @@ void usage() {
             "                    [--evolve G --pop P --births B --out genome.txt]   evolve innate wiring + constitution\n"
             "                    [--genome genome.txt]     run a saved (evolved) genome\n"
             "                    [--stations 1|2] [--station-buffer AH]   (0 = unlimited mains station)\n"
-            "                    [--traits all|none|-satiety,-progress,-places]   life engine mechanisms (ablation)\n"
+            "                    [--off satiety,progress,places]   switch life-engine mechanisms off\n"
             "--hours 0 (default) caps each life at 2.5x the body's idle endurance\n"
             "organism 0 is the example build; 1.. are generated bodies (see body_plan.h)\n"
             "conditions:\n");
@@ -777,11 +745,11 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[i], "--pop")) pop = atoi(next());
         else if (!strcmp(argv[i], "--births")) births = atoi(next());
         else if (!strcmp(argv[i], "--out")) out_path = next();
-        else if (!strcmp(argv[i], "--traits")) {
-            if (!parse_traits(next())) {
-                usage();
-                return 2;
-            }
+        else if (!strcmp(argv[i], "--off")) {
+            const char* v = next();
+            g_traits.satiety = !strstr(v, "satiety");
+            g_traits.progress = !strstr(v, "progress");
+            g_traits.places = !strstr(v, "places");
         }
         else if (!strcmp(argv[i], "--stations")) wcfg.stations = atoi(next());
         else if (!strcmp(argv[i], "--station-buffer")) wcfg.station_buffer_ah = static_cast<float>(atof(next()));

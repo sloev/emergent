@@ -9,9 +9,8 @@ body: which input is its energy (the battery) and which inputs hurt (e.g. a bump
 
 Everything else it does has to come out of a handful of mechanisms: a brain, a model
 that predicts its own senses, a memory of places, four needs, four hormones,
-exploration, and one learning rule. [`traits.md`](traits.md) lists them as traits,
-says which goal each is for, and what the simulator shows each is worth. What it's born with comes from **evolution**, not from anyone writing it. The program is
-[`src/esp32/include/life/organism.h`](../src/esp32/include/life/organism.h), about 300
+exploration, and one learning rule. What it's born with comes from **evolution**, not from anyone writing it. The program is
+[`src/esp32/include/life/organism.h`](../src/esp32/include/life/organism.h), about 450
 lines, header-only, identical on the ESP32 and in the [simulator](../src/sim/README.md).
 
 ## The 10 inputs
@@ -191,6 +190,7 @@ Each claim below is falsifiable in the simulator first, then on hardware.
 | Gaits (crawlers, legs) | brain rhythms + readout | net displacement with servo legs |
 | Individual temperament | genome | same body, different genome, different behavior |
 | Moods | hormone patterns | hormone traces vs behavior; observer ratings on video |
+| Poking things (push, stop, watch) | learning progress on self-caused change | time spent near movable objects (needs one in the sim) |
 | Signaling | radio/light/sound outputs + another organism | mutual information between one's output and the other's state |
 
 Signaling is the least likely: it only stabilizes when sender and receiver both gain

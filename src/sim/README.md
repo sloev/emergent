@@ -15,22 +15,9 @@ make
 
 `docs/sim-viewer.html` plays back a trace (the site ships one: seed 5, first life).
 
-## The life engine and its traits
-
-The default engine (`--engine life`) is [`life/organism.h`](../esp32/include/life/organism.h),
-described in [`docs/life.md`](../../docs/life.md) and, trait by trait, in
-[`docs/traits.md`](../../docs/traits.md). Its newer mechanisms can be switched off
-one at a time to measure what each is worth:
-
-```sh
-./emergent-sim --genome genomes/organism0.txt --condition full --runs 8 --lives 3 --traits all
-./emergent-sim --genome genomes/organism0.txt --condition full --runs 8 --lives 3 --traits -satiety
-./emergent-sim --evolve 40 --pop 32 --traits none --out baseline.txt   # evolve without them
-```
-
-`full%` is the share of docked time spent above 95% charge (charging forever);
-`places` is how many places the organism remembered by the end of a life. The
-classic-engine results below predate the life engine.
+`--off satiety,progress,places` switches the life engine's newer mechanisms off
+(ablation). `full%` = share of docked time above 95% charge; `places` = places
+remembered.
 
 ## The world
 
