@@ -286,14 +286,26 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
     ctx.globalAlpha = 1;
     ctx.strokeStyle = css("--ink"); ctx.lineWidth = 2; ctx.strokeRect(X(0), Y(RH), RW * s, RH * s);
 
-    const sy = meta.station_y, fd = meta.funnel_depth, r = org.radius, dx = RW - r;
-    ctx.strokeStyle = css("--station"); ctx.lineWidth = 2; ctx.beginPath();
-    ctx.moveTo(X(dx - fd), Y(sy + fd + 0.03 + r)); ctx.lineTo(X(dx), Y(sy + 0.03 + r));
-    ctx.moveTo(X(dx - fd), Y(sy - fd - 0.03 - r)); ctx.lineTo(X(dx), Y(sy - 0.03 - r));
-    ctx.stroke();
-    ctx.fillStyle = css("--station"); ctx.fillRect(X(RW) - 5, Y(sy + 0.09), 5, 0.18 * s);
-    if (v(i, "docked") > 0) { ctx.globalAlpha = 0.22; ctx.beginPath(); ctx.arc(X(RW), Y(sy), 0.3 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
-    ctx.fillStyle = css("--muted"); ctx.fillText("station", X(RW) - 50, Y(sy + fd + 0.2));
+    const sy = meta.station_y, fd = meta.funnel_depth, r = org.radius;
+    const nst = meta.stations || 1, cap = meta.station_buffer_ah || 0;
+    for (let k = 0; k < nst; k++) {
+      const side = k === 0 ? 1 : -1, wall = side > 0 ? RW : 0, dx = side > 0 ? RW - r : r;
+      const buf = col["station" + k] !== undefined ? v(i, "station" + k) : cap;
+      const full = cap > 0 ? Math.max(0, Math.min(1, buf / cap)) : 1;
+      ctx.strokeStyle = css("--station"); ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(X(dx - side * fd), Y(sy + fd + 0.03 + r)); ctx.lineTo(X(dx), Y(sy + 0.03 + r));
+      ctx.moveTo(X(dx - side * fd), Y(sy - fd - 0.03 - r)); ctx.lineTo(X(dx), Y(sy - 0.03 - r));
+      ctx.stroke();
+      // Station body with its buffer level: a draining food patch.
+      const bx = side > 0 ? X(wall) - 7 : X(wall), bh = 0.4 * s;
+      ctx.strokeStyle = css("--station"); ctx.lineWidth = 1; ctx.strokeRect(bx, Y(sy + 0.2), 7, bh);
+      ctx.fillStyle = css("--station"); ctx.fillRect(bx, Y(sy + 0.2) + bh * (1 - full), 7, bh * full);
+      const here = v(i, "docked") > 0 && Math.abs(v(i, "x") - dx) < 0.1;
+      if (here) { ctx.globalAlpha = 0.22; ctx.beginPath(); ctx.arc(X(wall), Y(sy), 0.3 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.fillStyle = css("--muted");
+      const label = cap > 0 ? `station ${Math.round(full * 100)}%` : "station";
+      ctx.fillText(label, side > 0 ? X(wall) - 80 : X(wall) + 6, Y(sy + fd + 0.2));
+    }
 
     let from = i; const span = 600 / meta.interval_s;
     while (from > 0 && i - from < span && v(from - 1, "life") === v(i, "life")) from--;
@@ -453,7 +465,10 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; white-s
       STRIPS = [
         { key: "soc", label: "battery charge", h: 26, color: "--energy" },
         { key: "docked", label: "on the dock", h: 16 },
-      ].concat(VARS.map(x => ({ key: x.key, label: x.label, h: 22, bipolar: x.min !== 0 || x.max !== 1, min: x.min, max: x.max,
+      ];
+      for (let k = 0; k < (meta.stations || 0); k++) if (col["station" + k] !== undefined && meta.station_buffer_ah > 0)
+        STRIPS.push({ key: "station" + k, label: (k === 0 ? "right" : "left") + " station charge", h: 16, color: "--station", bipolar: true, min: 0, max: meta.station_buffer_ah });
+      STRIPS = STRIPS.concat(VARS.map(x => ({ key: x.key, label: x.label, h: 22, bipolar: x.min !== 0 || x.max !== 1, min: x.min, max: x.max,
         band: x.band ? [(x.band[0] - x.min) / (x.max - x.min), (x.band[1] - x.min) / (x.max - x.min)] : null })));
       STRIPS.push({ heading: "inputs", h: 14 });
       org.sensors.forEach(s => STRIPS.push({ key: "in:" + s.name, label: s.name, h: 16 }));

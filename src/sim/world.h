@@ -1,6 +1,6 @@
 #pragma once
 //
-// A 2D room with one organism and one charging station. Physics and sensor
+// A 2D room with one organism and one or two charging stations. Physics and sensor
 // models are simple but each is grounded in how the real part behaves
 // (datasheet ranges, known noise sources), because the point is to see what
 // the behavior engine does with *realistic* inputs, not idealised ones.
@@ -27,8 +27,15 @@ struct WorldConfig {
     float room_w = 3.0f;
     float room_h = 2.5f;
 
-    // Station: contacts on the right wall at station_y, behind a V funnel.
+    // Stations: contacts on the right wall (and, with two, the left wall) at
+    // station_y, each behind a V funnel. Each is a solar-style station: a
+    // small buffer battery that charging drains and that refills slowly, so
+    // a station runs dry and the organism has to move on (a food patch that
+    // depletes). buffer_ah <= 0 means an unlimited mains station.
+    int stations = 2;
     float station_y = 1.25f;
+    float station_buffer_ah = 0.3f;
+    float station_refill_a = 0.2f;
     float funnel_depth = 0.30f;
     float funnel_throat = 0.03f;
     float dock_tolerance = 0.05f;   // contacts engage within this of the contact point
@@ -63,6 +70,12 @@ public:
         prev_act_.assign(plan.actuators.size(), 0.0f);
         dc_speed_[0] = dc_speed_[1] = 0.0f;
         next_scan_.assign(plan.sensors.size(), 0.0f);
+        for (int k = 0; k < cfg.stations && k < 2; k++) {
+            Station st;
+            st.side = k == 0 ? 1.0f : -1.0f;
+            st.buffer = cfg.station_buffer_ah;
+            stations_.push_back(st);
+        }
         last_rssi_.assign(plan.sensors.size(), -100.0f);
         reset_robot();
     }
@@ -188,11 +201,24 @@ public:
         for (size_t i = 0; i < a.size(); i++) prev_act_[i] = a[i];
         draw_ = draw;
 
-        docked_ = std::fabs(dock_x() - pose_.x) < cfg_.dock_tolerance && std::fabs(pose_.y - cfg_.station_y) < cfg_.dock_tolerance;
+        bool finite = cfg_.station_buffer_ah > 0.0f;
+        docked_at_ = -1;
+        for (size_t k = 0; k < stations_.size(); k++) {
+            Station& st = stations_[k];
+            if (finite) st.buffer = std::min(cfg_.station_buffer_ah, st.buffer + cfg_.station_refill_a * dt / 3600.0f);
+            if (std::fabs(dock_x(st) - pose_.x) < cfg_.dock_tolerance && std::fabs(pose_.y - cfg_.station_y) < cfg_.dock_tolerance)
+                docked_at_ = static_cast<int>(k);
+        }
+        docked_ = docked_at_ >= 0;
         charge_ = 0.0f;
         if (docked_) {
+            Station& st = stations_[static_cast<size_t>(docked_at_)];
             float taper = soc_ < 0.8f ? 1.0f : std::max(0.0f, (1.0f - soc_) / 0.2f);
             charge_ = cfg_.charge_current_a * taper;
+            if (finite) {
+                if (st.buffer <= 0.0f) charge_ = 0.0f;
+                st.buffer = std::max(0.0f, st.buffer - charge_ * dt / 3600.0f);
+            }
         }
         charging_ = charge_ > 0.01f;
         soc_ += (charge_ - draw) * dt / (plan_.capacity_ah * 3600.0f);
@@ -266,7 +292,7 @@ public:
             case Sense::kWarmth: {
                 // Room field: charger warm (+3 C within ~0.5 m), window cool
                 // (-2 C at the top wall); 15..30 C mapped to 0..1. Slow sensor.
-                float d = distance_to_station();
+                float d = distance_to_station();  // nearest station
                 float c = 21.0f + 3.0f * std::exp(-d * d / 0.25f) - 2.0f * (pose_.y / cfg_.room_h) + 1.5f * self_heat_;
                 if (charging_) c += 1.0f;
                 warm_ += (c - warm_) * 0.05f / 5.0f;
@@ -274,7 +300,12 @@ public:
             }
             case Sense::kRadioMsg:
                 // The station broadcasts its state byte: idle, charging, full.
-                return charging_ ? (soc_ > 0.98f ? 1.0f : 0.6f) : 0.2f;
+                // The nearest station's state byte: empty, idle, charging, full.
+                {
+                    const Station& st = stations_[static_cast<size_t>(nearest())];
+                    if (charging_) return soc_ > 0.98f ? 1.0f : 0.6f;
+                    return has_charge(st) ? 0.2f : 0.0f;
+                }
             case Sense::kProprio: {
                 const ActuatorDef& d = plan_.actuators[static_cast<size_t>(s.proprio_of)];
                 float v = prev_act_[static_cast<size_t>(s.proprio_of)];
@@ -288,13 +319,37 @@ public:
     float soc() const { return soc_; }
     bool docked() const { return docked_; }
     bool charging() const { return charging_; }
+    int docked_at() const { return docked_at_; }
+    size_t station_count() const { return stations_.size(); }
+    float station_buffer(size_t k) const { return stations_[k].buffer; }
     bool bumped() const { return bumped_; }
     float speed() const { return speed_; }
     float time() const { return t_; }
     float head_angle() const { return head_angle_; }
     const WorldConfig& config() const { return cfg_; }
-    float dock_x() const { return cfg_.room_w - plan_.radius; }
-    float distance_to_station() const { return std::hypot(pose_.x - dock_x(), pose_.y - cfg_.station_y); }
+    struct Station {
+        float side = 1.0f;   // +1: right wall, -1: left wall
+        float buffer = 0.0f;  // Ah left in its buffer battery
+    };
+    float dock_x(const Station& st) const { return st.side > 0 ? cfg_.room_w - plan_.radius : plan_.radius; }
+    float wall_x(const Station& st) const { return st.side > 0 ? cfg_.room_w : 0.0f; }
+    bool has_charge(const Station& st) const { return cfg_.station_buffer_ah <= 0.0f || st.buffer > 0.05f * cfg_.station_buffer_ah; }
+    int nearest() const {
+        int best = 0;
+        float bd = 1e9f;
+        for (size_t k = 0; k < stations_.size(); k++) {
+            float d = std::hypot(pose_.x - dock_x(stations_[k]), pose_.y - cfg_.station_y);
+            if (d < bd) {
+                bd = d;
+                best = static_cast<int>(k);
+            }
+        }
+        return best;
+    }
+    float distance_to_station() const {
+        const Station& st = stations_[static_cast<size_t>(nearest())];
+        return std::hypot(pose_.x - dock_x(st), pose_.y - cfg_.station_y);
+    }
 
 private:
     static float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
@@ -314,13 +369,16 @@ private:
         if (nx > cfg_.room_w - r) { nx = cfg_.room_w - r; contacts_.push_back(0.0f); }
         if (ny < r) { ny = r; contacts_.push_back(-kPi / 2); }
         if (ny > cfg_.room_h - r) { ny = cfg_.room_h - r; contacts_.push_back(kPi / 2); }
-        float into = dock_x() - nx;
-        if (into < cfg_.funnel_depth && into > -r) {
-            float half = std::max(0.0f, into) + cfg_.funnel_throat;
-            float off = ny - cfg_.station_y;
-            if (std::fabs(off) < cfg_.funnel_depth + cfg_.funnel_throat && std::fabs(off) > half) {
-                ny = cfg_.station_y + (off > 0 ? half : -half);
-                contacts_.push_back(off > 0 ? kPi / 4 : -kPi / 4);
+        for (const Station& st : stations_) {
+            float into = st.side > 0 ? dock_x(st) - nx : nx - dock_x(st);
+            if (into < cfg_.funnel_depth && into > -r) {
+                float half = std::max(0.0f, into) + cfg_.funnel_throat;
+                float off = ny - cfg_.station_y;
+                if (std::fabs(off) < cfg_.funnel_depth + cfg_.funnel_throat && std::fabs(off) > half) {
+                    ny = cfg_.station_y + (off > 0 ? half : -half);
+                    float normal = off > 0 ? kPi / 4 : -kPi / 4;
+                    contacts_.push_back(st.side > 0 ? normal : kPi - normal);
+                }
             }
         }
         pose_.x = nx;
@@ -330,10 +388,14 @@ private:
 
     float light_at(float look, bool directional) const {
         float total = 0.0f;
-        float dx = cfg_.room_w - pose_.x, dy = cfg_.station_y - pose_.y;
-        float d2 = dx * dx + dy * dy + 0.02f;
-        float c = directional ? std::cos(std::atan2(dy, dx) - look) : 0.6f;
-        if (c > 0) total += cfg_.station_led_intensity * c * 0.15f / d2;
+        // A station's LED is lit while it has charge to give.
+        for (const Station& st : stations_) {
+            if (!has_charge(st)) continue;
+            float dx = wall_x(st) - pose_.x, dy = cfg_.station_y - pose_.y;
+            float d2 = dx * dx + dy * dy + 0.02f;
+            float c = directional ? std::cos(std::atan2(dy, dx) - look) : 0.6f;
+            if (c > 0) total += cfg_.station_led_intensity * c * 0.15f / d2;
+        }
         float wy = cfg_.room_h + 0.5f - pose_.y;
         float wc = directional ? std::cos(kPi / 2 - look) : 0.6f;
         if (wc > 0) total += cfg_.window_intensity * wc * 0.5f / (wy * wy + 0.25f);
@@ -381,6 +443,8 @@ private:
     bool bumped_ = false, was_bumped_ = false;
     bool docked_ = false;
     bool charging_ = false;
+    int docked_at_ = -1;
+    std::vector<Station> stations_;
     std::vector<float> contacts_;
     std::vector<float> prev_act_;
     std::vector<float> next_scan_;

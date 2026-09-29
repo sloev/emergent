@@ -80,6 +80,7 @@ public:
         rng_ = g.seed ? g.seed : 1;
         wire_brain();
         memset(w_, 0, sizeof(w_));
+        memset(w0_, 0, sizeof(w0_));
         memset(e_, 0, sizeof(e_));
         memset(v_, 0, sizeof(v_));
         memset(m_, 0, sizeof(m_));
@@ -136,6 +137,8 @@ public:
     // serotonin, then the brain's neurons, then a constant.
     float weight(size_t j, size_t k) const { return w_[j][k]; }
     void set_weight(size_t j, size_t k, float w) { w_[j][k] = w; }
+    // Innate weight: what it's born with and what forgetting relaxes toward.
+    void set_innate(size_t j, size_t k, float w) { w_[j][k] = w0_[j][k] = w; }
     size_t feature_count() const { return n_in_ + kInner + kNeurons + 1; }
     static const char* inner_name(size_t i) {
         static const char* names[kInner] = {"hunger", "pain", "boredom", "dopamine", "adrenaline", "cortisol", "serotonin"};
@@ -279,9 +282,14 @@ private:
                 for (size_t k = 0; k < nf_; k++) v_[k] = clamp(v_[k] + vr * td / (sd + 1e-4f) * f_[k], -5.0f, 5.0f);
                 // Adrenaline speeds learning: what happened in a fright is learned fast.
                 float step = g_.learn_rate * (1.0f + adrenaline_) * dopamine_ * dt;
-                float keep = 1.0f - 1e-4f * dt;
+                // Forgetting relaxes toward what it was born with, not toward
+                // blank: learned changes fade, instincts don't.
+                float relax = 1e-4f * dt;
                 for (size_t j = 0; j < n_out_; j++)
-                    for (size_t k = 0; k < nf_; k++) w_[j][k] = clamp((w_[j][k] + step * e_[j][k]) * keep, -2.0f, 2.0f);
+                    for (size_t k = 0; k < nf_; k++) {
+                        float w = w_[j][k] + step * e_[j][k];
+                        w_[j][k] = clamp(w + (w0_[j][k] - w) * relax, -2.0f, 2.0f);
+                    }
             }
         }
         value_ = 0.0f;
@@ -351,6 +359,7 @@ private:
     float y_[kNeurons] = {};
     // learned
     float w_[kMaxOut][kFeatures] = {};
+    float w0_[kMaxOut][kFeatures] = {};  // innate
     float e_[kMaxOut][kFeatures] = {};
     float v_[kFeatures] = {};
     // senses

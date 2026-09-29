@@ -63,6 +63,7 @@ struct Metrics {
     bool died = false;
     int dock_events = 0;
     int hungry_dockings = 0;
+    int patch_switches = 0;  // meals taken at a different station than the last one
     float docked_frac = 0;
     float charge_ah = 0;
     float coverage = 0;
@@ -207,7 +208,7 @@ struct Runner {
         if (evo && !evo->innate.empty() && cond != Condition::kNoiseOnly) {
             size_t nf = org.feature_count();
             for (size_t j = 0; j < org.output_count(); j++)
-                for (size_t k = 0; k < nf && j * nf + k < evo->innate.size(); k++) org.set_weight(j, k, evo->innate[j * nf + k]);
+                for (size_t k = 0; k < nf && j * nf + k < evo->innate.size(); k++) org.set_innate(j, k, evo->innate[j * nf + k]);
         }
         org.set_plasticity(cond != Condition::kNoLearning && cond != Condition::kNoiseOnly);
     }
@@ -283,6 +284,7 @@ struct Runner {
         double speed_sum = 0, hungry_d = 0, sated_d = 0;
         long hungry_n = 0, sated_n = 0, docked_ticks = 0;
         bool was_charging = false;
+        int last_patch = -1;
         float prev_soc = world.soc();
         int window_hist[9] = {};
         int window_n = 0;
@@ -340,6 +342,8 @@ struct Runner {
             if (world.charging() && !was_charging) {
                 m.dock_events++;
                 if (hungry) m.hungry_dockings++;
+                if (last_patch >= 0 && world.docked_at() != last_patch) m.patch_switches++;
+                last_patch = world.docked_at();
             }
             was_charging = world.charging();
             if (world.soc() > prev_soc) m.charge_ah += (world.soc() - prev_soc) * plan.capacity_ah;
@@ -411,6 +415,7 @@ struct Runner {
         fprintf(trace, "%s[%d,%.0f,%.3f,%.3f,%.3f,%.3f,%d,%.3f", trace_first ? "" : ",\n", life, world.time(), p.x, p.y,
                 p.theta, world.soc(), world.docked() ? 1 : 0, world.head_angle());
         trace_first = false;
+        for (size_t k = 0; k < world.station_count(); k++) fprintf(trace, ",%.4f", world.station_buffer(k));
         if (use_life) {
             fprintf(trace, ",%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", org.hunger(), org.pain(), org.boredom(),
                     org.dopamine(), org.adrenaline(), org.cortisol(), org.serotonin(), org.value(), org.exploration());
@@ -475,7 +480,8 @@ std::string metrics_json(const Metrics& m) {
            ",\"dockings\":" + std::to_string(m.dock_events) + ",\"hungry_dockings\":" + std::to_string(m.hungry_dockings) +
            ",\"docked\":" + jnum(m.docked_frac) + ",\"charge_ah\":" + jnum(m.charge_ah) + ",\"coverage\":" + jnum(m.coverage) +
            ",\"speed\":" + jnum(m.mean_speed) + ",\"dist_hungry\":" + jnum(m.dist_when_hungry) +
-           ",\"dist_sated\":" + jnum(m.dist_when_sated) + ",\"entropy\":" + jnum(m.behavior_entropy) + "}";
+           ",\"dist_sated\":" + jnum(m.dist_when_sated) + ",\"entropy\":" + jnum(m.behavior_entropy) +
+           ",\"patch_switches\":" + std::to_string(m.patch_switches) + "}";
 }
 
 // The strongest learned connections: which sense drives which output, in
@@ -548,6 +554,7 @@ struct Evolver {
     WorldConfig wcfg;
     float hours;
     int births;  // independent newborns per evaluation (different rooms/starts)
+    int lives;   // consecutive lives per newborn: learning must stay good, not just start good
     size_t n_out = 0, nf = 0;
     std::mt19937 rng{12345};
 
@@ -587,12 +594,12 @@ struct Evolver {
         for (int b = 0; b < births; b++) {
             WorldConfig w = wcfg;
             w.seed = gen_seed * 31u + static_cast<uint32_t>(b) * 7u + 1u;
-            Runner r(Condition::kFull, plan, w, hours, 1, true);
+            Runner r(Condition::kFull, plan, w, hours, lives, true);
             r.evo = &e;
             std::vector<Metrics> ms = r.run_all();
-            sum += ms[0].lifespan_h / idle;
+            for (const Metrics& m : ms) sum += m.lifespan_h / idle;
         }
-        return sum / births;
+        return sum / (births * lives);
     }
 
     void run(int generations, int pop, const char* out_path) {
@@ -606,8 +613,9 @@ struct Evolver {
         for (int i = 0; i < pop; i++) P.push_back(random_genome());
         std::vector<float> fit(pop, 0.0f);
         unsigned threads = std::max(1u, std::thread::hardware_concurrency());
-        printf("evolving %s: %d generations x %d genomes, %d newborns each, lives capped at %.1f h, %u threads\n",
-               plan.title.c_str(), generations, pop, births, hours, threads);
+        printf("evolving %s: %d generations x %d genomes, %d newborns x %d lives each, lives capped at %.1f h, "
+               "%d station(s), %u threads\n",
+               plan.title.c_str(), generations, pop, births, lives, hours, wcfg.stations, threads);
         printf("%4s %8s %8s %8s  %s\n", "gen", "best", "mean", "worst", "best genome");
         for (int gen = 0; gen < generations; gen++) {
             std::atomic<int> next{0};
@@ -656,6 +664,7 @@ void usage() {
             "                    [--engine life|classic]   (life = include/life/organism.h, the default)\n"
             "                    [--evolve G --pop P --births B --out genome.txt]   evolve innate wiring + constitution\n"
             "                    [--genome genome.txt]     run a saved (evolved) genome\n"
+            "                    [--stations 1|2] [--station-buffer AH]   (0 = unlimited mains station)\n"
             "--hours 0 (default) caps each life at 2.5x the body's idle endurance\n"
             "organism 0 is the example build; 1.. are generated bodies (see body_plan.h)\n"
             "conditions:\n");
@@ -673,7 +682,7 @@ int main(int argc, char** argv) {
     const char* trace_path = nullptr;
     const char* genome_path = nullptr;
     const char* out_path = nullptr;
-    int evolve = 0, pop = 24, births = 2;
+    int evolve = 0, pop = 24, births = 2, evo_lives = 2;
     float trace_interval_s = 1.0f;
     WorldConfig wcfg;
 
@@ -710,6 +719,9 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[i], "--pop")) pop = atoi(next());
         else if (!strcmp(argv[i], "--births")) births = atoi(next());
         else if (!strcmp(argv[i], "--out")) out_path = next();
+        else if (!strcmp(argv[i], "--stations")) wcfg.stations = atoi(next());
+        else if (!strcmp(argv[i], "--station-buffer")) wcfg.station_buffer_ah = static_cast<float>(atof(next()));
+        else if (!strcmp(argv[i], "--evo-lives")) evo_lives = atoi(next());
         else {
             usage();
             return 2;
@@ -728,7 +740,7 @@ int main(int argc, char** argv) {
     }
 
     if (evolve > 0) {
-        Evolver ev{plan, wcfg, hours, births};
+        Evolver ev{plan, wcfg, hours, births, evo_lives};
         ev.run(evolve, pop, out_path);
         return 0;
     }
@@ -755,9 +767,11 @@ int main(int argc, char** argv) {
         r->evo = evo;
         fprintf(f,
                 "{\"meta\":{\"organism\":%s,\"condition\":%s,\"seed\":%u,\"room\":[%g,%g],\"station_y\":%g,"
-                "\"engine\":\"%s\",\"funnel_depth\":%g,\"interval_s\":%g,\"cap_h\":%g,\"idle_h\":%g,\"columns\":[\"life\",\"t\",\"x\",\"y\",\"theta\",\"soc\",\"docked\",\"head\"",
+                "\"engine\":\"%s\",\"funnel_depth\":%g,\"interval_s\":%g,\"cap_h\":%g,\"idle_h\":%g,\"stations\":%d,\"station_buffer_ah\":%g,\"columns\":[\"life\",\"t\",\"x\",\"y\",\"theta\",\"soc\",\"docked\",\"head\"",
                 plan_json(plan).c_str(), jstr(condition == "all" ? "full" : condition).c_str(), seed, wcfg.room_w,
-                wcfg.room_h, wcfg.station_y, life_engine ? "life" : "classic", wcfg.funnel_depth, trace_interval_s, hours, idle_h);
+                wcfg.room_h, wcfg.station_y, life_engine ? "life" : "classic", wcfg.funnel_depth, trace_interval_s, hours, idle_h,
+                wcfg.stations, wcfg.station_buffer_ah);
+        for (int k = 0; k < wcfg.stations; k++) fprintf(f, ",\"station%d\"", k);
         if (life_engine) {
             fprintf(f, ",\"hunger\",\"pain\",\"boredom\",\"dopamine\",\"adrenaline\",\"cortisol\",\"serotonin\",\"value\",\"explore\"");
         } else {
@@ -790,8 +804,8 @@ int main(int argc, char** argv) {
     } else {
         printf("organism %s (%s; %s)\n", plan.title.c_str(), loco_name(plan.loco), plan.temperament.c_str());
         printf("%d runs x %d lives (max %.1f h each; idle endurance %.2f h) per condition\n\n", runs, lives, hours, idle_h);
-        printf("%-18s %11s %6s %9s %8s %9s %8s %15s %8s\n", "condition", "lifespan_h", "died", "dockings", "docked%",
-               "coverage", "speed", "dist hungry/ok", "entropy");
+        printf("%-18s %11s %6s %9s %8s %9s %8s %15s %8s %8s\n", "condition", "lifespan_h", "died", "dockings", "docked%",
+               "coverage", "speed", "dist hungry/ok", "entropy", "switches");
     }
 
     std::vector<std::pair<const char*, std::vector<Summary>>> curves;
@@ -802,7 +816,7 @@ int main(int argc, char** argv) {
         if (life_engine && (ci.c == Condition::kNoContingency || ci.c == Condition::kNoSpatial)) continue;
         BodyPlan p = plan;
         if (ci.c == Condition::kNoBatteryLink) p.battery_linked = false;
-        Summary life, died, docks, docked, cov, spd, dh, ds, ent;
+        Summary life, died, docks, docked, cov, spd, dh, ds, ent, sw;
         std::vector<Summary> curve(lives);
         std::string lives_json, reflexes;
         for (int k = 0; k < runs; k++) {
@@ -825,6 +839,7 @@ int main(int argc, char** argv) {
                 dh.add(m.dist_when_hungry);
                 ds.add(m.dist_when_sated);
                 ent.add(m.behavior_entropy);
+                sw.add(m.patch_switches);
             }
             lives_json += "]";
         }
@@ -833,9 +848,9 @@ int main(int argc, char** argv) {
                    reflexes.empty() ? "" : (",\"reflexes\":" + reflexes).c_str());
             first_cond = false;
         } else {
-            printf("%-18s %5.2f±%-4.2f %5.0f%% %4.1f±%-3.1f %7.1f%% %8.0f%% %8.3f %6.2f / %-6.2f %8.2f\n", ci.name,
+            printf("%-18s %5.2f±%-4.2f %5.0f%% %4.1f±%-3.1f %7.1f%% %8.0f%% %8.3f %6.2f / %-6.2f %8.2f %8.1f\n", ci.name,
                    life.mean(), life.sd(), 100 * died.mean(), docks.mean(), docks.sd(), docked.mean(), cov.mean(),
-                   spd.mean(), dh.mean(), ds.mean(), ent.mean());
+                   spd.mean(), dh.mean(), ds.mean(), ent.mean(), sw.mean());
             fflush(stdout);
         }
         curves.emplace_back(ci.name, curve);
