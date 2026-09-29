@@ -88,6 +88,31 @@ its read/drive code); after that any profile can use it.
 
 ## Algorithm
 
+The robot's only coded states are booting, ticking, and holding still on a flat
+battery. Everything else, like foraging, feeding, resting, exploring and fleeing,
+is a pattern inside the tick, not a state anyone wrote.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Boot
+    Boot --> Tick: channels ready, genome loaded
+    state Tick {
+        direction LR
+        Sense --> Locate: inputs 0..1, prediction error
+        Locate --> Feel: current place
+        Feel --> Learn: needs, reward, hormones
+        Learn --> Think: dopamine x trace
+        Think --> Act: brain state
+        Act --> Sense: outputs, 50 ms later
+    }
+    Tick --> Flat: energy below 5%
+    Flat --> Tick: charging lifts energy
+    note right of Flat
+        outputs held at 0
+        the organism keeps ticking
+    end note
+```
+
 [`organism.h`](src/organism.h), every 50 ms, inputs `x` in, outputs `u` out:
 
 ```text
