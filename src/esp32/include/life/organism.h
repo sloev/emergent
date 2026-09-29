@@ -13,9 +13,15 @@
 //              timescales from 0.1 s to 10 s, driven by the inputs and by a
 //              copy of its own outputs. Gives it short-term memory and
 //              rhythms without either being written.
-//   needs      hunger (energy below its set-point), pain (from hurting
-//              inputs, fading), boredom (rises when nothing surprises it).
-//              Need = sum of squares. Reward = need going down.
+//   places     a handful of remembered situations ("places"): whatever the
+//              senses looked like when it was somewhere different enough.
+//              The nearest one is where it is; how often it has been there
+//              is how familiar that is. A map with no coordinates.
+//   needs      hunger (energy below its set-point), fullness (energy above
+//              its satiety point: nothing is pleasant forever), pain (from
+//              hurting inputs, fading), boredom (rises while it learns
+//              nothing new; relieved by learning progress and unfamiliar
+//              places). Need = sum of squares. Reward = need going down.
 //   hormones   dopamine   = surprise in reward (temporal-difference error of a
 //                           learned value estimate): the learning signal
 //              adrenaline = recent surprise and pain: more exploration, faster learning
@@ -58,6 +64,8 @@ struct Genome {
     float horizon_s = 20.0f;        // how far ahead the value estimate looks
     float trace_s = 2.0f;           // how far back a dopamine burst credits
     float brain_gain = 1.1f;        // recurrent strength: <1 calm, >1 lively
+    float satiety_setpoint = 0.97f; // energy input above this is fullness
+    float place_radius = 0.12f;     // how different a situation must look to be a new place
 };
 
 class Organism {
@@ -65,8 +73,9 @@ public:
     static constexpr size_t kMaxIn = 16;
     static constexpr size_t kMaxOut = 16;
     static constexpr size_t kNeurons = 24;
-    static constexpr size_t kInner = 7;  // hunger, pain, boredom, 4 hormones
-    static constexpr size_t kFeatures = kMaxIn + kInner + kNeurons + 1;
+    static constexpr size_t kInner = 8;  // hunger, fullness, pain, boredom, 4 hormones
+    static constexpr size_t kPlaces = 12;
+    static constexpr size_t kFeatures = kMaxIn + kInner + kNeurons + kPlaces + 1;
 
     // energy_input: index of the battery input, or -1. pain_mask: bit i set
     // if input i hurts. bipolar[j]: output j ranges -1..1 (else 0..1).
@@ -85,6 +94,9 @@ public:
         memset(v_, 0, sizeof(v_));
         memset(m_, 0, sizeof(m_));
         for (size_t i = 0; i < n_in_; i++) m_[i][i] = 1.0f;  // start by expecting "no change"
+        memset(proto_, 0, sizeof(proto_));
+        memset(visits_, 0, sizeof(visits_));
+        n_places_ = 0;
         reset_state();
     }
 
@@ -97,16 +109,25 @@ public:
         memset(noise_, 0, sizeof(noise_));
         memset(out_, 0, sizeof(out_));
         memset(f_, 0, sizeof(f_));
+        memset(err_fast_, 0, sizeof(err_fast_));
+        memset(err_slow_, 0, sizeof(err_slow_));
+        memset(situation_, 0, sizeof(situation_));
+        memset(place_act_, 0, sizeof(place_act_));
+        place_ = -1;
+        arrival_ = 0.0f;
+        progress_ = interest_ = 0.0f;
+        interest_avg_ = 0.0f;
+        fullness_ = 0.0f;
         pain_ = boredom_ = 0.0f;
         adrenaline_ = cortisol_ = serotonin_ = dopamine_ = 0.0f;
         need_ = value_ = 0.0f;
-        novelty_avg_ = 0.0f;
         td_var_ = 1e-4f;
         started_ = false;
     }
 
     void tick(const float* in, float* out, float dt) {
         sense(in, dt);
+        if (traits_.places) locate(in, dt);
         float r = feel(in, dt);
         features(in);
         learn(r, dt);
@@ -118,6 +139,7 @@ public:
 
     // --- introspection (dashboard, simulator, tests) -----------------------
     float hunger() const { return hunger_; }
+    float fullness() const { return fullness_; }
     float pain() const { return pain_; }
     float boredom() const { return boredom_; }
     float need() const { return need_; }
@@ -127,25 +149,42 @@ public:
     float serotonin() const { return serotonin_; }
     float value() const { return value_; }
     float surprise() const { return surprise_; }
+    float progress() const { return progress_; }  // learning progress: prediction error falling
+    float interest() const { return interest_; }  // progress + unfamiliarity: what relieves boredom
+    int place() const { return place_; }          // which remembered place it is at, or -1
+    size_t place_count() const { return n_places_; }
+    float familiarity(size_t p) const { return p < kPlaces ? visits_[p] : 0.0f; }  // seconds spent there, fading
     float exploration() const { return sigma_; }
     float neuron(size_t i) const { return y_[i]; }
     size_t input_count() const { return n_in_; }
     size_t output_count() const { return n_out_; }
 
     // Readout weight from feature k to output j. Features, in order: the
-    // inputs, then hunger, pain, boredom, dopamine, adrenaline, cortisol,
-    // serotonin, then the brain's neurons, then a constant.
+    // inputs, then hunger, fullness, pain, boredom, dopamine, adrenaline,
+    // cortisol, serotonin, then the brain's neurons, then the places, then
+    // a constant.
     float weight(size_t j, size_t k) const { return w_[j][k]; }
     void set_weight(size_t j, size_t k, float w) { w_[j][k] = w; }
     // Innate weight: what it's born with and what forgetting relaxes toward.
     void set_innate(size_t j, size_t k, float w) { w_[j][k] = w0_[j][k] = w; }
-    size_t feature_count() const { return n_in_ + kInner + kNeurons + 1; }
+    size_t feature_count() const { return n_in_ + kInner + kNeurons + kPlaces + 1; }
     static const char* inner_name(size_t i) {
-        static const char* names[kInner] = {"hunger", "pain", "boredom", "dopamine", "adrenaline", "cortisol", "serotonin"};
+        static const char* names[kInner] = {"hunger",     "fullness", "pain",     "boredom",
+                                            "dopamine", "adrenaline", "cortisol", "serotonin"};
         return i < kInner ? names[i] : "?";
     }
 
     void set_plasticity(bool on) { plastic_ = on; }
+
+    // Ablation switches, for measuring what each mechanism is worth. All on
+    // by default; off restores the simpler mechanism it replaced.
+    struct Traits {
+        bool satiety = true;   // off: no fullness need
+        bool progress = true;  // off: boredom relieved by raw surprise, not learning progress
+        bool places = true;    // off: no place memory (no place features, no arrival novelty)
+    };
+    void set_traits(const Traits& t) { traits_ = t; }
+    const Traits& traits() const { return traits_; }
 
 private:
     // --- brain wiring: random, sparse, fixed for life ----------------------
@@ -185,9 +224,19 @@ private:
         if (started_) {
             float norm = 1.0f;
             for (size_t k = 0; k < nf_; k++) norm += f_[k] * f_[k];
+            float fast = dt / 2.0f, slow = dt / 20.0f;
+            progress_ = 0.0f;
             for (size_t i = 0; i < n_in_; i++) {
                 float miss = in[i] - pred_[i];
                 float a = fabsf(miss);
+                // Learning progress: error over the last ~2 s below error
+                // over the last ~20 s means the model is getting this input
+                // right. Unlearnable noise keeps both equal and earns
+                // nothing, so a flickering light or hiss can't hold it.
+                err_fast_[i] += fast * (a - err_fast_[i]);
+                err_slow_[i] += slow * (a - err_slow_[i]);
+                float gain = err_slow_[i] - err_fast_[i] - 0.15f * err_slow_[i] - 0.002f;
+                if (gain > 0.0f) progress_ += gain;
                 float floor = 3.0f * jitter_[i] + 0.005f;
                 if (a > floor) s += a - floor;
                 float capped = a < 2.0f * floor ? a : 2.0f * floor;
@@ -198,6 +247,66 @@ private:
             }
         }
         surprise_ = s > 1.0f ? 1.0f : s;
+    }
+
+    // --- locate: which remembered place is this? ---------------------------
+    // A situation is the senses (minus energy: where it is shouldn't depend
+    // on how hungry it is), smoothed over ~1 s. The nearest remembered
+    // situation is the current place; one far from all of them becomes a new
+    // place, evicting the least familiar if memory is full. Familiarity is
+    // time spent there, fading over an hour.
+    void locate(const float* in, float dt) {
+        float a = started_ ? dt / 1.0f : 1.0f;
+        size_t dims = 0;
+        for (size_t i = 0; i < n_in_; i++) {
+            if (static_cast<int>(i) == energy_) continue;
+            situation_[dims] += a * (in[i] - situation_[dims]);
+            dims++;
+        }
+        if (dims == 0) return;
+        float best = 1e9f;
+        int bi = -1;
+        float r2 = g_.place_radius * g_.place_radius;
+        for (size_t p = 0; p < n_places_; p++) {
+            float d = 0.0f;
+            for (size_t k = 0; k < dims; k++) {
+                float e = situation_[k] - proto_[p][k];
+                d += e * e;
+            }
+            d /= static_cast<float>(dims);  // mean squared difference per sense
+            place_act_[p] = expf(-d / r2);
+            if (d < best) {
+                best = d;
+                bi = static_cast<int>(p);
+            }
+        }
+        if (bi < 0 || best > 4.0f * r2) {
+            // Somewhere new.
+            size_t slot = n_places_;
+            if (slot >= kPlaces) {
+                slot = 0;
+                for (size_t p = 1; p < kPlaces; p++)
+                    if (visits_[p] < visits_[slot]) slot = p;
+            } else {
+                n_places_++;
+            }
+            for (size_t k = 0; k < dims; k++) proto_[slot][k] = situation_[k];
+            visits_[slot] = 0.0f;
+            place_act_[slot] = 1.0f;
+            bi = static_cast<int>(slot);
+        } else {
+            // Drift toward how the place looks now, slower the more familiar it is.
+            float rate = dt / (5.0f + visits_[bi]);
+            for (size_t k = 0; k < dims; k++) proto_[bi][k] += rate * (situation_[k] - proto_[bi][k]);
+        }
+        // Arriving somewhere is interesting in proportion to how unfamiliar
+        // it is; staying put isn't.
+        if (bi != place_) arrival_ += 0.05f / (1.0f + visits_[bi] / 30.0f);
+        arrival_ -= arrival_ * (dt / 3.0f < 1.0f ? dt / 3.0f : 1.0f);
+        place_ = bi;
+        float fade = dt / 3600.0f;
+        for (size_t p = 0; p < n_places_; p++) visits_[p] -= visits_[p] * fade;
+        visits_[bi] += dt;
     }
 
     // Predict next tick's inputs from this tick's features.
@@ -219,6 +328,9 @@ private:
         if (!started_) sugar_ = energy;
         sugar_ += (energy - sugar_) * dt / g_.energy_buffer_s;
         hunger_ = clamp((g_.hunger_setpoint - sugar_) / g_.hunger_setpoint, 0.0f, 1.0f);
+        // Satiety: past its set-point, more of a good thing is a mild
+        // discomfort, so no source of relief holds it forever.
+        fullness_ = !traits_.satiety ? 0.0f : clamp((sugar_ - g_.satiety_setpoint) / (1.0f - g_.satiety_setpoint + 1e-3f), 0.0f, 1.0f);
 
         float hurt = 0.0f;
         for (size_t i = 0; i < n_in_; i++) {
@@ -230,15 +342,19 @@ private:
         }
         pain_ = clamp(pain_ + 0.5f * hurt - pain_ * dt / g_.pain_fade_s, 0.0f, 1.0f);
 
-        // Boredom is habituation: relieved by more surprise than it is used
-        // to over the long run (half an hour), so a quiet spell does get
-        // boring instead of becoming the new normal.
-        novelty_avg_ += (surprise_ - novelty_avg_) * dt / 1800.0f;
-        float relief = clamp(surprise_ / (novelty_avg_ + 1e-3f), 0.0f, 2.0f);
+        // Boredom is habituation: relieved by interest, i.e. learning
+        // progress plus an unfamiliar place, relative to what it is used to
+        // over the long run (half an hour), so a quiet spell does get boring
+        // instead of becoming the new normal. Mere surprise doesn't count:
+        // noise is surprising forever and teaches nothing.
+        interest_ = traits_.progress ? progress_ + arrival_ : surprise_;
+        interest_avg_ += (interest_ - interest_avg_) * dt / 1800.0f;
+        float relief = clamp(interest_ / (interest_avg_ + 1e-3f), 0.0f, 2.0f);
         boredom_ = clamp(boredom_ + (g_.boredom_rate * (1.0f - boredom_) - 0.5f * relief * boredom_) * dt, 0.0f, 1.0f);
         float bored = clamp((boredom_ - 0.4f) / 0.6f, 0.0f, 1.0f);
 
-        float need = hunger_ * hunger_ + pain_ * pain_ + bored * bored;
+        float full = 0.5f * fullness_;
+        float need = hunger_ * hunger_ + full * full + pain_ * pain_ + bored * bored;
         float r = started_ ? need_ - need : 0.0f;
         need_ = need;
 
@@ -254,6 +370,7 @@ private:
         size_t k = 0;
         for (size_t i = 0; i < n_in_; i++) fnext_[k++] = in[i];
         fnext_[k++] = hunger_;
+        fnext_[k++] = fullness_;
         fnext_[k++] = pain_;
         fnext_[k++] = bored_;
         fnext_[k++] = dopamine_;
@@ -261,6 +378,7 @@ private:
         fnext_[k++] = cortisol_;
         fnext_[k++] = serotonin_;
         for (size_t i = 0; i < kNeurons; i++) fnext_[k++] = y_[i];
+        for (size_t p = 0; p < kPlaces; p++) fnext_[k++] = p < n_places_ ? place_act_[p] : 0.0f;
         fnext_[k++] = 1.0f;
         nf_ = k;
     }
@@ -346,6 +464,7 @@ private:
     uint32_t pain_mask_ = 0;
     bool bipolar_[kMaxOut] = {};
     bool plastic_ = true;
+    Traits traits_;
     bool started_ = false;
     uint32_t rng_ = 1;
 
@@ -368,10 +487,20 @@ private:
     float jitter_[kMaxIn] = {};
     float prev_hurt_[kMaxIn] = {};
     float surprise_ = 0.0f;
-    float novelty_avg_ = 0.0f;
+    float err_fast_[kMaxIn] = {};
+    float err_slow_[kMaxIn] = {};
+    float progress_ = 0.0f, interest_ = 0.0f, interest_avg_ = 0.0f;
+    // places
+    float situation_[kMaxIn] = {};
+    float proto_[kPlaces][kMaxIn] = {};
+    float visits_[kPlaces] = {};
+    float place_act_[kPlaces] = {};
+    size_t n_places_ = 0;
+    int place_ = -1;
+    float arrival_ = 0.0f;
     // needs and hormones
     float sugar_ = 1.0f;
-    float hunger_ = 0.0f, pain_ = 0.0f, boredom_ = 0.0f, bored_ = 0.0f, need_ = 0.0f;
+    float hunger_ = 0.0f, fullness_ = 0.0f, pain_ = 0.0f, boredom_ = 0.0f, bored_ = 0.0f, need_ = 0.0f;
     float dopamine_ = 0.0f, adrenaline_ = 0.0f, cortisol_ = 0.0f, serotonin_ = 0.0f;
     float value_ = 0.0f, td_var_ = 1e-4f;
     float sigma_ = 0.0f;

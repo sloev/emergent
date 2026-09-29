@@ -8,8 +8,9 @@ it gets numbers in and writes numbers out. It is told exactly two facts about it
 body: which input is its energy (the battery) and which inputs hurt (e.g. a bumper).
 
 Everything else it does has to come out of a handful of mechanisms: a brain, a model
-that predicts its own senses, three needs, four hormones, exploration, and one
-learning rule. What it's born with comes from **evolution**, not from anyone writing it. The program is
+that predicts its own senses, a memory of places, four needs, four hormones,
+exploration, and one learning rule. [`traits.md`](traits.md) lists them as traits,
+says which goal each is for, and what the simulator shows each is worth. What it's born with comes from **evolution**, not from anyone writing it. The program is
 [`src/esp32/include/life/organism.h`](../src/esp32/include/life/organism.h), about 300
 lines, header-only, identical on the ESP32 and in the [simulator](../src/sim/README.md).
 
@@ -63,18 +64,23 @@ one or two vibration motors. The program doesn't know which.
 every 50 ms:
   sense      surprise = how far inputs missed what its forward model predicted,
                         beyond each input's own usual residual jitter
-  feel       hunger  = buffered energy ("blood sugar", ~30 s) below its set-point
-             pain    = jolts on inputs that hurt, fading over ~10 s
-             boredom = rises while nothing surprises it, relieved by more surprise than
-                       it's used to over the last half hour
-             need    = hunger² + pain² + boredom²          reward = need going down
+             progress = how much those misses are shrinking (error over ~2 s below
+                        error over ~20 s): it is learning something
+  locate     place    = nearest remembered situation (senses minus energy, ~1 s smoothed);
+                        one unlike any becomes a new place; familiarity = time spent there
+  feel       hunger   = buffered energy ("blood sugar", ~30 s) below its set-point
+             fullness = buffered energy above its satiety point
+             pain     = jolts on inputs that hurt, fading over ~10 s
+             boredom  = rises while it learns nothing, relieved by progress and by arriving
+                        somewhere unfamiliar, relative to the last half hour
+             need     = hunger² + (fullness/2)² + pain² + boredom²   reward = need going down
   hormones   dopamine   = reward - expected (TD error of a learned value estimate)
              adrenaline = recent surprise and pain          (seconds)
              cortisol   = need left unmet                   (minutes)
              serotonin  = contentment                       (minutes)
   think      24 recurrent neurons, random fixed wiring, timescales 0.1-10 s,
              driven by the inputs and a copy of its own outputs
-  act        out = readout(inputs, needs, hormones, neurons) + exploration
+  act        out = readout(inputs, needs, hormones, neurons, places) + exploration
              exploration size = base x (0.3 + hunger + adrenaline + cortisol + boredom) x (1 - 0.7 serotonin)
   learn      readout += rate x (1 + adrenaline) x dopamine x trace(exploration x feature)
              value   += TD(0)
@@ -84,7 +90,7 @@ every 50 ms:
 ```mermaid
 graph LR
     ins["10 input kinds"]
-    needs["needs<br/>hunger, pain, boredom"]
+    needs["needs<br/>hunger, fullness, pain, boredom"]
     horm["hormones<br/>dopamine, adrenaline,<br/>cortisol, serotonin"]
     brain["brain<br/>24 neurons, 0.1-10 s"]
     readout["learned readout"]
@@ -92,7 +98,11 @@ graph LR
     outs["10 output kinds"]
     value["value estimate"]
 
+    places["places<br/>remembered situations"]
     ins --> needs
+    ins --> places
+    places -->|"arriving somewhere new"| needs
+    places --> readout
     ins --> brain
     ins --> readout
     needs --> horm
@@ -112,8 +122,21 @@ Why each piece is there, and where it comes from:
 - **Forward model.** The organism learns to predict its own inputs, and only what it
   failed to predict is surprising. Without this, repetitive motion (a steady spin)
   stays "surprising" forever and becomes a self-stimulating stereotypy; with it,
-  repetition turns boring and only new situations relieve boredom (curiosity as
-  prediction error: Schmidhuber; Oudeyer & Kaplan).
+  repetition turns boring.
+- **Curiosity is learning progress, not surprise.** Boredom is relieved by the
+  model's error *falling*, not by error itself. Random noise is surprising forever
+  and teaches nothing, so it gets boring; a new thing it can learn (a wall that
+  answers a push, its own buzzer in its mic, another robot that answers back) is
+  interesting exactly while it is being learned (Schmidhuber 1991/2010; Oudeyer,
+  Kaplan & Hafner 2007).
+- **Places.** No coordinates: a place is a situation that looked different from every
+  other it remembers. Place activations are features like any other, so the value
+  estimate can learn which places are good when hungry and the readout what to do
+  in each; arriving somewhere unfamiliar is itself interesting (count-based
+  novelty).
+- **Satiety.** Energy above a set-point is a mild need of its own ("too full"), so
+  a full battery gives no reason to stay on the charger, and boredom there does the
+  rest (alliesthesia: Cabanac 1971).
 - **Brain.** A fixed random recurrent network holds recent history and produces
   rhythms. A learned readout of it can generate gaits and sequences without anyone
   writing an oscillator (reservoir computing; learned by reward modulation in Hoerzer,
@@ -127,7 +150,7 @@ Why each piece is there, and where it comes from:
 - **One learning rule.** Three-factor: a trace of exploration × activity, gated by
   dopamine. It's the rule the eligibility-trace literature attributes to dopamine
   plasticity, and it's the only one in the program.
-- **Genome.** A dozen numbers (brain wiring seed, hunger set-point, boredom rate,
+- **Genome.** A dozen numbers (brain wiring seed, hunger and satiety set-points, place size, boredom rate,
   pain fade, energy buffer, exploration size and smoothness, learning rates, value
   horizon, trace length, brain gain) plus the **innate readout weights** it is born
   with. Two organisms with the same body and different genomes behave differently for
@@ -161,7 +184,8 @@ Each claim below is falsifiable in the simulator first, then on hardware.
 |---|---|---|
 | Moving at all | exploration + readout | coverage above zero, not jitter |
 | Feeding (docking when hungry) | dopamine from hunger relief | self-sufficiency > 1 (lifespan ÷ idle endurance) |
-| Leaving when full, returning when hungry | hunger gating via the needs inputs | distance to the station hungry vs sated |
+| Leaving when full, returning when hungry | satiety + hunger as features | distance to the station hungry vs sated; % of docked time spent full |
+| Exploring, then settling | learning progress + place novelty | places remembered; coverage |
 | Avoiding what hurts | pain relief | bumps per hour falling over a life |
 | Rest and activity cycles | serotonin vs boredom | alternating low/high movement periods |
 | Gaits (crawlers, legs) | brain rhythms + readout | net displacement with servo legs |

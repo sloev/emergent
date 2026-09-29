@@ -94,6 +94,72 @@ void test_boredom_is_habituation(void) {
     TEST_ASSERT_TRUE(o.boredom() < bored - 0.2f);
 }
 
+// Curiosity can't be held by noise: an input that flickers at random is
+// surprising forever but teaches nothing, so it gets boring; a new pattern
+// the forward model can learn relieves boredom while it is being learned.
+static float boredom_after(bool learnable) {
+    Genome g;
+    g.seed = 3;
+    Organism o;
+    o.begin(g, 2, 2, 0, 0, kBip);
+    float in[2] = {0.9f, 0.5f}, out[2];
+    uint32_t r = 12345;
+    for (int t = 0; t < 1200; t++) o.tick(in, out, 0.05f);  // 60 s of nothing: bored
+    float peak = 0.0f;
+    for (int t = 0; t < 2400; t++) {                        // then 2 minutes of the new input
+        r ^= r << 13;
+        r ^= r >> 17;
+        r ^= r << 5;
+        in[1] = learnable ? 0.5f + 0.4f * sinf(t * 0.05f) : static_cast<float>(r % 1000) / 1000.0f;
+        o.tick(in, out, 0.05f);
+        if (t > 1200 && o.boredom() > peak) peak = o.boredom();
+    }
+    return peak;
+}
+
+void test_noise_is_boring_learnable_is_not(void) {
+    float noise = boredom_after(false);
+    float pattern = boredom_after(true);
+    TEST_ASSERT_TRUE(noise > 0.8f);
+    TEST_ASSERT_TRUE(pattern < noise - 0.1f);
+}
+
+// Satiety: energy above its set-point is fullness, a need of its own, so
+// a full battery is no longer a reason to stay where it charges.
+void test_full_energy_is_fullness(void) {
+    Genome g;
+    g.satiety_setpoint = 0.9f;
+    Organism o;
+    o.begin(g, 2, 2, 0, 0, kBip);
+    float in[2] = {0.8f, 0.5f}, out[2];
+    for (int t = 0; t < 2400; t++) o.tick(in, out, 0.05f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, o.fullness());
+    in[0] = 1.0f;
+    for (int t = 0; t < 2400; t++) o.tick(in, out, 0.05f);
+    TEST_ASSERT_TRUE(o.fullness() > 0.8f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, o.hunger());
+}
+
+// Places: a situation that looks different becomes a new place; coming
+// back to the first one recognizes it instead of making a third.
+void test_places_are_recognized(void) {
+    Genome g;
+    Organism o;
+    o.begin(g, 3, 2, 0, 0, kBip);
+    float a[3] = {0.9f, 0.2f, 0.2f}, b[3] = {0.9f, 0.8f, 0.7f}, out[2];
+    for (int t = 0; t < 200; t++) o.tick(a, out, 0.05f);
+    int pa = o.place();
+    for (int t = 0; t < 200; t++) o.tick(b, out, 0.05f);
+    int pb = o.place();
+    for (int t = 0; t < 200; t++) o.tick(a, out, 0.05f);
+    TEST_ASSERT_TRUE(pa >= 0 && pb >= 0 && pa != pb);
+    TEST_ASSERT_EQUAL(pa, o.place());
+    // Settling from one place to the other passes through in-between
+    // situations, which may count as places; it doesn't grow without bound.
+    TEST_ASSERT_TRUE(o.place_count() >= 2 && o.place_count() <= 6);
+    TEST_ASSERT_TRUE(o.familiarity(static_cast<size_t>(pa)) > o.familiarity(static_cast<size_t>(pb)));
+}
+
 // The core claim of the learning rule: if exploring output 0 upward while
 // input 1 is high keeps being followed by energy rising (need falling),
 // the readout weight from input 1 to output 0 grows positive.
@@ -132,6 +198,9 @@ int main(int, char**) {
     RUN_TEST(test_low_energy_is_hunger);
     RUN_TEST(test_pain_from_declared_input_fades);
     RUN_TEST(test_boredom_is_habituation);
+    RUN_TEST(test_noise_is_boring_learnable_is_not);
+    RUN_TEST(test_full_energy_is_fullness);
+    RUN_TEST(test_places_are_recognized);
     RUN_TEST(test_dopamine_shapes_the_readout);
     return UNITY_END();
 }
