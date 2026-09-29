@@ -1,7 +1,6 @@
-// Emergent simulator: runs the unmodified behavior engine (physiology,
-// contingency memory, spatial memory, learned reflexes, action generator)
-// in a 2D room with a charging station, in one of many bodies, and scores
-// what it does.
+// Emergent simulator: runs the unmodified organism (life/organism.h) in a 2D
+// room with charging stations, in one of many bodies, and scores what it
+// does. It also evolves the genome a robot is born with (--evolve).
 //
 //   ./emergent-sim --runs 8 --lives 6 --hours 3              # organism 0, every condition
 //   ./emergent-sim --organism 12 --json --runs 4 --lives 4   # one zoo organism, machine-readable
@@ -23,10 +22,6 @@
 #include <vector>
 
 #include "body_plan.h"
-#include "core/action_generator.h"
-#include "core/contingency_memory.h"
-#include "core/physiology.h"
-#include "core/spatial_memory.h"
 #include "life/organism.h"
 #include "sim_body.h"
 #include "world.h"
@@ -35,27 +30,20 @@ namespace {
 
 using namespace sim;
 
-enum class Condition {
-    kFull, kHandWired, kHandWiredPlastic, kNoLearning, kNoContingency, kNoSpatial, kNoBatteryLink, kNoiseOnly, kRandomWalk
-};
+enum class Condition { kFull, kNoLearning, kNoBatteryLink, kNoiseOnly, kRandomWalk };
 
 struct ConditionInfo {
     Condition c;
     const char* name;
     const char* what;
-    bool example_only;
 };
 
 const ConditionInfo kConditions[] = {
-    {Condition::kFull, "full", "unmodified engine", false},
-    {Condition::kHandWired, "hand_wired", "reflexes fixed by hand to phototaxis, not learned (upper bound)", true},
-    {Condition::kHandWiredPlastic, "hand_wired_plastic", "starts hand-wired, then learns (does learning keep it?)", true},
-    {Condition::kNoLearning, "no_reflexes", "learned sensorimotor reflexes off", false},
-    {Condition::kNoContingency, "no_contingency", "contingency bias never fires", false},
-    {Condition::kNoSpatial, "no_spatial", "spatial nudge never fires", false},
-    {Condition::kNoBatteryLink, "no_battery_link", "battery not wired to h_energy", false},
-    {Condition::kNoiseOnly, "noise_only", "no memory, no reflexes: drives + noise", false},
-    {Condition::kRandomWalk, "random_walk", "null model: wanders with its own locomotion, no engine", false},
+    {Condition::kFull, "full", "the organism as it is"},
+    {Condition::kNoLearning, "no_learning", "born with its genome, never learns"},
+    {Condition::kNoBatteryLink, "no_battery_link", "battery not wired to hunger"},
+    {Condition::kNoiseOnly, "noise_only", "no instincts, no learning: needs + exploration noise"},
+    {Condition::kRandomWalk, "random_walk", "null model: wanders with its own locomotion, no organism"},
 };
 
 struct Metrics {
@@ -73,9 +61,6 @@ struct Metrics {
     float dist_when_hungry = 0;
     float dist_when_sated = 0;
     float behavior_entropy = 0;
-    float var_mean[kPhysVarCount] = {};
-    float drive_on[kPhysVarCount] = {};
-    float mean_fuzz = 0;
 };
 
 constexpr float kDt = 0.05f;
@@ -154,8 +139,8 @@ bool load_genome(const char* path, EvoGenome& e) {
 // on. Memories and reflexes persist (the firmware saves life-state);
 // physiology restarts from its boot values.
 struct Runner {
-    Runner(Condition c, const BodyPlan& p, const WorldConfig& w, float h, int n, bool life_engine)
-        : cond(c), plan(p), wcfg(w), hours(h), lives(n), use_life(life_engine), world(wcfg, plan), body(plan),
+    Runner(Condition c, const BodyPlan& p, const WorldConfig& w, float h, int n)
+        : cond(c), plan(p), wcfg(w), hours(h), lives(n), world(wcfg, plan), body(plan),
           rng(w.seed + 99) {}
 
     Condition cond;
@@ -163,13 +148,8 @@ struct Runner {
     WorldConfig wcfg;
     float hours;
     int lives;
-    bool use_life;
     World world;
     SimBody body;
-    Physiology phys;
-    ContingencyMemory cm, cm_empty;
-    SpatialMemory spatial, spatial_empty;
-    ActionGenerator gen;
     life::Organism org;
     float in_buf[life::Organism::kMaxIn] = {};
     float out_buf[life::Organism::kMaxOut] = {};
@@ -180,18 +160,7 @@ struct Runner {
     long trace_every = 20;  // ticks between trace rows
 
     std::vector<Metrics> run_all() {
-        // g_tuning is the classic engine's global constitution; the life
-        // engine carries everything in its Genome, so evaluations can run on
-        // several threads at once without touching shared state.
-        if (!use_life) g_tuning = plan.tuning;
-        cm.begin(body);
-        cm_empty.begin(body);
-        gen.set_seed(wcfg.seed * 2654435761u + 1);
-        gen.begin_learning(body);
-        gen.set_learning(cond != Condition::kNoLearning && cond != Condition::kNoiseOnly);
-        if (cond == Condition::kHandWired || cond == Condition::kHandWiredPlastic) hand_wire();
-        if (cond == Condition::kHandWired) gen.set_plasticity(false);
-        if (use_life) begin_life_engine();
+        begin_organism();
         std::vector<Metrics> out;
         for (int life = 0; life < lives; life++) {
             if (life > 0) world.reset_robot();
@@ -200,12 +169,11 @@ struct Runner {
         return out;
     }
 
-    // The new engine: one Organism, told only which input is its energy and
-    // which inputs hurt (bumpers).
-    void begin_life_engine() {
-        life::Genome g;
+    // One Organism, told only which input is its energy and which inputs
+    // hurt (bumpers).
+    void begin_organism() {
+        life::Genome g = plan.genome;
         g.seed = wcfg.seed * 2654435761u + static_cast<uint32_t>(plan.id) * 97u + 1u;
-        g.hunger_setpoint = plan.tuning.bands.lo[0];
         uint32_t pain = 0;
         bool bip[life::Organism::kMaxOut] = {};
         for (size_t i = 0; i < plan.sensors.size() && i < 32; i++)
@@ -226,29 +194,6 @@ struct Runner {
                 for (size_t k = 0; k < nf && j * nf + k < evo->innate.size(); k++) org.set_innate(j, k, evo->innate[j * nf + k]);
         }
         org.set_plasticity(cond != Condition::kNoLearning && cond != Condition::kNoiseOnly);
-    }
-
-    // Braitenberg 2b in the hunger context of the example body: each head
-    // light excites the opposite wheel; the station's clicks brake.
-    void hand_wire() {
-        SensorimotorPolicy& p = gen.policy();
-        size_t e = 1 + static_cast<size_t>(PhysVar::kEnergy);
-        size_t bias = p.input_count();
-        auto s = [&](const char* n) {
-            for (size_t i = 0; i < plan.sensors.size(); i++)
-                if (plan.sensors[i].name == n) return i;
-            return static_cast<size_t>(0);
-        };
-        size_t L = static_cast<size_t>(plan.actuator_index(Role::kLocoLeft));
-        size_t R = static_cast<size_t>(plan.actuator_index(Role::kLocoRight));
-        p.set_weight(e, s("light_left"), R, 1.5f);
-        p.set_weight(e, s("light_right"), L, 1.5f);
-        p.set_weight(e, s("light_left"), L, -0.8f);
-        p.set_weight(e, s("light_right"), R, -0.8f);
-        p.set_weight(e, bias, L, 0.2f);
-        p.set_weight(e, bias, R, 0.2f);
-        p.set_weight(e, s("mic"), L, -1.5f);
-        p.set_weight(e, s("mic"), R, -1.5f);
     }
 
     // Null model: move with this body's own locomotion, no engine at all.
@@ -292,8 +237,7 @@ struct Runner {
     }
 
     Metrics run_life(int life) {
-        phys.begin(body);
-        if (use_life) org.reset_state();
+        org.reset_state();
         Metrics m;
         bool visited[kCellsX][kCellsY] = {};
         double speed_sum = 0, hungry_d = 0, sated_d = 0;
@@ -314,32 +258,18 @@ struct Runner {
 
         long total_ticks = static_cast<long>(hours * 3600.0f / kDt);
         long tick = 0;
-        uint32_t now_ms = 0;
-
         for (; tick < total_ticks; tick++) {
-            now_ms += 50;
             for (size_t i = 0; i < body.sensor_count(); i++) body.sensor_at(i).set(world.sense(i));
 
             if (cond == Condition::kRandomWalk) {
                 random_walk_step();
-                phys.update(body, kDt, 0.0f);
-            } else if (use_life) {
+            } else {
                 for (size_t i = 0; i < body.sensor_count(); i++) in_buf[i] = body.sensor_at(i).last_value();
                 org.tick(in_buf, out_buf, kDt);
                 for (size_t j = 0; j < body.actuator_count(); j++) body.actuator_at(j).write(out_buf[j]);
-                phys.update(body, kDt, 0.0f);  // bookkeeping only: nothing reads it back
-            } else {
-                ContingencyMemory& c_act =
-                    (cond == Condition::kNoContingency || cond == Condition::kNoiseOnly) ? cm_empty : cm;
-                SpatialMemory& s_act =
-                    (cond == Condition::kNoSpatial || cond == Condition::kNoiseOnly) ? spatial_empty : spatial;
-                phys.update(body, kDt, cm.last_surprise());
-                cm.update(body, phys, kDt);
-                spatial.update(body, phys, kDt);
-                gen.tick(body, phys, c_act, s_act, now_ms);
             }
 
-            // Firmware SafetyMonitor's battery floor.
+            // Battery floor, as in the firmware.
             if (energy >= 0 && body.sensor_at(static_cast<size_t>(energy)).last_value() < 0.05f) {
                 for (size_t i = 0; i < body.actuator_count(); i++) body.actuator_at(i).force(0.0f);
             }
@@ -356,7 +286,7 @@ struct Runner {
                 docked_ticks++;
                 if (world.soc() > 0.95f) full_docked_ticks++;
             }
-            bool hungry = use_life ? org.hunger() > 0.0f : phys.drive(PhysVar::kEnergy) > 0.0f;
+            bool hungry = org.hunger() > 0.0f;
             if (world.charging() && !was_charging) {
                 m.dock_events++;
                 if (hungry) m.hungry_dockings++;
@@ -374,11 +304,6 @@ struct Runner {
                 sated_d += d;
                 sated_n++;
             }
-            for (size_t v = 0; v < kPhysVarCount; v++) {
-                m.var_mean[v] += phys.value(static_cast<PhysVar>(v));
-                if (phys.drive(static_cast<PhysVar>(v)) > 0.0f) m.drive_on[v] += 1;
-            }
-            m.mean_fuzz += phys.fuzz_scale();
 
             // Behavior entropy over its two main locomotion channels, 60 s windows.
             auto sgn = [&](int idx) {
@@ -413,7 +338,7 @@ struct Runner {
         m.lifespan_h = ticks * kDt / 3600.0f;
         m.docked_frac = docked_ticks / ticks;
         m.full_docked_frac = docked_ticks ? static_cast<float>(full_docked_ticks) / docked_ticks : NAN;
-        m.places = use_life ? static_cast<int>(org.place_count()) : 0;
+        m.places = static_cast<int>(org.place_count());
         int cells = 0;
         for (auto& row : visited)
             for (bool v : row) cells += v;
@@ -422,11 +347,6 @@ struct Runner {
         m.dist_when_hungry = hungry_n ? static_cast<float>(hungry_d / hungry_n) : NAN;
         m.dist_when_sated = sated_n ? static_cast<float>(sated_d / sated_n) : NAN;
         m.behavior_entropy = ent_n ? static_cast<float>(ent_sum / ent_n) : NAN;
-        for (size_t v = 0; v < kPhysVarCount; v++) {
-            m.var_mean[v] /= ticks;
-            m.drive_on[v] /= ticks;
-        }
-        m.mean_fuzz /= ticks;
         return m;
     }
 
@@ -436,13 +356,8 @@ struct Runner {
                 p.theta, world.soc(), world.docked() ? 1 : 0, world.head_angle());
         trace_first = false;
         for (size_t k = 0; k < world.station_count(); k++) fprintf(trace, ",%.4f", world.station_buffer(k));
-        if (use_life) {
-            fprintf(trace, ",%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", org.hunger(), org.pain(), org.boredom(),
-                    org.dopamine(), org.adrenaline(), org.cortisol(), org.serotonin(), org.value(), org.exploration());
-        } else {
-            for (size_t v = 0; v < kPhysVarCount; v++) fprintf(trace, ",%.3f", phys.value(static_cast<PhysVar>(v)));
-            fprintf(trace, ",%.3f", phys.fuzz_scale());
-        }
+        fprintf(trace, ",%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f", org.hunger(), org.pain(), org.boredom(),
+                org.dopamine(), org.adrenaline(), org.cortisol(), org.serotonin(), org.value(), org.exploration());
         for (size_t i = 0; i < body.sensor_count(); i++) fprintf(trace, ",%.3f", body.sensor_at(i).last_value());
         for (size_t i = 0; i < body.actuator_count(); i++) fprintf(trace, ",%.3f", body.actuator_at(i).value());
         fprintf(trace, "]");
@@ -486,12 +401,10 @@ std::string plan_json(const BodyPlan& p) {
         s += std::string(i ? "," : "") + "{\"name\":" + jstr(d.name) + ",\"role\":" + jstr(role_name(d.role)) +
              ",\"part\":" + jstr(d.part) + ",\"min\":" + jnum(d.min) + ",\"max\":" + jnum(d.max) + "}";
     }
-    const Tuning& t = p.tuning;
-    s += "],\"tuning\":{\"hunger_below\":" + jnum(t.bands.lo[0]) + ",\"boredom_above\":" + jnum(t.bands.hi[5]) +
-         ",\"boredom_gain\":" + jnum(t.boredom.gain) + ",\"startle_gain\":" + jnum(t.safety.drop_gain) +
-         ",\"curiosity_weight\":" + jnum(t.exploration.curiosity) + ",\"hunger_weight\":" + jnum(t.exploration.hunger) +
-         ",\"learn_rate\":" + jnum(t.policy.learn_rate) + ",\"trace_tau_s\":" + jnum(t.policy.trace_tau_s) +
-         ",\"noise_tau_s\":" + jnum(t.action.noise_tau_s) + ",\"noise_gain\":" + jnum(t.action.noise_gain) + "}}";
+    const life::Genome& g = p.genome;
+    s += "],\"genome\":{\"hunger_setpoint\":" + jnum(g.hunger_setpoint) + ",\"boredom_rate\":" + jnum(g.boredom_rate) +
+         ",\"explore\":" + jnum(g.explore) + ",\"explore_tau_s\":" + jnum(g.explore_tau_s) +
+         ",\"learn_rate\":" + jnum(g.learn_rate) + ",\"trace_s\":" + jnum(g.trace_s) + "}}";
     return s;
 }
 
@@ -507,7 +420,7 @@ std::string metrics_json(const Metrics& m) {
 
 // The strongest learned connections: which sense drives which output, in
 // which motivational context.
-std::string life_reflexes_json(Runner& r, size_t n) {
+std::string reflexes_json(Runner& r, size_t n) {
     struct W {
         float w;
         size_t j, k;
@@ -534,28 +447,6 @@ std::string life_reflexes_json(Runner& r, size_t n) {
     return s + "]";
 }
 
-std::string reflexes_json(Runner& r, size_t n) {
-    if (r.use_life) return life_reflexes_json(r, n);
-    struct W {
-        float w;
-        size_t k, i, j;
-    };
-    std::vector<W> all;
-    const SensorimotorPolicy& p = r.gen.policy();
-    for (size_t k = 0; k < SensorimotorPolicy::kContexts; k++)
-        for (size_t i = 0; i <= p.input_count(); i++)
-            for (size_t j = 0; j < p.output_count(); j++) all.push_back({p.weight(k, i, j), k, i, j});
-    std::sort(all.begin(), all.end(), [](const W& a, const W& b) { return std::fabs(a.w) > std::fabs(b.w); });
-    std::string s = "[";
-    for (size_t q = 0; q < std::min(n, all.size()); q++) {
-        const W& w = all[q];
-        const char* ctx = w.k == 0 ? "always" : Physiology::var_name(static_cast<PhysVar>(w.k - 1));
-        std::string in = w.i < p.input_count() ? r.plan.sensors[w.i].name : "(bias)";
-        s += std::string(q ? "," : "") + "{\"context\":" + jstr(ctx) + ",\"from\":" + jstr(in) +
-             ",\"to\":" + jstr(r.plan.actuators[w.j].name) + ",\"w\":" + jnum(w.w) + "}";
-    }
-    return s + "]";
-}
 
 struct Summary {
     double sum = 0, sum2 = 0;
@@ -619,7 +510,7 @@ struct Evolver {
         for (int b = 0; b < births; b++) {
             WorldConfig w = wcfg;
             w.seed = gen_seed * 31u + static_cast<uint32_t>(b) * 7u + 1u;
-            Runner r(Condition::kFull, plan, w, hours, lives, true);
+            Runner r(Condition::kFull, plan, w, hours, lives);
             r.evo = &e;
             std::vector<Metrics> ms = r.run_all();
             for (const Metrics& m : ms) sum += m.lifespan_h / idle;
@@ -629,8 +520,8 @@ struct Evolver {
 
     void run(int generations, int pop, const char* out_path) {
         {
-            Runner probe(Condition::kFull, plan, wcfg, hours, 1, true);
-            probe.begin_life_engine();
+            Runner probe(Condition::kFull, plan, wcfg, hours, 1);
+            probe.begin_organism();
             n_out = probe.org.output_count();
             nf = probe.org.feature_count();
         }
@@ -686,7 +577,6 @@ void usage() {
     fprintf(stderr,
             "usage: emergent-sim [--organism K] [--condition NAME|all] [--runs N] [--lives N] [--hours H]\n"
             "                    [--seed S] [--rssi-period S] [--json] [--describe] [--trace FILE] [--trace-every S]\n"
-            "                    [--engine life|classic]   (life = include/life/organism.h, the default)\n"
             "                    [--evolve G --pop P --births B --out genome.txt]   evolve innate wiring + constitution\n"
             "                    [--genome genome.txt]     run a saved (evolved) genome\n"
             "                    [--stations 1|2] [--station-buffer AH]   (0 = unlimited mains station)\n"
@@ -694,7 +584,7 @@ void usage() {
             "--hours 0 (default) caps each life at 2.5x the body's idle endurance\n"
             "organism 0 is the example build; 1.. are generated bodies (see body_plan.h)\n"
             "conditions:\n");
-    for (auto& c : kConditions) fprintf(stderr, "  %-20s %s%s\n", c.name, c.what, c.example_only ? " [organism 0]" : "");
+    for (auto& c : kConditions) fprintf(stderr, "  %-20s %s%s\n", c.name, c.what, "");
 }
 
 }  // namespace
@@ -704,7 +594,7 @@ int main(int argc, char** argv) {
     int runs = 10, lives = 1, organism = 0;
     float hours = 0.0f;
     uint32_t seed = 1;
-    bool json = false, describe = false, life_engine = true;
+    bool json = false, describe = false;
     const char* trace_path = nullptr;
     const char* genome_path = nullptr;
     const char* out_path = nullptr;
@@ -728,15 +618,6 @@ int main(int argc, char** argv) {
         else if (!strcmp(argv[i], "--seed")) seed = static_cast<uint32_t>(atoi(next()));
         else if (!strcmp(argv[i], "--rssi-period")) wcfg.rssi_period_override = static_cast<float>(atof(next()));
         else if (!strcmp(argv[i], "--json")) json = true;
-        else if (!strcmp(argv[i], "--engine")) {
-            const char* e = next();
-            if (!strcmp(e, "life")) life_engine = true;
-            else if (!strcmp(e, "classic")) life_engine = false;
-            else {
-                usage();
-                return 2;
-            }
-        }
         else if (!strcmp(argv[i], "--describe")) describe = true;
         else if (!strcmp(argv[i], "--trace")) trace_path = next();
         else if (!strcmp(argv[i], "--trace-every")) trace_interval_s = static_cast<float>(atof(next()));
@@ -795,22 +676,16 @@ int main(int argc, char** argv) {
         }
         wcfg.seed = seed;
         if (c == Condition::kNoBatteryLink) plan.battery_linked = false;
-        auto r = std::make_unique<Runner>(c, plan, wcfg, hours, lives, life_engine);
+        auto r = std::make_unique<Runner>(c, plan, wcfg, hours, lives);
         r->evo = evo;
         fprintf(f,
                 "{\"meta\":{\"organism\":%s,\"condition\":%s,\"seed\":%u,\"room\":[%g,%g],\"station_y\":%g,"
                 "\"engine\":\"%s\",\"funnel_depth\":%g,\"interval_s\":%g,\"cap_h\":%g,\"idle_h\":%g,\"stations\":%d,\"station_buffer_ah\":%g,\"columns\":[\"life\",\"t\",\"x\",\"y\",\"theta\",\"soc\",\"docked\",\"head\"",
                 plan_json(plan).c_str(), jstr(condition == "all" ? "full" : condition).c_str(), seed, wcfg.room_w,
-                wcfg.room_h, wcfg.station_y, life_engine ? "life" : "classic", wcfg.funnel_depth, trace_interval_s, hours, idle_h,
+                wcfg.room_h, wcfg.station_y, "life", wcfg.funnel_depth, trace_interval_s, hours, idle_h,
                 wcfg.stations, wcfg.station_buffer_ah);
         for (int k = 0; k < wcfg.stations; k++) fprintf(f, ",\"station%d\"", k);
-        if (life_engine) {
-            fprintf(f, ",\"hunger\",\"pain\",\"boredom\",\"dopamine\",\"adrenaline\",\"cortisol\",\"serotonin\",\"value\",\"explore\"");
-        } else {
-            for (size_t v = 0; v < kPhysVarCount; v++)
-                fprintf(f, ",%s", jstr(Physiology::var_name(static_cast<PhysVar>(v))).c_str());
-            fprintf(f, ",\"fuzz\"");
-        }
+        fprintf(f, ",\"hunger\",\"pain\",\"boredom\",\"dopamine\",\"adrenaline\",\"cortisol\",\"serotonin\",\"value\",\"explore\"");
         for (auto& s : plan.sensors) fprintf(f, ",%s", jstr("in:" + s.name).c_str());
         for (auto& a : plan.actuators) fprintf(f, ",%s", jstr("out:" + a.name).c_str());
         fprintf(f, "]},\"rows\":[\n");
@@ -844,8 +719,6 @@ int main(int argc, char** argv) {
     bool first_cond = true;
     for (auto& ci : kConditions) {
         if (condition != "all" && condition != ci.name) continue;
-        if (ci.example_only && (organism != 0 || life_engine)) continue;
-        if (life_engine && (ci.c == Condition::kNoContingency || ci.c == Condition::kNoSpatial)) continue;
         BodyPlan p = plan;
         if (ci.c == Condition::kNoBatteryLink) p.battery_linked = false;
         Summary life, died, docks, docked, fulld, cov, spd, dh, ds, ent, sw, pl;
@@ -853,7 +726,7 @@ int main(int argc, char** argv) {
         std::string lives_json, reflexes;
         for (int k = 0; k < runs; k++) {
             wcfg.seed = seed + k;
-            auto r = std::make_unique<Runner>(ci.c, p, wcfg, hours, lives, life_engine);
+            auto r = std::make_unique<Runner>(ci.c, p, wcfg, hours, lives);
             r->evo = evo;
             std::vector<Metrics> ms = r->run_all();
             if (k == 0 && ci.c == Condition::kFull) reflexes = reflexes_json(*r, 8);

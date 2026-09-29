@@ -2,8 +2,8 @@
 //
 // Body plans: what one simulated organism is made of. A plan lists its
 // locomotion system, every sensor and actuator channel (with the physical
-// part each one models), its battery, and its temperament (a Tuning, the
-// same struct the firmware runs on).
+// part each one models), its battery, and its temperament (a life::Genome,
+// the same struct the firmware runs on).
 //
 // Organism 0 is the example build from docs/example-body.md. Organisms 1..N
 // are generated from a seed out of real, cheap parts: stepper or DC wheels,
@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "board_config.h"
-#include "core/tuning.h"
+#include "life/organism.h"
 
 namespace sim {
 
@@ -97,7 +97,7 @@ struct BodyPlan {
     float base_current_a = 0.25f;
     std::vector<SensorDef> sensors;
     std::vector<ActuatorDef> actuators;
-    Tuning tuning{};
+    life::Genome genome{};
     bool battery_linked = true;
 
     int actuator_index(Role r) const {
@@ -376,27 +376,20 @@ inline BodyPlan random_plan(int id, uint32_t seed) {
 
     // Temperament: the same knobs the firmware exposes, drawn around the
     // defaults. Each draw gets a word so a reader can tell organisms apart.
-    Tuning& t = p.tuning;
-    t.bands.lo[0] = r.uni(0.5f, 0.8f);
-    t.bands.hi[5] = r.uni(0.25f, 0.6f);
-    t.boredom.gain = r.uni(0.02f, 0.10f);
-    t.safety.drop_gain = r.uni(0.6f, 2.0f);
-    t.exploration.curiosity = r.uni(0.1f, 0.5f);
-    t.exploration.hunger = r.uni(0.0f, 0.5f);
-    t.policy.learn_rate *= r.uni(0.5f, 2.0f);
-    t.policy.trace_tau_s = r.uni(1.5f, 6.0f);
-    t.action.noise_tau_s = r.uni(0.5f, 2.0f);
-    t.action.noise_gain = r.uni(0.3f, 0.7f);
+    life::Genome& g = p.genome;
+    g.hunger_setpoint = r.uni(0.5f, 0.8f);
+    g.boredom_rate = r.uni(0.02f, 0.10f);
+    g.explore = r.uni(0.3f, 0.7f);
+    g.explore_tau_s = r.uni(0.5f, 2.0f);
+    g.learn_rate *= r.uni(0.5f, 2.0f);
+    g.trace_s = r.uni(1.0f, 5.0f);
 
     std::vector<std::string> words;
-    words.push_back(t.bands.lo[0] > 0.7f ? "hungers early" : t.bands.lo[0] < 0.58f ? "hungers late" : "");
-    words.push_back(t.boredom.gain > 0.075f ? "restless" : t.boredom.gain < 0.035f ? "placid" : "");
-    words.push_back(t.safety.drop_gain > 1.6f ? "timid" : t.safety.drop_gain < 0.9f ? "bold" : "");
-    words.push_back(t.exploration.curiosity > 0.4f ? "curious" : "");
-    words.push_back(t.exploration.hunger > 0.4f ? "forages hard when hungry"
-                    : t.exploration.hunger < 0.1f ? "doesn't forage harder when hungry" : "");
-    words.push_back(t.policy.learn_rate > 0.003f ? "quick learner" : t.policy.learn_rate < 0.0014f ? "slow learner" : "");
-    words.push_back(t.policy.trace_tau_s > 4.5f ? "long memory span" : t.policy.trace_tau_s < 2.2f ? "short memory span" : "");
+    words.push_back(g.hunger_setpoint > 0.7f ? "hungers early" : g.hunger_setpoint < 0.58f ? "hungers late" : "");
+    words.push_back(g.boredom_rate > 0.075f ? "restless" : g.boredom_rate < 0.035f ? "placid" : "");
+    words.push_back(g.explore > 0.6f ? "curious" : g.explore < 0.4f ? "cautious" : "");
+    words.push_back(g.learn_rate > 0.15f ? "quick learner" : g.learn_rate < 0.07f ? "slow learner" : "");
+    words.push_back(g.trace_s > 4.0f ? "long memory span" : g.trace_s < 2.0f ? "short memory span" : "");
     std::string temper;
     for (auto& wd : words) {
         if (wd.empty()) continue;

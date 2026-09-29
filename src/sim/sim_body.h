@@ -8,6 +8,7 @@
 // the battery channel is named as the board's energy_sensor, the one
 // wiring fact the design allows.
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -15,7 +16,6 @@
 #include "board_config.h"
 #include "body/rate_limit.h"
 #include "body_plan.h"
-#include "core/math_util.h"
 
 namespace sim {
 
@@ -27,7 +27,7 @@ public:
     // Same clamp + rate limit the real Actuator::write() applies, at the
     // behavior tick's dt.
     float write(float target) {
-        float t = clampf(target, spec_.range_min, spec_.range_max);
+        float t = std::clamp(target, spec_.range_min, spec_.range_max);
         current_ = apply_rate_limit(current_, t, spec_.max_rate_per_s, kTickS);
         return current_;
     }
@@ -53,7 +53,7 @@ public:
     float last_value() const { return value_; }
     const char* name() const { return spec_.name; }
     const SensorSpec& spec() const { return spec_; }
-    void set(float v) { value_ = clampf(v, 0.0f, 1.0f); }
+    void set(float v) { value_ = std::clamp(v, 0.0f, 1.0f); }
 
 private:
     SensorSpec spec_{};

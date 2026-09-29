@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SIM = os.path.join(HERE, "emergent-sim")
-CONDITIONS = ["full", "no_reflexes", "random_walk"]
+CONDITIONS = ["full", "no_learning", "random_walk"]
 
 
 def run(organism, condition, runs, lives):
@@ -137,7 +137,7 @@ def main():
 
 def write_report(rows, args):
     full = [r["conditions"]["full"]["self_sufficiency"] for r in rows]
-    base = [r["conditions"]["no_reflexes"]["self_sufficiency"] for r in rows]
+    base = [r["conditions"]["no_learning"]["self_sufficiency"] for r in rows]
     rw = [r["conditions"]["random_walk"]["self_sufficiency"] for r in rows]
     better = sum(1 for f, b in zip(full, base) if f - b > 0.08)
     worse = sum(1 for f, b in zip(full, base) if b - f > 0.08)
@@ -168,9 +168,9 @@ def write_report(rows, args):
     L.append("|---|---|---|---|---|---|")
     for loco, rs in sorted(by_loco.items()):
         f_ = st.mean(r["conditions"]["full"]["self_sufficiency"] for r in rs)
-        b_ = st.mean(r["conditions"]["no_reflexes"]["self_sufficiency"] for r in rs)
+        b_ = st.mean(r["conditions"]["no_learning"]["self_sufficiency"] for r in rs)
         w_ = st.mean(r["conditions"]["random_walk"]["self_sufficiency"] for r in rs)
-        h_ = sum(1 for r in rs if r["conditions"]["full"]["self_sufficiency"] - r["conditions"]["no_reflexes"]["self_sufficiency"] > 0.08)
+        h_ = sum(1 for r in rs if r["conditions"]["full"]["self_sufficiency"] - r["conditions"]["no_learning"]["self_sufficiency"] > 0.08)
         L.append(f"| {loco} | {len(rs)} | {f_:.2f} | {b_:.2f} | {w_:.2f} | {h_}/{len(rs)} |")
     L.append("")
     L.append("## Organisms\n")
