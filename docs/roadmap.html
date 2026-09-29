@@ -294,11 +294,15 @@ open work only.</p>
 </thead>
 <tbody><tr>
 <td>Implemented</td>
-<td>20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine.</td>
+<td>20 Hz loop: sense → physiology → drives → memory → action → actuate → learn. Learned sensor→actuator reflexes trained by drive reduction. Named-channel body. SoftAP dashboard. Life-state JSON. Station firmware as a separate state machine.</td>
 </tr>
 <tr>
 <td>Tested</td>
-<td>Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias) against a fake body. Not real hardware.</td>
+<td>Host-native tests for bit packing, age saturation, rate-limit clamp, LEDC cap, and organism behavior (energy dynamics, contingency bias, reflex learning rule) against a fake body. Not real hardware.</td>
+</tr>
+<tr>
+<td>Simulated</td>
+<td>The unmodified engine in a modelled room with a station (<code>src/sim</code>): learned reflexes lift mean lifespan from 1.26 h to 1.86 h (hand-wired bound 2.46 h). Learns to reach and stay on the dock; not yet to leave when full, and nothing accumulates across lives.</td>
 </tr>
 <tr>
 <td>Hardware tested</td>
@@ -306,14 +310,37 @@ open work only.</p>
 </tr>
 <tr>
 <td>Designed / planned</td>
-<td>Approach-and-dock, ablations, extra boards.</td>
+<td>Body declared in a JSON file with per-input ranges, stepper and mic-envelope channel kinds (<a href="example-body.md">example build</a>); approach-and-dock on hardware; extra boards.</td>
 </tr>
 <tr>
 <td>Hypothesis</td>
-<td>That drives + decaying memory + noise will look alive, including charging as an attractor. Unverified.</td>
+<td>That drives + decaying memory + learned reflexes + noise will look alive on real hardware, including charging as an attractor. Unverified.</td>
 </tr>
 </tbody></table>
 <hr>
+<h2 id="v0100--simulator-and-learned-reflexes-current">v0.10.0 — Simulator and learned reflexes (current)</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Native simulator driving the unmodified engine in a modelled room with a station,
+ablation conditions, a no-engine baseline and a hand-wired upper bound
+(<a href="../src/sim/README.md">src/sim</a>)</li>
+<li><input checked="" disabled="" type="checkbox"> Learned sensor→actuator reflexes trained by drive reduction, with an eligibility trace</li>
+<li><input checked="" disabled="" type="checkbox"> Physiology fixes the simulator exposed: hunger band, hunger→activity, energy double
+count, sensory adaptation and startle habituation, curiosity out of the reward,
+convex drive, correlated exploration noise</li>
+<li><input checked="" disabled="" type="checkbox"> <a href="example-body.md">Example build</a>: 7 inputs, 5 outputs on one ESP32 DevKit</li>
+<li><input disabled="" type="checkbox"> Save reflex weights in life-state (today they're lost on reboot)</li>
+<li><input disabled="" type="checkbox"> Leave when full: the learned organism stays docked at 87% charge</li>
+<li><input disabled="" type="checkbox"> Learning that accumulates across lives instead of peaking in the first one</li>
+<li><input disabled="" type="checkbox"> Reflex weights on the dashboard</li>
+</ul>
+<h2 id="v0110--body-from-a-file">v0.11.0 — Body from a file</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <code>body.json</code> on LittleFS, editable from the dashboard, applied live without reflash</li>
+<li><input disabled="" type="checkbox"> Per-input range (battery 9.0–12.6 V → 0..1)</li>
+<li><input disabled="" type="checkbox"> <code>envelope</code> input for an analog mic (background sampling, RMS)</li>
+<li><input disabled="" type="checkbox"> <code>stepper</code> output (velocity mode, shared enable, disabled at rest)</li>
+<li><input disabled="" type="checkbox"> ESP-NOW station beacon for ~10 Hz RSSI (the simulator can measure what the 5 s scan costs)</li>
+</ul>
 <h2 id="v091--hardware-validation-blocked-no-hardware-in-this-environment">v0.9.1 — Hardware validation (blocked, no hardware in this environment)</h2>
 <ul>
 <li><input disabled="" type="checkbox"> End-to-end test: emergent approach-and-dock behavior over repeated sessions</li>
