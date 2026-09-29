@@ -10,7 +10,7 @@ body: which input is its energy (the battery) and which inputs hurt (e.g. a bump
 Everything else it does has to come out of a handful of mechanisms: a brain, a model
 that predicts its own senses, a memory of places, four needs, four hormones,
 exploration, and one learning rule. What it's born with comes from **evolution**, not from anyone writing it. The program is
-[`src/esp32/include/life/organism.h`](../src/esp32/include/life/organism.h), about 450
+[`src/esp32/include/life/organism.h`](../src/esp32/include/life/organism.h), about 500
 lines, header-only, identical on the ESP32 and in the [simulator](../src/sim/README.md).
 
 ## The 10 inputs
